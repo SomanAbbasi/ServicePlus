@@ -9,11 +9,13 @@ import { GeoModule } from './geo/geo.module';
 import { MediaModule } from './media/media.module';
 import { AvailabilityModule } from './availability/availability.module';
 import { PricingModule } from './pricing/pricing.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    HealthModule,
     AuthModule,
     ServicesModule,
     BookingModule,
