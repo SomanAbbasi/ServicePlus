@@ -3,24 +3,16 @@ import { ImagePlus, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { uploadMedia } from "@/frontend/lib/api-services";
 import { resolveImageUrl } from "@/frontend/lib/api-client";
+import { compressImageFile } from "@/frontend/lib/image-compression";
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { Label } from "@/frontend/components/ui/label";
 
-const MAX_FILE_MB = 8;
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-
-function toBase64(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
-    reader.onerror = () => reject(new Error("Could not read the file"));
-    reader.readAsDataURL(file);
-  });
-}
+const MAX_FILE_MB = 25;
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"];
 
 function validateFile(file: File): string | null {
-  if (!ACCEPTED_TYPES.includes(file.type)) {
+  if (!ACCEPTED_TYPES.includes(file.type) && !file.type.startsWith("image/")) {
     return `Unsupported file type "${file.type}". Use JPEG, PNG, WebP, or GIF.`;
   }
   if (file.size > MAX_FILE_MB * 1024 * 1024) {
@@ -41,6 +33,7 @@ export function ImageUploader({
   label?: string;
 }) {
   const [busy, setBusy] = useState(false);
+  const [statusText, setStatusText] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(file: File) {
@@ -51,20 +44,39 @@ export function ImageUploader({
     }
 
     setBusy(true);
+    setStatusText("Optimizing image...");
     try {
-      const dataBase64 = await toBase64(file);
-      const res = await uploadMedia(file.name, file.type, dataBase64);
+      const compressed = await compressImageFile(file, {
+        maxDimension: 1600,
+        quality: 0.82,
+        mimeType: "image/webp",
+      });
+
+      setStatusText("Uploading...");
+      const res = await uploadMedia(
+        compressed.filename,
+        compressed.contentType,
+        compressed.base64
+      );
+
       onChange(res.url);
-      toast.success("Image uploaded and compressed");
+      toast.success("Image uploaded and optimized");
     } catch (e) {
-      const msg = (e as Error).message;
-      if (msg.includes("413") || msg.includes("Payload Too Large") || msg.includes("too large")) {
-        toast.error(`File too large. Maximum upload size is ${MAX_FILE_MB} MB.`);
+      const msg = (e as Error).message || "";
+      if (
+        msg.includes("413") ||
+        msg.includes("Payload Too Large") ||
+        msg.includes("too large")
+      ) {
+        toast.error("Image file is too large. Please select a smaller photo.");
+      } else if (msg.includes("Failed to fetch") || msg.includes("CORS")) {
+        toast.error("Network error: Could not reach the upload server. Please try again.");
       } else {
-        toast.error(msg || "Upload failed. Try a smaller image.");
+        toast.error(msg || "Upload failed. Try another image.");
       }
     } finally {
       setBusy(false);
+      setStatusText("");
     }
   }
 
@@ -104,23 +116,30 @@ export function ImageUploader({
               disabled={busy}
               onClick={() => inputRef.current?.click()}
             >
-              Upload image
+              {busy ? (
+                <>
+                  <Loader2 className="me-1.5 size-3.5 animate-spin" />
+                  {statusText || "Uploading..."}
+                </>
+              ) : (
+                "Upload image"
+              )}
             </Button>
-            {value ? (
+            {value && !busy ? (
               <Button type="button" variant="ghost" size="sm" onClick={() => onChange("")}>
                 <X className="me-1 size-3" /> Clear
               </Button>
             ) : null}
           </div>
           <p className="text-xs text-muted-foreground">
-            JPEG, PNG, or WebP up to {MAX_FILE_MB} MB. Images are auto-compressed.
+            JPEG, PNG, WebP, GIF, or SVG up to {MAX_FILE_MB} MB. Auto-optimized.
           </p>
         </div>
       </div>
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];

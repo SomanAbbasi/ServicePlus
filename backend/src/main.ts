@@ -22,30 +22,52 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        /\.vercel\.app$/.test(new URL(origin).hostname)
-      ) {
-        callback(null, true);
-      } else {
-        callback(null, true);
+      if (!origin) return callback(null, true);
+      try {
+        const url = new URL(origin);
+        const hostname = url.hostname;
+        if (
+          allowedOrigins.includes(origin) ||
+          hostname.endsWith('.vercel.app') ||
+          hostname === 'localhost' ||
+          hostname === '127.0.0.1'
+        ) {
+          return callback(null, true);
+        }
+        return callback(null, true);
+      } catch {
+        return callback(null, true);
       }
     },
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'sp_auth_token',
+    ],
     credentials: true,
   });
 
   app.setGlobalPrefix(apiPrefix);
 
   if (process.env.STORAGE_PROVIDER !== 'r2') {
-    const storagePath = join(
-      process.cwd(),
-      process.env.STORAGE_LOCAL_PATH || './storage',
-    );
-    app.useStaticAssets(storagePath, { prefix: '/images' });
+    try {
+      const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+      const storagePath = join(
+        process.cwd(),
+        process.env.STORAGE_LOCAL_PATH || (isServerless ? '/tmp/storage' : './storage'),
+      );
+      app.useStaticAssets(storagePath, { prefix: '/images' });
+    } catch (e: any) {
+      console.warn(`Static assets warning: ${e?.message}`);
+    }
   }
 
-  app.use(express.json({ limit: '10mb' }));
+  app.use(express.json({ limit: '20mb' }));
+  app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
   app.useGlobalPipes(
     new ValidationPipe({

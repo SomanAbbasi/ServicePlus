@@ -35,31 +35,35 @@ export class R2StorageProvider implements StorageProvider {
     buffer: Buffer,
     contentType: string,
   ): Promise<{ url: string }> {
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.bucket,
-        Key: path,
+        Key: cleanPath,
         Body: buffer,
         ContentType: contentType,
+        CacheControl: 'public, max-age=31536000, immutable',
       }),
     );
 
-    const url = this.publicUrl(path);
-    this.logger.log(`Uploaded to R2: ${path} → ${url}`);
+    const url = this.publicUrl(cleanPath);
+    this.logger.log(`Uploaded to R2: ${cleanPath} → ${url}`);
     return { url };
   }
 
   publicUrl(path: string): string {
-    if (path.startsWith('http')) return path;
-    if (path.startsWith('/')) return path;
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+
     if (
       this.publicBaseUrl &&
       !this.publicBaseUrl.includes('pub-xxxxxx') &&
-      !this.publicBaseUrl.includes('.r2.dev')
+      !this.publicBaseUrl.includes('your-bucket')
     ) {
-      return `${this.publicBaseUrl.replace(/\/+$/, '')}/${path}`;
+      return `${this.publicBaseUrl.replace(/\/+$/, '')}/${cleanPath}`;
     }
-    return `/api/media/file/${path}`;
+    return `/api/media/file/${cleanPath}`;
   }
 
   async getObject(

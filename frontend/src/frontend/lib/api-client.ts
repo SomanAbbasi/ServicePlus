@@ -141,12 +141,25 @@ async function request<T>(path: string, method: string, options: RequestOptions 
 
   const fetchBody = body !== undefined ? JSON.stringify(body) : null;
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: fetchBody,
-    ...rest,
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method,
+      headers,
+      body: fetchBody,
+      ...rest,
+    });
+  } catch (err: unknown) {
+    const errorMsg = (err as Error)?.message ?? "Network error";
+    if (errorMsg.includes("Failed to fetch") || errorMsg.includes("NetworkError")) {
+      throw new ApiError(
+        0,
+        `Network error: Could not connect to API at ${url}. If this was a large file upload, the payload may have exceeded the gateway limit.`,
+        err
+      );
+    }
+    throw new ApiError(0, errorMsg, err);
+  }
 
   if (res.status === 401 && retry && !skipAuth && getRefreshToken()) {
     try {
