@@ -38,11 +38,16 @@ function AdminCustomers() {
           {
             key: "name",
             header: "Customer",
-            cell: (r) => <span className="font-medium">{r.full_name ?? "Unnamed"}</span>,
-            csv: (r) => r.full_name ?? "",
+            cell: (r) => <span className="font-medium">{r.full_name || r.phone || "Customer"}</span>,
+            csv: (r) => r.full_name || r.phone || "Customer",
           },
           { key: "phone", header: "Phone", cell: (r) => r.phone ?? "—", csv: (r) => r.phone ?? "" },
-          { key: "email", header: "Email", cell: (r) => r.email ?? "—", csv: (r) => r.email ?? "" },
+          {
+            key: "email",
+            header: "Email",
+            cell: (r) => (r.email && !r.email.includes("@phone.serviceplus.app") ? r.email : "—"),
+            csv: (r) => (r.email && !r.email.includes("@phone.serviceplus.app") ? r.email : ""),
+          },
           { key: "bookings", header: "Bookings", cell: (r) => r.bookings, csv: (r) => r.bookings },
           {
             key: "spend",

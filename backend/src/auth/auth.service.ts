@@ -126,7 +126,7 @@ export class AuthService {
       profile = await this.prisma.profile.create({
         data: {
           phone: normalized,
-          email,
+          email: null,
           fullName: name ?? null,
           userRoles: {
             create: { role: 'customer' },
