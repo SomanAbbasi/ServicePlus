@@ -40,15 +40,21 @@ export class MediaController {
     );
   }
 
-  @Get('file/*')
+  @Get('file/*path')
   async getFile(
     @Req() req: Request,
-    @Param() params: Record<string, string>,
+    @Param() params: Record<string, any>,
     @Res() res: Response,
   ) {
-    const rawParam = params['0'] || params['path'];
-    const urlPath = req.path ? req.path.replace(/^.*\/media\/file\/?/, '') : '';
-    const chosenPath = rawParam || urlPath;
+    const raw = params['path'] || params['0'] || params['splat'];
+    let chosenPath = '';
+    if (Array.isArray(raw)) {
+      chosenPath = raw.join('/');
+    } else if (typeof raw === 'string') {
+      chosenPath = raw;
+    } else if (req.path) {
+      chosenPath = req.path.replace(/^.*\/media\/file\/?/, '');
+    }
     const cleanPath = decodeURIComponent(chosenPath || '').replace(/^\/+/, '');
 
     const file = await this.mediaService.getFile(cleanPath);
