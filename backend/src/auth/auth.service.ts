@@ -44,6 +44,7 @@ export class AuthService {
   }
 
   private async ensureAdminRole(userId: string) {
+    if (!userId) return;
     const existing = await this.prisma.userRole.findFirst({
       where: { userId, role: 'admin' },
     });
@@ -164,6 +165,7 @@ export class AuthService {
   }
 
   async getProfile(userId: string) {
+    if (!userId) throw new UnauthorizedException('User not authenticated');
     const profile = await this.prisma.profile.findUnique({
       where: { id: userId },
       include: { userRoles: true },
@@ -173,6 +175,7 @@ export class AuthService {
   }
 
   async checkIsAdmin(userId: string) {
+    if (!userId) return { isAdmin: false };
     const profile = await this.prisma.profile.findUnique({
       where: { id: userId },
       select: { phone: true },

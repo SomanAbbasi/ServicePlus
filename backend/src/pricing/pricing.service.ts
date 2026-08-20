@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-export const SERVICE_FEE_PCT = 5;
+export const SERVICE_FEE_PCT = 0;
 export const TAX_PCT = 0;
 
 export interface PricingService {
