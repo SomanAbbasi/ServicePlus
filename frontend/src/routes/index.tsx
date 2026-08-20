@@ -125,13 +125,16 @@ function Home() {
         "Quality guarantee in every service",
       ];
 
-  // Active Category & Filtered Services
+  // Active Category & Filtered Services (Display top featured services on homepage)
   const activeCategory = categories.find((c) => c.slug === selectedCatSlug);
+  const featuredOnly = services.filter((s) => s.is_featured || (s as any).isFeatured);
   const filteredServices = selectedCatSlug
     ? services.filter((s) => s.category_id === activeCategory?.id)
+    : featuredOnly.length > 0
+    ? featuredOnly
     : services;
 
-  const displayServices = filteredServices.length > 0 ? filteredServices : services;
+  const displayServices = (filteredServices.length > 0 ? filteredServices : services).slice(0, 4);
 
   return (
     <div dir={isAr ? "rtl" : "ltr"} className="bg-slate-50/50 min-h-screen">
@@ -206,11 +209,15 @@ function Home() {
         }}
       />
 
-      {/* Category Slider & Services Explorer Section */}
+      {/* Category Slider & Popular Services Explorer Section */}
       <section id="categories" className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">{t("home.todoTitle")}</h2>
-          <p className="mt-1 text-sm text-slate-500">{t("home.todoSubtitle")}</p>
+          <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl lg:text-4xl">
+            {isAr ? "خدماتنا الأكثر شعبية" : "Our most popular services"}
+          </h2>
+          <p className="mt-2 text-xs sm:text-sm text-slate-500 font-medium">
+            {isAr ? "استكشف الخدمات التي يحجزها عملاؤنا بكثرة:" : "Explore the services our customers book most:"}
+          </p>
         </div>
 
         {/* Horizontal Category Slider Bar with Scroll Arrows */}
@@ -226,19 +233,19 @@ function Home() {
 
           <div
             ref={catSliderRef}
-            className="flex items-center gap-2.5 overflow-x-auto px-10 pb-4 pt-1 scrollbar-none scroll-smooth"
+            className="flex items-center gap-3 overflow-x-auto px-10 pb-4 pt-1 scrollbar-none scroll-smooth"
           >
             <button
               type="button"
               onClick={() => setSelectedCatSlug(null)}
-              className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold transition-all ${
+              className={`flex shrink-0 items-center gap-2 rounded-full px-5 py-2.5 text-xs font-extrabold transition-all ${
                 selectedCatSlug === null
-                  ? "bg-cyan-600 text-white shadow-md shadow-cyan-600/20"
-                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  ? "bg-cyan-500 text-white shadow-md shadow-cyan-500/20"
+                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-cyan-500"
               }`}
             >
               <Sparkles className="size-4" />
-              {t("search.allServices")}
+              {isAr ? "جميع الخدمات" : "All services"}
             </button>
 
             {categories.map((cat) => {
@@ -250,9 +257,9 @@ function Home() {
                   key={cat.slug}
                   type="button"
                   onClick={() => setSelectedCatSlug(cat.slug)}
-                  className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
+                  className={`flex shrink-0 items-center gap-2 rounded-full px-5 py-2.5 text-xs font-extrabold transition-all ${
                     isSelected
-                      ? "bg-cyan-600 text-white shadow-md shadow-cyan-600/20"
+                      ? "bg-cyan-500 text-white shadow-md shadow-cyan-500/20"
                       : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-cyan-500"
                   }`}
                 >
@@ -260,15 +267,15 @@ function Home() {
                     <img
                       src={resolveImageUrl(cat.image_url)}
                       alt=""
-                      className="size-6 rounded-full object-cover"
+                      className="size-5 rounded-full object-cover"
                     />
                   ) : (
                     <div
-                      className={`grid size-6 place-items-center rounded-full ${
+                      className={`grid size-5 place-items-center rounded-full ${
                         isSelected ? "bg-white/20 text-white" : "bg-cyan-50 text-cyan-600"
                       }`}
                     >
-                      <Icon className="size-3.5" />
+                      <Icon className="size-3" />
                     </div>
                   )}
                   {catName}
@@ -287,173 +294,82 @@ function Home() {
           </button>
         </div>
 
-        {/* Services Grid & Category Sections (Justlife-Style) */}
-        <div className="mt-8 space-y-10">
-          {selectedCatSlug === null ? (
-            /* Render Category Sections Grouped (Justlife Homepage Layout) */
-            categories.map((cat) => {
-              const catServices = services.filter((s) => s.category_id === cat.id);
-              if (catServices.length === 0) return null;
-              const catName = localizedText({ ...cat }, "name", locale) ?? cat.name;
+        {/* Clean 4-Column Popular Services Grid (Matching Screenshot media_1787232594791.png) */}
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {displayServices.map((service) => {
+            const catObj = categories.find((c) => c.id === service.category_id);
+            const catName = catObj ? (localizedText({ ...catObj }, "name", locale) ?? catObj.name) : (isAr ? "خدمة منزلية" : "Home Service");
+            const imageUrl = resolveImageUrl(service.image_url) || FALLBACK_IMAGE;
+            const serviceName = localizedText({ ...service }, "name", locale) ?? service.name;
+            const serviceDesc = service.short_description ?? (isAr ? "خدمة منزلية احترافية." : "Professional home service.");
+            const price = num(service.base_price);
 
-              return (
-                <div key={cat.id} className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
-                    <div className="flex items-center gap-2.5">
-                      {cat.image_url ? (
-                        <img
-                          src={resolveImageUrl(cat.image_url)}
-                          alt=""
-                          className="size-7 rounded-full object-cover shadow-2xs"
-                        />
-                      ) : null}
-                      <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">
-                        {catName}
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedCatSlug(cat.slug)}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-cyan-600 hover:text-cyan-700"
-                    >
-                      {isAr ? "عرض الكل" : "View all"}
-                      {isAr ? <ChevronLeft className="size-3.5" /> : <ChevronRight className="size-3.5" />}
-                    </button>
-                  </div>
+            return (
+              <div
+                key={service.id}
+                className="group flex flex-col overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-cyan-500/40"
+              >
+                {/* Image Container with Badges */}
+                <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                  <img
+                    src={imageUrl}
+                    alt={serviceName}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  {/* Top-Left Category Badge */}
+                  <span className="absolute top-3 start-3 rounded-md bg-white/95 px-2.5 py-1 text-[11px] font-bold text-slate-800 shadow-2xs backdrop-blur-xs">
+                    {catName}
+                  </span>
 
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                    {catServices.map((service) => {
-                      const imageUrl = resolveImageUrl(service.image_url) || FALLBACK_IMAGE;
-                      const serviceName = localizedText({ ...service }, "name", locale) ?? service.name;
-                      const serviceDesc = service.short_description ?? (isAr ? "خدمة منزلية احترافية." : "Professional home service.");
-
-                      return (
-                        <div
-                          key={service.id}
-                          className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xs transition-all hover:-translate-y-1 hover:shadow-md hover:border-cyan-500/40"
-                        >
-                          <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                            <img
-                              src={imageUrl}
-                              alt={serviceName}
-                              loading="lazy"
-                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
-                            <div className="absolute bottom-2 end-2 flex items-center gap-1 rounded-full bg-slate-900/80 px-2 py-0.5 text-[10px] font-bold text-white">
-                              <Star className="size-3 fill-amber-400 text-amber-400" />
-                              {service.rating ?? 4.8}
-                            </div>
-                          </div>
-
-                          <div className="flex flex-1 flex-col justify-between p-3.5">
-                            <div>
-                              <h4 className="line-clamp-1 text-xs font-bold text-slate-900 group-hover:text-cyan-600 transition-colors">
-                                {serviceName}
-                              </h4>
-                              <p className="mt-1 line-clamp-2 text-[11px] text-slate-500 leading-relaxed">
-                                {serviceDesc}
-                              </p>
-                            </div>
-
-                            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
-                              <div>
-                                <span className="text-[9px] text-slate-400 uppercase font-semibold block">{t("common.from")}</span>
-                                <span className="text-xs font-extrabold text-slate-900">
-                                  {formatMoney(num(service.base_price))}
-                                </span>
-                              </div>
-
-                              <Link
-                                to="/booking/$slug"
-                                params={{ slug: service.slug }}
-                                className="inline-flex items-center gap-1 rounded-lg bg-cyan-600 px-2.5 py-1.5 text-[11px] font-bold text-white transition-all hover:bg-cyan-700 shadow-2xs"
-                              >
-                                {t("bookNow")}
-                                {isAr ? <ArrowLeft className="size-3" /> : <ArrowRight className="size-3" />}
-                              </Link>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  {/* Bottom-Right Star Rating Badge */}
+                  <div className="absolute bottom-3 end-3 flex items-center gap-1 rounded-full bg-slate-900/85 px-2.5 py-1 text-[11px] font-extrabold text-white shadow-md">
+                    <Star className="size-3.5 fill-amber-400 text-amber-400" />
+                    <span>{service.rating ?? 4.8}</span>
                   </div>
                 </div>
-              );
-            })
-          ) : (
-            /* Render Filtered Category View */
-            <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
-                <h3 className="text-xl font-extrabold text-slate-900">
-                  {activeCategory ? (localizedText({ ...activeCategory }, "name", locale) ?? activeCategory.name) : "Services"}
-                </h3>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
-                {filteredServices.map((service) => {
-                  const imageUrl = resolveImageUrl(service.image_url) || FALLBACK_IMAGE;
-                  const serviceName = localizedText({ ...service }, "name", locale) ?? service.name;
-                  const serviceDesc = service.short_description ?? (isAr ? "خدمة منزلية احترافية." : "Professional home service.");
+                {/* Content & Action */}
+                <div className="flex flex-1 flex-col justify-between p-5">
+                  <div className="space-y-1.5">
+                    <h3 className="text-base font-extrabold text-slate-900 group-hover:text-cyan-600 transition-colors line-clamp-1">
+                      {serviceName}
+                    </h3>
+                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                      {serviceDesc}
+                    </p>
+                  </div>
 
-                  return (
-                    <div
-                      key={service.id}
-                      className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xs transition-all hover:-translate-y-1 hover:shadow-md hover:border-cyan-500/40"
-                    >
-                      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                        <img
-                          src={imageUrl}
-                          alt={serviceName}
-                          loading="lazy"
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute bottom-2 end-2 flex items-center gap-1 rounded-full bg-slate-900/80 px-2 py-0.5 text-[10px] font-bold text-white">
-                          <Star className="size-3 fill-amber-400 text-amber-400" />
-                          {service.rating ?? 4.8}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-1 flex-col justify-between p-3.5">
-                        <div>
-                          <h4 className="line-clamp-1 text-xs font-bold text-slate-900 group-hover:text-cyan-600 transition-colors">
-                            {serviceName}
-                          </h4>
-                          <p className="mt-1 line-clamp-2 text-[11px] text-slate-500 leading-relaxed">
-                            {serviceDesc}
-                          </p>
-                        </div>
-
-                        <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
-                          <div>
-                            <span className="text-[9px] text-slate-400 uppercase font-semibold block">{t("common.from")}</span>
-                            <span className="text-xs font-extrabold text-slate-900">
-                              {formatMoney(num(service.base_price))}
-                            </span>
-                          </div>
-
-                          <Link
-                            to="/booking/$slug"
-                            params={{ slug: service.slug }}
-                            className="inline-flex items-center gap-1 rounded-lg bg-cyan-600 px-2.5 py-1.5 text-[11px] font-bold text-white transition-all hover:bg-cyan-700 shadow-2xs"
-                          >
-                            {t("bookNow")}
-                            {isAr ? <ArrowLeft className="size-3" /> : <ArrowRight className="size-3" />}
-                          </Link>
-                        </div>
-                      </div>
+                  <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                        FROM
+                      </span>
+                      <span className="text-base font-black text-slate-900">
+                        {formatMoney(price)}
+                      </span>
                     </div>
-                  );
-                })}
+
+                    <Link
+                      to="/booking/$slug"
+                      params={{ slug: service.slug }}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500 px-4 py-2.5 text-xs font-extrabold text-white transition-all hover:bg-cyan-600 shadow-sm active:scale-95"
+                    >
+                      {t("bookNow")}
+                      {isAr ? <ArrowLeft className="size-3.5" /> : <ArrowRight className="size-3.5" />}
+                    </Link>
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })}
         </div>
 
-        <div className="mt-8 text-center">
+        <div className="mt-10 text-center">
           <Button
             variant="outline"
             size="lg"
-            className="rounded-xl border-slate-300 font-bold text-slate-700 hover:bg-slate-100"
+            className="rounded-full border-slate-300 font-extrabold text-slate-700 hover:bg-slate-100 px-8 py-3 text-xs"
             onClick={() => void navigate({ to: "/search", search: { q: "" } })}
           >
             {t("home.browseAll")}
