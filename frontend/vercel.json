@@ -1,5 +1,3 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npx cross-env NITRO_PRESET=vercel vite build",
-  "outputDirectory": ".vercel/output"
+  "$schema": "https://openapi.vercel.sh/vercel.json"
 }
