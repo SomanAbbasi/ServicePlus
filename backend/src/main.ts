@@ -14,7 +14,8 @@ async function bootstrap() {
   const apiPrefix = config.get<string>('API_PREFIX', 'api');
 
   const allowedOrigins = [
-    config.get<string>('FRONTEND_URL', 'http://localhost:3000'),
+    config.get<string>('FRONTEND_URL', 'https://service-plus-flame.vercel.app'),
+    'https://service-plus-flame.vercel.app',
     'http://localhost:5173',
     'http://localhost:3000',
   ];
