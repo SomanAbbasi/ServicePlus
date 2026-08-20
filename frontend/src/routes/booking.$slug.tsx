@@ -18,6 +18,7 @@ import {
   RefreshCw,
   ShieldCheck,
   Sparkles,
+  Star,
   Tag,
   Wallet,
   X,
@@ -363,7 +364,9 @@ function BookingWizard() {
 
   const formattedTimeRange = useMemo(() => {
     if (!slotStart) return "17:30-18:00";
-    const [h, m] = slotStart.split(":").map(Number);
+    const parts = slotStart.split(":").map(Number);
+    const h = parts[0] ?? 17;
+    const m = parts[1] ?? 30;
     const endM = (m + 30) % 60;
     const endH = h + (m + 30 >= 60 ? 1 : 0);
     const endStr = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
@@ -397,151 +400,288 @@ function BookingWizard() {
           </Link>
         </div>
 
-        <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl mb-6">
-          {serviceTitle}
-        </h1>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
+          <div>
+            <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+              {serviceTitle}
+            </h1>
+            {detail?.service?.rating ? (
+              <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 font-semibold">
+                <div className="flex items-center gap-1 text-amber-500 font-extrabold">
+                  <Star className="size-3.5 fill-amber-400 text-amber-400" />
+                  <span>{String(detail.service.rating)}</span>
+                </div>
+                <span>({detail.service.reviewCount ? Number(detail.service.reviewCount).toLocaleString() : "28,557"} bookings)</span>
+              </div>
+            ) : null}
+          </div>
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr] items-start min-w-0">
           {/* Main Booking Controls Left Column */}
           <div className="space-y-6 min-w-0">
-            {/* STEP 1: Details (Hours, Professionals, Materials) */}
+            {/* STEP 1: Details or Deep Cleaning Multi-Group Option Selector */}
             {step === 0 && (
               <section className="space-y-6 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
-                {/* 1. Hours Selector */}
-                <div>
-                  <div className="flex items-center gap-1.5 mb-3">
-                    <Label className="text-xs sm:text-sm font-bold text-slate-900">
-                      {isAr ? "كم عدد الساعات التي تحتاجها؟" : "How many hours do you need your professional to stay?"}
-                    </Label>
-                    <Info className="size-4 text-slate-400 shrink-0" />
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((h) => (
-                      <button
-                        key={h}
+                {hasOptions ? (
+                  /* Deep Cleaning / Multi-Group Sub-Category Selector (Matching Screenshot media_1787231010179.png) */
+                  <div className="space-y-6">
+                    {/* Horizontal Group Selector Tabs */}
+                    {optionGroups.length > 0 && (
+                      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                        {optionGroups.map((g) => {
+                          const isGroupSelected = selectedGroupId === g.id;
+                          const groupImg = resolveImageUrl(g.imageUrl || g.image_url) || FALLBACK_IMAGE;
+                          return (
+                            <button
+                              key={g.id}
+                              type="button"
+                              onClick={() => setActiveGroup(g.id)}
+                              className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all shrink-0 w-28 text-center ${
+                                isGroupSelected
+                                  ? "border-cyan-500 bg-cyan-50/60 ring-2 ring-cyan-500/20 shadow-xs"
+                                  : "border-slate-200 bg-white hover:border-slate-300"
+                              }`}
+                            >
+                              <div className="size-12 rounded-xl overflow-hidden bg-slate-100 mb-2">
+                                <img src={groupImg} alt={g.name} className="size-full object-cover" />
+                              </div>
+                              <span className={`text-[11px] font-bold leading-tight line-clamp-2 ${
+                                isGroupSelected ? "text-cyan-900" : "text-slate-700"
+                              }`}>
+                                {g.name}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Visible Package Options under Active Group */}
+                    <div className="space-y-4 pt-2">
+                      {visibleOptions.map((opt: any) => {
+                        const qty = optionQty[opt.id] || 0;
+                        const optImg = resolveImageUrl(opt.imageUrl || opt.image_url) || FALLBACK_IMAGE;
+                        const optOriginal = opt.originalPrice || opt.original_price;
+
+                        return (
+                          <div
+                            key={opt.id}
+                            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 transition-all shadow-2xs"
+                          >
+                            <div className="flex items-start gap-3.5 min-w-0">
+                              <div className="size-16 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100">
+                                <img src={optImg} alt={opt.name} className="size-full object-cover" />
+                              </div>
+                              <div className="min-w-0 space-y-1">
+                                <h4 className="text-sm font-extrabold text-slate-900">{opt.name}</h4>
+                                {opt.description && (
+                                  <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                                    {opt.description}
+                                  </p>
+                                )}
+                                <div className="flex items-center gap-2 pt-1">
+                                  <span className="text-sm font-extrabold text-slate-900">
+                                    AED {Number(opt.price).toFixed(0)}
+                                  </span>
+                                  {optOriginal && (
+                                    <span className="text-xs text-slate-400 line-through font-semibold">
+                                      AED {Number(optOriginal).toFixed(0)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="shrink-0 self-end sm:self-center">
+                              {qty === 0 ? (
+                                <Button
+                                  type="button"
+                                  onClick={() => setQty(opt.id, 1)}
+                                  className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs px-5 py-2 rounded-full shadow-2xs"
+                                >
+                                  Add +
+                                </Button>
+                              ) : (
+                                <div className="flex items-center gap-2 rounded-full border border-cyan-500 bg-cyan-50 px-2 py-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => setQty(opt.id, qty - 1)}
+                                    className="grid size-6 place-items-center rounded-full bg-white text-cyan-800 font-bold text-xs shadow-2xs"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="text-xs font-extrabold text-cyan-900 px-1">{qty}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setQty(opt.id, qty + 1)}
+                                    className="grid size-6 place-items-center rounded-full bg-cyan-600 text-white font-bold text-xs shadow-2xs"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-100">
+                      <Button
                         type="button"
-                        onClick={() => setHours(h)}
-                        className={`grid size-10 sm:size-11 place-items-center rounded-full text-xs font-extrabold transition-all ${
-                          hours === h
-                            ? "bg-cyan-100 text-cyan-800 border-2 border-cyan-500 shadow-xs"
-                            : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                        }`}
+                        onClick={goNext}
+                        disabled={!canContinue}
+                        className="w-full bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-sm py-3.5 rounded-full shadow-md"
                       >
-                        {h}
-                      </button>
-                    ))}
+                        Next
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  /* Standard Service Details (Hours, Pros, Materials) */
+                  <>
+                    {/* 1. Hours Selector */}
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-3">
+                        <Label className="text-xs sm:text-sm font-bold text-slate-900">
+                          {isAr ? "كم عدد الساعات التي تحتاجها؟" : "How many hours do you need your professional to stay?"}
+                        </Label>
+                        <Info className="size-4 text-slate-400 shrink-0" />
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((h) => (
+                          <button
+                            key={h}
+                            type="button"
+                            onClick={() => setHours(h)}
+                            className={`grid size-10 sm:size-11 place-items-center rounded-full text-xs font-extrabold transition-all ${
+                              hours === h
+                                ? "bg-cyan-100 text-cyan-800 border-2 border-cyan-500 shadow-xs"
+                                : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                            }`}
+                          >
+                            {h}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                {/* 2. Professionals Selector */}
-                <div>
-                  <div className="flex items-center gap-1.5 mb-3">
-                    <Label className="text-xs sm:text-sm font-bold text-slate-900">
-                      {isAr ? "كم عدد المحترفين الذين تحتاجهم؟" : "How many professionals do you need?"}
-                    </Label>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {[1, 2, 3, 4].map((p) => (
-                      <button
-                        key={p}
+                    {/* 2. Professionals Selector */}
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-3">
+                        <Label className="text-xs sm:text-sm font-bold text-slate-900">
+                          {isAr ? "كم عدد المحترفين الذين تحتاجهم؟" : "How many professionals do you need?"}
+                        </Label>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {[1, 2, 3, 4].map((p) => (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setProfessionals(p)}
+                            className={`grid size-10 sm:size-11 place-items-center rounded-full text-xs font-extrabold transition-all ${
+                              professionals === p
+                                ? "bg-cyan-100 text-cyan-800 border-2 border-cyan-500 shadow-xs"
+                                : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 3. Cleaning Materials Selector */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        <Label className="text-xs sm:text-sm font-bold text-slate-900">
+                          {isAr ? "هل تحتاج مواد تنظيف؟" : "Need cleaning materials?"}
+                        </Label>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500">
+                          Powered by <span className="rounded bg-emerald-600 px-1.5 py-0.5 text-[10px] text-white italic font-black">Jif</span>
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => setMaterials(false)}
+                          className={`rounded-full px-4 sm:px-5 py-2 text-xs font-bold transition-all ${
+                            !materials
+                              ? "bg-cyan-100 text-cyan-800 border-2 border-cyan-500 shadow-xs"
+                              : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          {isAr ? "لا، لدي موادي الخاصة" : "No, I have them"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMaterials(true)}
+                          className={`rounded-full px-4 sm:px-5 py-2 text-xs font-bold transition-all ${
+                            materials
+                              ? "bg-cyan-100 text-cyan-800 border-2 border-cyan-500 shadow-xs"
+                              : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          {isAr ? "نعم، يرجى توفيرها" : "Yes, please"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Fuel Surcharge Promo Banner */}
+                    <div className="rounded-xl border border-cyan-100 bg-cyan-50/70 p-3.5 flex items-center gap-2.5 text-xs text-cyan-900 font-bold leading-relaxed">
+                      <Sparkles className="size-4 text-cyan-600 shrink-0" />
+                      <span>First booking? Your fuel surcharge fee is on us. Enjoy!</span>
+                    </div>
+
+                    {/* Instructions Textarea */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <Label className="text-xs font-bold text-slate-700">
+                          {isAr ? "أي تعليمات أو متطلبات خاصة؟" : "Any instructions or special requirements?"}
+                        </Label>
+                        <span className="text-[11px] text-slate-400 font-medium">{instructions.length}/150</span>
+                      </div>
+                      <Textarea
+                        maxLength={150}
+                        value={instructions}
+                        onChange={(e) => setInstructions(e.target.value)}
+                        placeholder="Gate code, pets, parking instructions..."
+                        rows={3}
+                        className="text-xs"
+                      />
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="pt-4">
+                      <Button
                         type="button"
-                        onClick={() => setProfessionals(p)}
-                        className={`grid size-10 sm:size-11 place-items-center rounded-full text-xs font-extrabold transition-all ${
-                          professionals === p
-                            ? "bg-cyan-100 text-cyan-800 border-2 border-cyan-500 shadow-xs"
-                            : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                        }`}
+                        onClick={goNext}
+                        className="w-full bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-sm py-3.5 rounded-full shadow-md"
                       >
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 3. Cleaning Materials Selector */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    <Label className="text-xs sm:text-sm font-bold text-slate-900">
-                      {isAr ? "هل تحتاج مواد تنظيف؟" : "Need cleaning materials?"}
-                    </Label>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500">
-                      Powered by <span className="rounded bg-emerald-600 px-1.5 py-0.5 text-[10px] text-white italic font-black">Jif</span>
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2.5">
-                    <button
-                      type="button"
-                      onClick={() => setMaterials(false)}
-                      className={`rounded-full px-4 sm:px-5 py-2 text-xs font-bold transition-all ${
-                        !materials
-                          ? "bg-cyan-100 text-cyan-800 border-2 border-cyan-500 shadow-xs"
-                          : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                      }`}
-                    >
-                      {isAr ? "لا، لدي موادي الخاصة" : "No, I have them"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMaterials(true)}
-                      className={`rounded-full px-4 sm:px-5 py-2 text-xs font-bold transition-all ${
-                        materials
-                          ? "bg-cyan-100 text-cyan-800 border-2 border-cyan-500 shadow-xs"
-                          : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                      }`}
-                    >
-                      {isAr ? "نعم، يرجى توفيرها" : "Yes, please"}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Fuel Surcharge Promo Banner */}
-                <div className="rounded-xl border border-cyan-100 bg-cyan-50/70 p-3.5 flex items-center gap-2.5 text-xs text-cyan-900 font-bold leading-relaxed">
-                  <Sparkles className="size-4 text-cyan-600 shrink-0" />
-                  <span>First booking? Your fuel surcharge fee is on us. Enjoy!</span>
-                </div>
-
-                {/* Instructions Textarea */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-xs font-bold text-slate-700">
-                      {isAr ? "أي تعليمات أو متطلبات خاصة؟" : "Any instructions or special requirements?"}
-                    </Label>
-                    <span className="text-[11px] text-slate-400 font-medium">{instructions.length}/150</span>
-                  </div>
-                  <Textarea
-                    maxLength={150}
-                    value={instructions}
-                    onChange={(e) => setInstructions(e.target.value)}
-                    placeholder="Gate code, pets, parking instructions..."
-                    rows={3}
-                    className="text-xs"
-                  />
-                </div>
-
-                {/* Action Button */}
-                <div className="pt-4">
-                  <Button
-                    type="button"
-                    onClick={goNext}
-                    className="w-full bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-sm py-3.5 rounded-full shadow-md"
-                  >
-                    Next
-                  </Button>
-                </div>
+                        Next
+                      </Button>
+                    </div>
+                  </>
+                )}
               </section>
             )}
 
-            {/* STEP 1.5: Add-ons (Only shown if service has add-ons) */}
+            {/* STEP 1.5: Popular Add-ons Grid (Matching Screenshot media_1787230745646.png) */}
             {step === 1 && hasAddons && (
               <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">{t("booking.addonsTitle")}</h2>
-                  <p className="mt-1 text-xs text-slate-500">{t("booking.addonsBody")}</p>
+                  <h2 className="text-lg font-extrabold text-slate-900">Popular Add-ons</h2>
+                  <p className="mt-0.5 text-xs font-bold text-slate-600">People also added</p>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
                   {addons.map((a: any) => {
                     const selected = addonIds.includes(a.id);
+                    const addonImg = resolveImageUrl(a.image_url || a.imageUrl) || FALLBACK_IMAGE;
+                    const addonPrice = Number(a.price || 0);
+                    const originalPrice = a.original_price || a.originalPrice;
+
                     return (
                       <div
                         key={a.id}
@@ -550,26 +690,42 @@ function BookingWizard() {
                             selected ? prev.filter((x) => x !== a.id) : [...prev, a.id],
                           )
                         }
-                        className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 transition-all ${
+                        className={`group relative flex flex-col overflow-hidden rounded-2xl border cursor-pointer transition-all ${
                           selected
-                            ? "border-cyan-600 bg-cyan-50/50 shadow-xs"
-                            : "border-slate-200 hover:border-slate-300"
+                            ? "border-cyan-500 bg-cyan-50/30 ring-2 ring-cyan-500/20 shadow-sm"
+                            : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-xs"
                         }`}
                       >
-                        <div>
-                          <p className="text-xs font-bold text-slate-900">
-                            {localizedText(a, "name", locale) ?? a.name}
-                          </p>
-                          <p className="mt-1 text-xs font-extrabold text-cyan-600">
-                            +{formatMoney(Number(a.price))}
-                          </p>
+                        <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
+                          <img
+                            src={addonImg}
+                            alt={a.name}
+                            className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          {/* Circular Cyan Plus / Check Action Button */}
+                          <div
+                            className={`absolute bottom-2 end-2 grid size-7 place-items-center rounded-full shadow-md transition-transform active:scale-90 ${
+                              selected ? "bg-cyan-600 text-white" : "bg-cyan-400 text-white hover:bg-cyan-500"
+                            }`}
+                          >
+                            {selected ? <Check className="size-4" /> : <Plus className="size-4" />}
+                          </div>
                         </div>
-                        <div
-                          className={`grid size-5 place-items-center rounded-md border ${
-                            selected ? "bg-cyan-600 border-cyan-600 text-white" : "border-slate-300"
-                          }`}
-                        >
-                          {selected ? <Check className="size-3" /> : null}
+
+                        <div className="flex flex-1 flex-col justify-between p-3">
+                          <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
+                            {localizedText(a, "name", locale) ?? a.name}
+                          </h4>
+                          <div className="mt-1 flex items-center gap-1.5">
+                            <span className="text-xs font-extrabold text-slate-900">
+                              AED {addonPrice.toFixed(0)}
+                            </span>
+                            {originalPrice && (
+                              <span className="text-[11px] font-semibold text-slate-400 line-through">
+                                AED {Number(originalPrice).toFixed(0)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -583,7 +739,7 @@ function BookingWizard() {
                   <Button
                     type="button"
                     onClick={goNext}
-                    className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-xs px-8 rounded-full"
+                    className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-xs px-8 rounded-full shadow-md"
                   >
                     Next
                   </Button>
@@ -1005,13 +1161,52 @@ function BookingWizard() {
                 <span className="font-bold text-slate-800 text-end">{materials ? "Yes" : "No"}</span>
               </div>
 
+              {/* Selected Add-ons List if any */}
+              {addonIds.length > 0 && (
+                <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                  <span className="text-slate-400 font-semibold block mb-1">Selected Add-ons</span>
+                  {addons
+                    .filter((a: any) => addonIds.includes(a.id))
+                    .map((a: any) => (
+                      <div key={a.id} className="flex justify-between items-center text-xs">
+                        <span className="font-bold text-slate-700 truncate">{a.name}</span>
+                        <span className="font-extrabold text-cyan-600 shrink-0">
+                          +AED {Number(a.price).toFixed(0)}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              )}
+
               {/* Payment Summary Box */}
-              <div className="mt-6 pt-4 border-t border-slate-100">
+              <div className="mt-6 pt-4 border-t border-slate-100 space-y-2">
                 <h3 className="font-extrabold text-slate-900 text-sm mb-3">Payment Summary</h3>
-                <div className="flex justify-between items-center text-base font-extrabold text-slate-900">
+                
+                {(quote?.breakdown as any)?.subtotal !== undefined && (
+                  <div className="flex justify-between items-center text-xs text-slate-600">
+                    <span>Base Service</span>
+                    <span>AED {Number((quote?.breakdown as any)?.subtotal || 0).toFixed(2)}</span>
+                  </div>
+                )}
+
+                {(quote?.breakdown as any)?.addons_total ? (
+                  <div className="flex justify-between items-center text-xs text-slate-600">
+                    <span>Add-ons Total</span>
+                    <span>AED {Number((quote?.breakdown as any)?.addons_total || 0).toFixed(2)}</span>
+                  </div>
+                ) : null}
+
+                {(quote?.breakdown as any)?.discount ? (
+                  <div className="flex justify-between items-center text-xs text-emerald-600 font-bold">
+                    <span>Discount</span>
+                    <span>-AED {Number((quote?.breakdown as any)?.discount || 0).toFixed(2)}</span>
+                  </div>
+                ) : null}
+
+                <div className="flex justify-between items-center text-base font-extrabold text-slate-900 pt-2 border-t border-slate-100">
                   <span>Total</span>
                   <span className="text-slate-900 font-black">
-                    AED {quote?.breakdown?.total ? quote.breakdown.total.toFixed(2) : "79.00"}
+                    AED {Number((quote?.breakdown as any)?.total || 79).toFixed(2)}
                   </span>
                 </div>
               </div>

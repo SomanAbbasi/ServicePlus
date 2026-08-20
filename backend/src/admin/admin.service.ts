@@ -131,6 +131,7 @@ export class AdminService {
         select: {
           id: true,
           name: true,
+          nameAr: true,
           slug: true,
           shortDescription: true,
           basePrice: true,
@@ -173,7 +174,43 @@ export class AdminService {
         select: { id: true, categoryId: true, serviceId: true, sortOrder: true },
       }),
     ]);
-    return { services, categories, listings };
+
+    return {
+      services: services.map((s) => ({
+        ...s,
+        category_id: s.categoryId,
+        image_url: s.imageUrl,
+        is_active: s.isActive,
+        is_featured: s.isFeatured,
+        base_price: s.basePrice,
+        original_price: s.originalPrice,
+        hourly_rate: s.hourlyRate,
+        materials_price: s.materialsPrice,
+        short_description: s.shortDescription,
+        duration_minutes: s.durationMinutes,
+        booking_type: s.bookingType,
+        sort_order: s.sortOrder,
+      })),
+      categories: categories.map((c) => ({
+        ...c,
+        image_url: c.imageUrl,
+        is_active: c.isActive,
+        name_ar: c.nameAr,
+        description_ar: c.descriptionAr,
+        intro_ar: c.introAr,
+        sections_ar: c.sectionsAr,
+        faqs_ar: c.faqsAr,
+        seo_title: c.seoTitle,
+        seo_description: c.seoDescription,
+        sort_order: c.sortOrder,
+      })),
+      listings: listings.map((l) => ({
+        ...l,
+        category_id: l.categoryId,
+        service_id: l.serviceId,
+        sort_order: l.sortOrder,
+      })),
+    };
   }
 
   async updateService(id: string, data: Record<string, any>) {
@@ -283,7 +320,24 @@ export class AdminService {
         select: { addonId: true, serviceId: true },
       }),
     ]);
-    return { addons, links };
+
+    return {
+      addons: addons.map((a) => ({
+        ...a,
+        image_url: a.imageUrl,
+        is_active: a.isActive,
+        min_quantity: a.minQuantity,
+        max_quantity: a.maxQuantity,
+        duration_minutes: a.durationMinutes,
+        original_price: a.originalPrice,
+        sort_order: a.sortOrder,
+      })),
+      links: links.map((l) => ({
+        ...l,
+        addon_id: l.addonId,
+        service_id: l.serviceId,
+      })),
+    };
   }
 
   async updateAddon(id: string, data: Record<string, any>) {

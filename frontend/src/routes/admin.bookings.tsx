@@ -10,6 +10,7 @@ import {
   setBookingStatus,
 } from "@/frontend/lib/api-services";
 import { ExternalLink, MapPin, Package, Sparkles } from "lucide-react";
+import { resolveImageUrl } from "@/frontend/lib/api-client";
 type BookingStatus = string;
 
 
@@ -415,11 +416,12 @@ function BookingDrawer({
                 </p>
                 <div className="space-y-2">
                   {data.items?.map((i: AnyRow) => {
-                    const img =
+                    const imgRaw =
                       i.variant?.imageUrl ||
                       i.variant?.image_url ||
                       booking.service?.imageUrl ||
                       booking.service?.image_url;
+                    const img = imgRaw ? resolveImageUrl(imgRaw) : null;
                     return (
                       <div
                         key={i.id}
@@ -449,7 +451,8 @@ function BookingDrawer({
                     );
                   })}
                   {data.addons?.map((a: AnyRow) => {
-                    const img = a.addon?.imageUrl || a.addon?.image_url;
+                    const imgRaw = a.addon?.imageUrl || a.addon?.image_url;
+                    const img = imgRaw ? resolveImageUrl(imgRaw) : null;
                     return (
                       <div
                         key={a.id}

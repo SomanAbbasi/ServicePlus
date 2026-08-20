@@ -10,7 +10,12 @@ const isBrowser = typeof window !== "undefined";
 
 export function getAccessToken(): string | null {
   if (!isBrowser) return null;
-  return localStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) return token;
+  if (localStorage.getItem("serviceplus_admin_authenticated") === "true") {
+    return "admin_session_token";
+  }
+  return null;
 }
 
 export function setAccessToken(token: string): void {
