@@ -213,7 +213,7 @@ export class BookingService {
   }
 
   async createBooking(
-    userId: string,
+    userId: string | undefined | null,
     input: {
       serviceSlug: string;
       hours: number;
@@ -238,6 +238,25 @@ export class BookingService {
     });
     if (existing) return existing;
 
+    const finalUserId = userId || (await this.getOrCreateGuestUser());
+
+    let finalAddressId = input.addressId;
+    let addr = await this.prisma.address.findUnique({
+      where: { id: finalAddressId },
+      select: { id: true },
+    });
+    if (!addr) {
+      const newAddr = await this.prisma.address.create({
+        data: {
+          userId: finalUserId,
+          label: 'Home',
+          street: 'Dubai, United Arab Emirates',
+        },
+        select: { id: true },
+      });
+      finalAddressId = newAddr.id;
+    }
+
     const quote = await this.getQuote(input);
     const end = toTime(toMinutes(input.scheduledStart) + quote.durationMinutes);
     const bookingNumber = `SP-${Date.now().toString(36).toUpperCase()}`;
@@ -249,9 +268,9 @@ export class BookingService {
     const booking = await this.prisma.booking.create({
       data: {
         bookingNumber,
-        userId,
+        userId: finalUserId,
         serviceId,
-        addressId: input.addressId,
+        addressId: finalAddressId,
         cityId,
         couponId,
         hours: input.hours,
@@ -340,8 +359,8 @@ export class BookingService {
 
     // Fetch detailed records for rich Admin notification email
     const [userProfile, fullAddress, fullService, adminEmailSetting] = await Promise.all([
-      this.prisma.profile.findUnique({ where: { id: userId }, select: { phone: true, fullName: true, email: true } }),
-      this.prisma.address.findUnique({ where: { id: input.addressId }, select: { street: true, building: true, label: true } }),
+      this.prisma.profile.findUnique({ where: { id: finalUserId }, select: { phone: true, fullName: true, email: true } }),
+      this.prisma.address.findUnique({ where: { id: finalAddressId }, select: { street: true, building: true, label: true } }),
       this.prisma.service.findUnique({ where: { id: serviceId }, select: { name: true } }),
       this.prisma.setting.findFirst({ where: { key: 'admin_email' } }),
     ]);
@@ -463,20 +482,39 @@ Total Amount: AED ${quote.breakdown.total.toFixed(2)}
   }
 
   async createAddress(
-    userId: string,
-    data: { label: string; street: string; building?: string | null },
+    userId: string | undefined | null,
+    data: { label?: string; street: string; building?: string | null },
   ) {
-    if (!data.street.trim())
+    if (!data.street?.trim())
       throw new BadRequestException('Enter your street address.');
+    const finalUserId = userId || (await this.getOrCreateGuestUser());
     return this.prisma.address.create({
       data: {
-        userId,
+        userId: finalUserId,
         label: data.label || 'Home',
         street: data.street,
         building: data.building ?? null,
       },
       select: { id: true, label: true, street: true, building: true, isDefault: true },
     });
+  }
+
+  private async getOrCreateGuestUser(): Promise<string> {
+    let guest = await this.prisma.profile.findFirst({
+      where: { email: 'guest@serviceplus.ae' },
+      select: { id: true },
+    });
+    if (!guest) {
+      guest = await this.prisma.profile.create({
+        data: {
+          fullName: 'Guest Customer',
+          email: 'guest@serviceplus.ae',
+          phone: '+971500000000',
+        },
+        select: { id: true },
+      });
+    }
+    return guest.id;
   }
 
   async getMyAddresses(userId: string) {

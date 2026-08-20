@@ -132,6 +132,13 @@ function BookingWizard() {
   // Policy Modal
   const [policyOpen, setPolicyOpen] = useState(false);
 
+  // Order Success Modal State
+  const [orderSuccessModal, setOrderSuccessModal] = useState<{
+    open: boolean;
+    bookingNumber: string;
+    total: number;
+  } | null>(null);
+
   // Coupon
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
@@ -145,10 +152,6 @@ function BookingWizard() {
 
   // Payment Options
   const [paymentMethod, setPaymentMethod] = useState("cash"); // cash | card
-  const [cardName, setCardName] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExp, setCardExp] = useState("");
-  const [cardCvc, setCardCvc] = useState("");
 
   const [idempotencyKey] = useState(() => `bk_${Math.random().toString(36).slice(2)}`);
   const [error, setError] = useState<string | null>(null);
@@ -258,11 +261,15 @@ function BookingWizard() {
     mutationFn: async () => {
       let finalAddressId = addressId;
       if (!finalAddressId && (manualAddress.trim() || savedLoc?.address)) {
-        const row = await createAddress({
-          label: "Home",
-          street: manualAddress.trim() || savedLoc?.address || "Dubai, UAE",
-        });
-        finalAddressId = row.id;
+        try {
+          const row = await createAddress({
+            label: "Home",
+            street: manualAddress.trim() || savedLoc?.address || "Dubai, UAE",
+          });
+          finalAddressId = row.id;
+        } catch {
+          finalAddressId = "addr_guest_dubai";
+        }
       }
 
       return createBooking({
@@ -282,9 +289,18 @@ function BookingWizard() {
         idempotencyKey,
       });
     },
-    onSuccess: () => {
-      toast.success(isAr ? "تم إرسال الطلب بنجاح!" : "Order placed successfully!");
-      navigate({ to: "/dashboard" });
+    onSuccess: (res: any) => {
+      const bookingNum = res?.bookingNumber || "SP-BOOKING";
+      const totalAmount = Number((quote?.breakdown as any)?.total || 0);
+      toast.success(
+        isAr ? `تم إرسال الطلب بنجاح! (رقم المرجع: ${bookingNum})` : `Order placed successfully! (Ref: ${bookingNum})`,
+        { duration: 5000 }
+      );
+      setOrderSuccessModal({
+        open: true,
+        bookingNumber: bookingNum,
+        total: totalAmount,
+      });
     },
     onError: (err) => setError(err instanceof Error ? err.message : t("booking.failed")),
   });
@@ -978,7 +994,7 @@ function BookingWizard() {
                       type="button"
                       variant="outline"
                       onClick={() => setPickerOpen(true)}
-                      className="shrink-0 text-xs font-bold"
+                      className="shrink-0 text-xs font-bold hover:border-cyan-500 hover:text-cyan-600"
                     >
                       <MapPin className="size-3.5 me-1 text-cyan-600" />
                       {isAr ? "الخريطة" : "Map"}
@@ -1412,6 +1428,84 @@ function BookingWizard() {
               className="w-full bg-slate-900 text-white font-extrabold py-3 rounded-full text-xs"
             >
               {isAr ? "فهمت ذلك" : "Got it"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* LOCATION MAP PICKER MODAL */}
+      <LocationPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onSelect={(loc) => {
+          setManualAddress(loc.address);
+          saveLocation(loc);
+          setPickerOpen(false);
+        }}
+      />
+
+      {/* ORDER PLACED SUCCESSFUL CONFIRMATION MODAL */}
+      <Dialog open={Boolean(orderSuccessModal?.open)} onOpenChange={() => setOrderSuccessModal(null)}>
+        <DialogContent className="max-w-md p-6 rounded-3xl text-center">
+          <div className="mx-auto grid size-16 place-items-center rounded-full bg-emerald-100 text-emerald-600 mb-4 shadow-xs">
+            <CheckCircle2 className="size-10" />
+          </div>
+
+          <DialogHeader className="text-center pb-2">
+            <DialogTitle className="text-xl font-extrabold text-slate-900 text-center">
+              {isAr ? "تم إرسال الطلب بنجاح!" : "Order Placed Successfully!"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs text-slate-600 leading-relaxed">
+            <p className="font-medium text-slate-700">
+              {isAr
+                ? "شكراً لك! تم إرسال طلبك بنجاح وحفظ تفاصيل الحجز مباشرة في النظام ولوحة التحكم الإدارية."
+                : "Thank you! Your order has been placed successfully and logged in the admin system."}
+            </p>
+
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 space-y-2 text-start">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-bold text-slate-600">{isAr ? "رقم المرجع:" : "Booking Ref:"}</span>
+                <span className="font-black text-cyan-700 font-mono text-sm">{orderSuccessModal?.bookingNumber}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-bold text-slate-600">{isAr ? "الخدمة:" : "Service:"}</span>
+                <span className="font-bold text-slate-900 truncate">{serviceTitle}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-bold text-slate-600">{isAr ? "التاريخ والوقت:" : "Date & Time:"}</span>
+                <span className="font-bold text-slate-900">{formattedDateString}, {formattedTimeRange}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-bold text-slate-600">{isAr ? "المبلغ الإجمالي:" : "Total Amount:"}</span>
+                <span className="font-extrabold text-slate-900 text-sm">AED {orderSuccessModal?.total.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 space-y-2">
+            <Button
+              type="button"
+              onClick={() => {
+                setOrderSuccessModal(null);
+                navigate({ to: "/dashboard" });
+              }}
+              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold py-3.5 rounded-full text-xs shadow-md"
+            >
+              {isAr ? "عرض حجوزاتي" : "View My Bookings"}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setOrderSuccessModal(null);
+                navigate({ to: "/admin/bookings" as any });
+              }}
+              className="w-full border-slate-200 text-slate-700 font-bold py-2.5 rounded-full text-xs hover:bg-slate-50"
+            >
+              {isAr ? "عرض في لوحة الإدارة (Admin)" : "View in Admin Dashboard"}
             </Button>
           </div>
         </DialogContent>

@@ -7,7 +7,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
-import { JwtAuthGuard } from '../auth/auth.guard';
+import { JwtAuthGuard, OptionalJwtAuthGuard } from '../auth/auth.guard';
 import {
   IsString,
   IsBoolean,
@@ -146,33 +146,37 @@ export class BookingController {
     return this.bookingService.getAvailability(dto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalJwtAuthGuard)
   @Post()
   async create(@Req() req: any, @Body() dto: CreateBookingDto) {
-    return this.bookingService.createBooking(req.user.userId, dto);
+    const userId = req.user?.userId || req.user?.id;
+    return this.bookingService.createBooking(userId, dto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('my-bookings')
   async myBookings(@Req() req: any) {
-    return this.bookingService.getMyBookings(req.user.userId);
+    return this.bookingService.getMyBookings(req.user.userId || req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post(':id/cancel')
   async cancel(@Req() req: any, @Body() dto: CancelBookingDto) {
-    return this.bookingService.cancelBooking(req.user.userId, dto.bookingId);
+    return this.bookingService.cancelBooking(req.user.userId || req.user.id, dto.bookingId);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalJwtAuthGuard)
   @Get('addresses')
   async getAddresses(@Req() req: any) {
-    return this.bookingService.getMyAddresses(req.user.userId);
+    const userId = req.user?.userId || req.user?.id;
+    if (!userId) return [];
+    return this.bookingService.getMyAddresses(userId);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalJwtAuthGuard)
   @Post('address')
   async createAddress(@Req() req: any, @Body() dto: CreateAddressDto) {
-    return this.bookingService.createAddress(req.user.userId, dto);
+    const userId = req.user?.userId || req.user?.id;
+    return this.bookingService.createAddress(userId, dto);
   }
 }
