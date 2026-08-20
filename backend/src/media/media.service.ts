@@ -86,6 +86,25 @@ export class MediaService {
   }
 
   async getFile(filePath: string) {
-    return this.storageProvider.getObject(filePath);
+    if (!filePath) return null;
+
+    // 1. Try exact path
+    let file = await this.storageProvider.getObject(filePath);
+    if (file) return file;
+
+    // 2. If no extension was included in the request path, try matching extensions
+    if (!filePath.includes('.')) {
+      const candidates = ['.webp', '.jpg', '.png', '.jpeg', '.gif', '.svg'];
+      for (const ext of candidates) {
+        try {
+          file = await this.storageProvider.getObject(`${filePath}${ext}`);
+          if (file) return file;
+        } catch {
+          // Ignore candidate failure and try next extension
+        }
+      }
+    }
+
+    return null;
   }
 }

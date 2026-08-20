@@ -8,6 +8,7 @@ import {
   UseGuards,
   Res,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { MediaService } from './media.service';
@@ -28,6 +29,8 @@ class UploadMediaDto {
 
 @Controller('media')
 export class MediaController {
+  private readonly logger = new Logger(MediaController.name);
+
   constructor(private mediaService: MediaService) {}
 
   @Post('upload')
@@ -46,23 +49,30 @@ export class MediaController {
     @Param() params: Record<string, any>,
     @Res() res: Response,
   ) {
-    const raw = params['path'] || params['0'] || params['splat'];
-    let chosenPath = '';
-    if (Array.isArray(raw)) {
-      chosenPath = raw.join('/');
-    } else if (typeof raw === 'string') {
-      chosenPath = raw;
-    } else if (req.path) {
-      chosenPath = req.path.replace(/^.*\/media\/file\/?/, '');
+    try {
+      const raw = params['path'] || params['0'] || params['splat'];
+      let chosenPath = '';
+      if (Array.isArray(raw)) {
+        chosenPath = raw.join('/');
+      } else if (typeof raw === 'string') {
+        chosenPath = raw;
+      } else if (req.path) {
+        chosenPath = req.path.replace(/^.*\/media\/file\/?/, '');
+      }
+      const cleanPath = decodeURIComponent(chosenPath || '').replace(/^\/+/, '');
+
+      const file = await this.mediaService.getFile(cleanPath);
+      if (!file) {
+        return res.status(404).json({ statusCode: 404, message: 'File not found' });
+      }
+
+      res.setHeader('Content-Type', file.contentType || 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.send(file.buffer);
+    } catch (e: any) {
+      this.logger.error(`Error serving media file: ${e?.message || e}`);
+      return res.status(500).json({ statusCode: 500, message: 'Could not retrieve media file' });
     }
-    const cleanPath = decodeURIComponent(chosenPath || '').replace(/^\/+/, '');
-
-    const file = await this.mediaService.getFile(cleanPath);
-    if (!file) throw new NotFoundException('File not found');
-
-    res.setHeader('Content-Type', file.contentType || 'image/jpeg');
-    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.send(file.buffer);
   }
 }
