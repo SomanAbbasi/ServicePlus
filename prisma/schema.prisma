@@ -1,0 +1,733 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ────────────────────────────────────────────────
+
+enum AppRole {
+  admin
+  staff
+  professional
+  customer
+}
+
+enum BookingStatus {
+  DRAFT
+  PENDING
+  CONFIRMED
+  ASSIGNING
+  ASSIGNED
+  EN_ROUTE
+  ARRIVED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+  PAYMENT_FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum ProfessionalStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+  SUSPENDED
+  ON_LEAVE
+}
+
+// ── Models ───────────────────────────────────────────────
+
+model Profile {
+  id        String   @id @default(uuid())
+  phone     String?
+  email     String?
+  fullName  String?  @map("full_name")
+  avatarUrl String?  @map("avatar_url")
+  locale    String   @default("en")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  addresses      Address[]
+  bookings       Booking[]
+  notifications  Notification[]
+  reviews        Review[]
+  supportTickets SupportTicket[] @relation("UserSupportTickets")
+  userRoles      UserRole[]
+  phoneAuthSecrets PhoneAuthSecret[]
+  couponRedemptions CouponRedemption[]
+
+  @@map("profiles")
+}
+
+model UserRole {
+  id        String  @id @default(uuid())
+  userId    String  @map("user_id")
+  role      AppRole
+  createdAt DateTime @default(now()) @map("created_at")
+
+  profile Profile @relation(fields: [userId], references: [id])
+
+  @@unique([userId, role])
+  @@map("user_roles")
+}
+
+model Country {
+  id            String   @id @default(uuid())
+  code          String
+  name          String
+  currencyCode  String   @default("AED") @map("currency_code")
+  currencySymbol String  @default("د.إ") @map("currency_symbol")
+  dialCode      String   @default("+971") @map("dial_code")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  cities City[]
+
+  @@unique([code])
+  @@map("countries")
+}
+
+model City {
+  id            String   @id @default(uuid())
+  name          String
+  slug          String
+  countryId     String   @map("country_id")
+  surchargePct  Float    @default(0) @map("surcharge_pct")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  country        Country        @relation(fields: [countryId], references: [id])
+  bookings       Booking[]
+  professionals  Professional[]
+  slotHolds      SlotHold[]
+
+  @@unique([slug])
+  @@map("cities")
+}
+
+model Address {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  label       String   @default("Home")
+  street      String
+  building    String?
+  unit        String?
+  instructions String?
+  latitude    Float?
+  longitude   Float?
+  postalCode  String?  @map("postal_code")
+  isDefault   Boolean  @default(false) @map("is_default")
+  cityId      String?  @map("city_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  profile  Profile  @relation(fields: [userId], references: [id])
+  bookings Booking[]
+
+  @@map("addresses")
+}
+
+model ServiceCategory {
+  id              String   @id @default(uuid())
+  name            String
+  nameAr          String?  @map("name_ar")
+  slug            String
+  icon            String   @default("Sparkles")
+  imageUrl        String?  @map("image_url")
+  description     String?
+  descriptionAr   String?  @map("description_ar")
+  intro           String?
+  introAr         String?  @map("intro_ar")
+  sections        Json     @default("[]")
+  sectionsAr      Json     @default("[]") @map("sections_ar")
+  faqs            Json     @default("[]")
+  faqsAr          Json     @default("[]") @map("faqs_ar")
+  seoTitle        String?  @map("seo_title")
+  seoDescription  String?  @map("seo_description")
+  isActive        Boolean  @default(true) @map("is_active")
+  sortOrder       Int      @default(0) @map("sort_order")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  services        Service[]
+  listings        ServiceListing[]
+  professionalSkills ProfessionalSkill[]
+
+  @@unique([slug])
+  @@map("service_categories")
+}
+
+model Service {
+  id                     String   @id @default(uuid())
+  name                   String
+  nameAr                 String?  @map("name_ar")
+  slug                   String
+  categoryId             String   @map("category_id")
+  shortDescription       String?  @map("short_description")
+  shortDescriptionAr     String?  @map("short_description_ar")
+  description            String?
+  descriptionAr          String?  @map("description_ar")
+  imageUrl               String?  @map("image_url")
+  icon                   String   @default("Wrench")
+  bookingType            String   @default("fixed") @map("booking_type")
+  basePrice              Float    @default(0) @map("base_price")
+  originalPrice          Float?   @map("original_price")
+  hourlyRate             Float?   @map("hourly_rate")
+  materialsPrice         Float    @default(0) @map("materials_price")
+  extraProfessionalPct   Float    @default(0) @map("extra_professional_pct")
+  minHours               Int      @default(1) @map("min_hours")
+  maxHours               Int      @default(8) @map("max_hours")
+  maxProfessionals       Int      @default(4) @map("max_professionals")
+  durationMinutes        Int      @default(60) @map("duration_minutes")
+  includes               Json     @default("[]")
+  includesAr             Json     @default("[]") @map("includes_ar")
+  intro                  String?
+  introAr                String?  @map("intro_ar")
+  sections               Json     @default("[]")
+  sectionsAr             Json     @default("[]") @map("sections_ar")
+  faqs                   Json     @default("[]")
+  faqsAr                 Json     @default("[]") @map("faqs_ar")
+  seoTitle               String?  @map("seo_title")
+  seoTitleAr             String?  @map("seo_title_ar")
+  seoDescription         String?  @map("seo_description")
+  seoDescriptionAr       String?  @map("seo_description_ar")
+  rating                 Float    @default(0)
+  reviewCount            Int      @default(0) @map("review_count")
+  isFeatured             Boolean  @default(false) @map("is_featured")
+  isActive               Boolean  @default(true) @map("is_active")
+  sortOrder              Int      @default(0) @map("sort_order")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  category            ServiceCategory    @relation(fields: [categoryId], references: [id])
+  listings            ServiceListing[]
+  variants            ServiceVariant[]
+  optionGroups        ServiceOptionGroup[]
+  relations           ServiceRelation[] @relation("ServiceRelation")
+  relatedBy           ServiceRelation[] @relation("RelatedService")
+  addonLinks          AddonService[]
+  bookings            Booking[]
+  reviews             Review[]
+
+  @@unique([slug])
+  @@map("services")
+}
+
+model ServiceListing {
+  id         String   @id @default(uuid())
+  categoryId String   @map("category_id")
+  serviceId  String   @map("service_id")
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  category ServiceCategory @relation(fields: [categoryId], references: [id])
+  service  Service         @relation(fields: [serviceId], references: [id])
+
+  @@unique([categoryId, serviceId])
+  @@map("service_listings")
+}
+
+model ServiceVariant {
+  id              String   @id @default(uuid())
+  serviceId       String   @map("service_id")
+  groupId         String?  @map("group_id")
+  name            String
+  nameAr          String?  @map("name_ar")
+  description     String?
+  descriptionAr   String?  @map("description_ar")
+  imageUrl        String?  @map("image_url")
+  price           Float
+  originalPrice   Float?   @map("original_price")
+  durationMinutes Int      @default(0) @map("duration_minutes")
+  maxQuantity     Int      @default(10) @map("max_quantity")
+  sortOrder       Int      @default(0) @map("sort_order")
+  isActive        Boolean  @default(true) @map("is_active")
+
+  service      Service              @relation(fields: [serviceId], references: [id])
+  optionGroup  ServiceOptionGroup?  @relation(fields: [groupId], references: [id])
+  bookingItems BookingItem[]
+
+  @@map("service_variants")
+}
+
+model ServiceOptionGroup {
+  id        String   @id @default(uuid())
+  serviceId String   @map("service_id")
+  name      String
+  nameAr    String?  @map("name_ar")
+  imageUrl  String?  @map("image_url")
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  service  Service          @relation(fields: [serviceId], references: [id])
+  variants ServiceVariant[]
+
+  @@map("service_option_groups")
+}
+
+model ServiceRelation {
+  id              String @id @default(uuid())
+  serviceId       String @map("service_id")
+  relatedServiceId String @map("related_service_id")
+  sortOrder       Int    @default(0) @map("sort_order")
+
+  service        Service @relation("ServiceRelation", fields: [serviceId], references: [id])
+  relatedService Service @relation("RelatedService", fields: [relatedServiceId], references: [id])
+
+  @@unique([serviceId, relatedServiceId])
+  @@map("service_relations")
+}
+
+model Addon {
+  id              String   @id @default(uuid())
+  name            String
+  nameAr          String?  @map("name_ar")
+  slug            String
+  description     String?
+  imageUrl        String?  @map("image_url")
+  price           Float
+  originalPrice   Float?   @map("original_price")
+  minQuantity     Int      @default(1) @map("min_quantity")
+  maxQuantity     Int      @default(10) @map("max_quantity")
+  durationMinutes Int      @default(0) @map("duration_minutes")
+  isActive        Boolean  @default(true) @map("is_active")
+  sortOrder       Int      @default(0) @map("sort_order")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  serviceLinks AddonService[]
+  bookingAddons BookingAddon[]
+
+  @@unique([slug])
+  @@map("addons")
+}
+
+model AddonService {
+  id        String @id @default(uuid())
+  addonId   String @map("addon_id")
+  serviceId String @map("service_id")
+
+  addon   Addon   @relation(fields: [addonId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@unique([addonId, serviceId])
+  @@map("addon_services")
+}
+
+model Bundle {
+  id             String    @id @default(uuid())
+  name           String
+  slug           String
+  description    String?
+  imageUrl       String?   @map("image_url")
+  price          Float
+  originalPrice  Float?    @map("original_price")
+  purchaseLimit  Int       @default(0) @map("purchase_limit")
+  isActive       Boolean   @default(true) @map("is_active")
+  startsAt       DateTime? @map("starts_at")
+  endsAt         DateTime? @map("ends_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  items BundleItem[]
+
+  @@unique([slug])
+  @@map("bundles")
+}
+
+model BundleItem {
+  id        String  @id @default(uuid())
+  bundleId  String  @map("bundle_id")
+  label     String
+  quantity  Int     @default(1)
+  serviceId String? @map("service_id")
+
+  bundle Bundle @relation(fields: [bundleId], references: [id])
+
+  @@map("bundle_items")
+}
+
+model Coupon {
+  id               String    @id @default(uuid())
+  code             String
+  description      String?
+  discountType     String    @default("percentage") @map("discount_type")
+  discountValue    Float     @map("discount_value")
+  maxDiscount      Float?    @map("max_discount")
+  minAmount        Float     @default(0) @map("min_amount")
+  firstBookingOnly Boolean   @default(false) @map("first_booking_only")
+  maxRedemptions   Int?      @map("max_redemptions")
+  perUserLimit     Int       @default(1) @map("per_user_limit")
+  redemptionCount  Int       @default(0) @map("redemption_count")
+  startsAt         DateTime? @map("starts_at")
+  expiresAt        DateTime? @map("expires_at")
+  isFeatured       Boolean   @default(false) @map("is_featured")
+  isActive         Boolean   @default(true) @map("is_active")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  redemptions CouponRedemption[]
+  bookings    Booking[]
+
+  @@unique([code])
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id        String    @id @default(uuid())
+  couponId  String    @map("coupon_id")
+  userId    String?   @map("user_id")
+  bookingId String?   @map("booking_id")
+  amount    Float     @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  coupon  Coupon   @relation(fields: [couponId], references: [id])
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  profile Profile? @relation(fields: [userId], references: [id])
+
+  @@map("coupon_redemptions")
+}
+
+model Professional {
+  id             String            @id @default(uuid())
+  userId         String?           @map("user_id")
+  fullName       String            @map("full_name")
+  phone          String?
+  email          String?
+  photoUrl       String?           @map("photo_url")
+  cityId         String?           @map("city_id")
+  status         ProfessionalStatus @default(AVAILABLE)
+  rating         Float             @default(0)
+  completedJobs  Int               @default(0) @map("completed_jobs")
+  experienceYears Int              @default(0) @map("experience_years")
+  workStart      String            @default("08:00") @map("work_start")
+  workEnd        String            @default("20:00") @map("work_end")
+  latitude       Float?
+  longitude      Float?
+  notes          String?
+  isActive       Boolean           @default(true) @map("is_active")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  city          City?                   @relation(fields: [cityId], references: [id])
+  skills        ProfessionalSkill[]
+  availability  ProfessionalAvailability[]
+  bookings      Booking[]
+  reviews       Review[]
+
+  @@map("professionals")
+}
+
+model ProfessionalSkill {
+  id             String @id @default(uuid())
+  professionalId String @map("professional_id")
+  categoryId     String @map("category_id")
+
+  professional Professional  @relation(fields: [professionalId], references: [id])
+  category     ServiceCategory @relation(fields: [categoryId], references: [id])
+
+  @@unique([professionalId, categoryId])
+  @@map("professional_skills")
+}
+
+model ProfessionalAvailability {
+  id             String  @id @default(uuid())
+  professionalId String  @map("professional_id")
+  dayOfWeek      Int     @map("day_of_week")
+  startTime      String  @default("08:00") @map("start_time")
+  endTime        String  @default("20:00") @map("end_time")
+  isAvailable    Boolean @default(true) @map("is_available")
+
+  professional Professional @relation(fields: [professionalId], references: [id])
+
+  @@unique([professionalId, dayOfWeek])
+  @@map("professional_availability")
+}
+
+model OtpCode {
+  id        String   @id @default(uuid())
+  phone     String
+  codeHash  String   @map("code_hash")
+  attempts  Int      @default(0)
+  consumed  Boolean  @default(false)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("otp_codes")
+}
+
+model PhoneAuthSecret {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  phone     String
+  secret    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  profile Profile @relation(fields: [userId], references: [id])
+
+  @@map("phone_auth_secrets")
+}
+
+model Booking {
+  id                String        @id @default(uuid())
+  bookingNumber     String        @map("booking_number")
+  userId            String?       @map("user_id")
+  serviceId         String        @map("service_id")
+  addressId         String?       @map("address_id")
+  cityId            String?       @map("city_id")
+  couponId          String?       @map("coupon_id")
+  professionalId    String?       @map("professional_id")
+  guestPhone        String?       @map("guest_phone")
+  hours             Int           @default(1)
+  professionalsCount Int          @default(1) @map("professionals_count")
+  materials         Boolean       @default(false)
+  instructions      String?
+  scheduledDate     String?       @map("scheduled_date")
+  scheduledStart    String?       @map("scheduled_start")
+  scheduledEnd      String?       @map("scheduled_end")
+  status            BookingStatus @default(DRAFT)
+  paymentStatus     PaymentStatus @default(PENDING) @map("payment_status")
+  paymentMethod     String?       @map("payment_method")
+  subtotal          Float         @default(0)
+  addonsTotal       Float         @default(0) @map("addons_total")
+  materialsTotal    Float         @default(0) @map("materials_total")
+  discount          Float         @default(0)
+  fees              Float         @default(0)
+  tax               Float         @default(0)
+  total             Float         @default(0)
+  idempotencyKey    String?       @map("idempotency_key")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  profile           Profile?      @relation(fields: [userId], references: [id])
+  service           Service       @relation(fields: [serviceId], references: [id])
+  address           Address?      @relation(fields: [addressId], references: [id])
+  city              City?         @relation(fields: [cityId], references: [id])
+  coupon            Coupon?       @relation(fields: [couponId], references: [id])
+  professional      Professional? @relation(fields: [professionalId], references: [id])
+
+  items             BookingItem[]
+  addons            BookingAddon[]
+  priceSnapshots    BookingPriceSnapshot[]
+  statusHistory     BookingStatusHistory[]
+  payments          Payment?
+  refunds           Refund[]
+  reviews           Review?
+  notifications     Notification[]
+  slotHolds         SlotHold[]
+  couponRedemptions CouponRedemption[]
+
+  @@unique([idempotencyKey])
+  @@map("bookings")
+}
+
+model BookingItem {
+  id         String  @id @default(uuid())
+  bookingId  String  @map("booking_id")
+  variantId  String? @map("variant_id")
+  bundleId   String? @map("bundle_id")
+  label      String
+  quantity   Int     @default(1)
+  unitPrice  Float   @default(0) @map("unit_price")
+
+  booking Booking        @relation(fields: [bookingId], references: [id])
+  variant ServiceVariant? @relation(fields: [variantId], references: [id])
+
+  @@map("booking_items")
+}
+
+model BookingAddon {
+  id        String  @id @default(uuid())
+  bookingId String  @map("booking_id")
+  addonId   String  @map("addon_id")
+  label     String
+  quantity  Int     @default(1)
+  unitPrice Float   @default(0) @map("unit_price")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  addon   Addon   @relation(fields: [addonId], references: [id])
+
+  @@map("booking_addons")
+}
+
+model BookingPriceSnapshot {
+  id        String   @id @default(uuid())
+  bookingId String   @map("booking_id")
+  breakdown Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("booking_price_snapshots")
+}
+
+model BookingStatusHistory {
+  id         String         @id @default(uuid())
+  bookingId  String         @map("booking_id")
+  fromStatus BookingStatus? @map("from_status")
+  toStatus   BookingStatus  @map("to_status")
+  note       String?
+  actor      String?
+  createdAt  DateTime       @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("booking_status_history")
+}
+
+model Payment {
+  id                String        @id @default(uuid())
+  bookingId         String        @unique @map("booking_id")
+  provider          String        @default("mock")
+  providerReference String?       @map("provider_reference")
+  method            String        @default("cash")
+  amount            Float
+  status            PaymentStatus @default(PENDING)
+  createdAt         DateTime      @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("payments")
+}
+
+model Refund {
+  id        String   @id @default(uuid())
+  bookingId String   @map("booking_id")
+  amount    Float
+  reason    String?
+  status    String   @default("pending")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("refunds")
+}
+
+model Review {
+  id             String   @id @default(uuid())
+  bookingId      String   @unique @map("booking_id")
+  userId         String?  @map("user_id")
+  professionalId String?  @map("professional_id")
+  serviceId      String?  @map("service_id")
+  rating         Int
+  comment        String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  booking      Booking       @relation(fields: [bookingId], references: [id])
+  profile      Profile?      @relation(fields: [userId], references: [id])
+  professional Professional? @relation(fields: [professionalId], references: [id])
+  service      Service?      @relation(fields: [serviceId], references: [id])
+
+  @@map("reviews")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  bookingId String?  @map("booking_id")
+  channel   String   @default("in_app")
+  event     String
+  title     String
+  body      String?
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  profile  Profile?  @relation(fields: [userId], references: [id])
+  booking  Booking?  @relation(fields: [bookingId], references: [id])
+
+  @@map("notifications")
+}
+
+model SlotHold {
+  id        String   @id @default(uuid())
+  bookingId String?  @map("booking_id")
+  cityId    String?  @map("city_id")
+  slotDate  String   @map("slot_date")
+  slotStart String   @map("slot_start")
+  slotEnd   String   @map("slot_end")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  booking Booking? @relation(fields: [bookingId], references: [id])
+  city    City?    @relation(fields: [cityId], references: [id])
+
+  @@map("slot_holds")
+}
+
+model JobQueue {
+  id          String   @id @default(uuid())
+  jobType     String   @map("job_type")
+  queue       String   @default("default")
+  payload     Json     @default("{}")
+  status      String   @default("pending")
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3) @map("max_attempts")
+  lastError   String?  @map("last_error")
+  runAt       DateTime @default(now()) @map("run_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("job_queue")
+}
+
+model SupportTicket {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  bookingId String?  @map("booking_id")
+  subject   String
+  status    String   @default("open")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  profile  Profile?        @relation("UserSupportTickets", fields: [userId], references: [id])
+  messages SupportMessage[]
+
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id        String   @id @default(uuid())
+  ticketId  String   @map("ticket_id")
+  sender    String   @default("user")
+  body      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id])
+
+  @@map("support_messages")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?  @map("actor_id")
+  actorLabel String?  @map("actor_label")
+  action     String
+  entity     String
+  entityId   String?  @map("entity_id")
+  before     Json?
+  after      Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  key       String
+  value     Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([key])
+  @@map("settings")
+}
