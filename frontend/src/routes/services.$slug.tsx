@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { CheckCircle2, Clock, ShieldCheck, Sparkles, Star } from "lucide-react";
+import { CheckCircle2, Clock, ChevronRight, ShieldCheck, Star } from "lucide-react";
 import { getServiceDetail } from "@/frontend/lib/api-services";
 import { resolveImageUrl } from "@/frontend/lib/api-client";
 import { ServiceCard } from "@/frontend/components/ServiceCard";
@@ -132,6 +132,8 @@ function ServiceDetail() {
         insured: "مؤمّن وموثّق",
         minimum: "دقيقة كحد أدنى",
         reviews: "تقييم",
+        inCategory: "في",
+        relatedHint: "اكتشف المزيد من خدماتنا المميزة",
       }
     : {
         home: "Home",
@@ -145,176 +147,222 @@ function ServiceDetail() {
         insured: "Insured & vetted",
         minimum: "min minimum",
         reviews: "reviews",
+        inCategory: "in",
+        relatedHint: "Discover more of our featured services",
       };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6" dir={ar ? "rtl" : "ltr"}>
-      <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
-        <Link to="/" className="hover:text-foreground">
-          {L.home}
-        </Link>
-        {category ? (
-          <>
-            <span className="mx-2">/</span>
-            <Link
-              to="/categories/$slug"
-              params={{ slug: category.slug }}
-              className="hover:text-foreground"
-            >
-              {category.name}
-            </Link>
-          </>
-        ) : null}
-        <span className="mx-2">/</span>
-        <span className="text-foreground">{name}</span>
-      </nav>
+    <div className="bg-white" dir={ar ? "rtl" : "ltr"}>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
 
-      <section className="relative mt-4 overflow-hidden rounded-3xl">
-        <img
-          src={resolveImageUrl(service.image_url) || FALLBACK_IMAGE}
-          alt={name}
-          className="h-64 w-full object-cover sm:h-[22rem]"
-        />
-        <div
-          className="absolute inset-0 bg-gradient-to-r from-foreground/80 via-foreground/55 to-foreground/20"
-          aria-hidden
-        />
-        <div className="absolute inset-0 flex flex-col justify-center gap-3 p-6 sm:p-12">
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-background/15 px-3 py-1 text-xs font-medium text-background backdrop-blur">
-            <Sparkles className="size-3.5" aria-hidden />
-            {category?.name ?? "ServicePlus"}
-          </span>
-          <h1 className="max-w-2xl text-2xl font-bold text-background sm:text-4xl">
-            {name} {ar ? "في الإمارات العربية المتحدة" : "in the United Arab Emirates"}
-          </h1>
-          <p className="max-w-xl text-sm text-background/90 sm:text-base">{tagline}</p>
-          <Button asChild size="lg" className="w-fit">
-            <Link to="/booking/$slug" params={{ slug: service.slug }}>
-              {L.book}
-            </Link>
-          </Button>
-        </div>
-      </section>
+        {/* ── Breadcrumb ── */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 py-6 text-sm text-muted-foreground">
+          <Link to="/" className="transition-colors hover:text-foreground">
+            {L.home}
+          </Link>
+          {category ? (
+            <>
+              <ChevronRight className="size-3.5 shrink-0" aria-hidden />
+              <Link
+                to="/categories/$slug"
+                params={{ slug: category.slug }}
+                className="transition-colors hover:text-foreground"
+              >
+                {category.name}
+              </Link>
+            </>
+          ) : null}
+          <ChevronRight className="size-3.5 shrink-0" aria-hidden />
+          <span className="font-medium text-foreground">{name}</span>
+        </nav>
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-[1.6fr_1fr]">
-        <div>
-          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <Star className="size-4 fill-warning text-warning" aria-hidden />
-              {num(service.rating).toFixed(1)} ({service.review_count ?? 0} {L.reviews})
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Clock className="size-4" aria-hidden />
-              {service.duration_minutes ?? 60} {L.minimum}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <ShieldCheck className="size-4" aria-hidden />
-              {L.insured}
-            </span>
+        {/* ── Hero Section ── */}
+        <section className="grid gap-8 pb-12 lg:grid-cols-2 lg:items-center lg:gap-12">
+          {/* Mobile: image first */}
+          <div className="order-1 overflow-hidden rounded-2xl lg:order-2">
+            <img
+              src={resolveImageUrl(service.image_url) || FALLBACK_IMAGE}
+              alt={name}
+              className="aspect-[4/3] w-full object-cover"
+            />
           </div>
 
-          {intro.length ? (
-            <div className="mt-5 space-y-4">
-              {intro.map((p) => (
-                <p key={p.slice(0, 40)} className="text-sm leading-7 text-muted-foreground">
-                  {p}
-                </p>
-              ))}
-            </div>
-          ) : null}
+          <div className="order-2 flex flex-col gap-5 lg:order-1">
+            {category ? (
+              <span className="w-fit rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                {category.name}
+              </span>
+            ) : null}
 
-          {includes.length ? (
-            <div className="mt-10 rounded-2xl border border-border bg-card p-6">
-              <h2 className="text-lg font-semibold">{L.included}</h2>
-              <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-                {includes.map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              {name}
+            </h1>
 
-          {variants.length ? (
-            <div className="mt-10">
-              <h2 className="text-lg font-semibold">{L.options}</h2>
-              <ul className="mt-3 divide-y divide-border rounded-xl border border-border">
-                {variants.map((v) => (
-                  <li key={v.id} className="flex items-center justify-between gap-4 px-4 py-3">
-                    <div>
-                      <p className="text-sm font-medium">{v.name}</p>
-                      {v.description ? (
-                        <p className="text-xs text-muted-foreground">{v.description}</p>
-                      ) : null}
-                    </div>
-                    <span className="text-sm font-semibold">{formatMoney(num(v.price))}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+            <p className="max-w-lg text-base leading-relaxed text-gray-500">{tagline}</p>
 
-          {sections.map((section) => (
-            <section key={section.title} className="mt-10">
-              <h2 className="text-lg font-semibold">{section.title}</h2>
-              <div className="mt-3 space-y-3">
-                {paragraphs(section.body).map((p) => (
-                  <p key={p.slice(0, 40)} className="text-sm leading-7 text-muted-foreground">
+            <div className="flex items-baseline gap-2">
+              <span className="text-sm text-gray-400">{L.from}</span>
+              <span className="text-2xl font-bold text-gray-900">
+                {formatMoney(num(service.base_price))}
+              </span>
+            </div>
+
+            <div>
+              <Button asChild size="lg" className="rounded-xl px-8">
+                <Link to="/booking/$slug" params={{ slug: service.slug }}>
+                  {L.book}
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Rating row ── */}
+        <div className="flex flex-wrap items-center gap-5 border-y border-gray-100 py-5 text-sm text-gray-500">
+          <span className="inline-flex items-center gap-1.5">
+            <Star className="size-4 fill-amber-400 text-amber-400" aria-hidden />
+            <span className="font-semibold text-gray-900">{num(service.rating).toFixed(1)}</span>
+            <span className="text-gray-400">({service.review_count ?? 0} {L.reviews})</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Clock className="size-4 text-gray-400" aria-hidden />
+            {service.duration_minutes ?? 60} {L.minimum}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <ShieldCheck className="size-4 text-green-500" aria-hidden />
+            {L.insured}
+          </span>
+        </div>
+
+        {/* ── Main content + Sidebar ── */}
+        <div className="grid gap-10 py-12 lg:grid-cols-[1.6fr_1fr] lg:items-start">
+
+          {/* ── Left column ── */}
+          <div className="space-y-10">
+
+            {/* Intro / description */}
+            {intro.length ? (
+              <section className="space-y-4">
+                {intro.map((p) => (
+                  <p key={p.slice(0, 40)} className="text-sm leading-7 text-gray-500">
                     {p}
                   </p>
                 ))}
-              </div>
-            </section>
-          ))}
+              </section>
+            ) : null}
 
-          {faqs.length ? (
-            <div className="mt-12">
-              <h2 className="text-lg font-semibold">{L.faq}</h2>
-              <div className="mt-3 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
-                {faqs.map((faq) => (
-                  <details key={faq.q} className="group px-5 py-4">
-                    <summary className="cursor-pointer list-none text-sm font-medium marker:hidden">
-                      {faq.q}
-                    </summary>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{faq.a}</p>
-                  </details>
-                ))}
-              </div>
+            {/* What's included */}
+            {includes.length ? (
+              <section className="rounded-2xl border border-gray-100 bg-gray-50 p-6">
+                <h2 className="text-lg font-semibold text-gray-900">{L.included}</h2>
+                <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {includes.map((item) => (
+                    <li key={item} className="flex items-start gap-2.5 text-sm text-gray-600">
+                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-green-500" aria-hidden />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {/* Options / Variants */}
+            {variants.length ? (
+              <section>
+                <h2 className="text-lg font-semibold text-gray-900">{L.options}</h2>
+                <ul className="mt-4 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100">
+                  {variants.map((v) => (
+                    <li
+                      key={v.id}
+                      className="flex items-center justify-between gap-4 bg-white px-5 py-4 transition-colors hover:bg-gray-50"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900">{v.name}</p>
+                        {v.description ? (
+                          <p className="mt-0.5 text-xs text-gray-400">{v.description}</p>
+                        ) : null}
+                      </div>
+                      <span className="shrink-0 text-sm font-semibold text-gray-900">
+                        {formatMoney(num(v.price))}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {/* Custom sections */}
+            {sections.map((section) => (
+              <section key={section.title}>
+                <h2 className="text-lg font-semibold text-gray-900">{section.title}</h2>
+                <div className="mt-3 space-y-3">
+                  {paragraphs(section.body).map((p) => (
+                    <p key={p.slice(0, 40)} className="text-sm leading-7 text-gray-500">
+                      {p}
+                    </p>
+                  ))}
+                </div>
+              </section>
+            ))}
+
+            {/* FAQ */}
+            {faqs.length ? (
+              <section>
+                <h2 className="text-lg font-semibold text-gray-900">{L.faq}</h2>
+                <div className="mt-4 divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-100">
+                  {faqs.map((faq) => (
+                    <details key={faq.q} className="group">
+                      <summary className="flex cursor-pointer items-center justify-between gap-4 px-5 py-4 text-sm font-medium text-gray-900 marker:hidden select-none [&::-webkit-details-marker]:hidden">
+                        {faq.q}
+                        <ChevronRight className="size-4 shrink-0 text-gray-400 transition-transform group-open:rotate-90" />
+                      </summary>
+                      <p className="px-5 pb-4 text-sm leading-6 text-gray-500">{faq.a}</p>
+                    </details>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+          </div>
+
+          {/* ── Sticky sidebar ── */}
+          <aside className="lg:sticky lg:top-24 lg:self-start">
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+              <p className="text-sm text-gray-400">{L.from}</p>
+              <p className="mt-1 text-3xl font-bold text-gray-900">
+                {formatMoney(num(service.base_price))}
+              </p>
+              {service.original_price ? (
+                <p className="text-sm text-gray-400 line-through">
+                  {formatMoney(num(service.original_price))}
+                </p>
+              ) : null}
+
+              <Button asChild size="lg" className="mt-5 w-full rounded-xl">
+                <Link to="/booking/$slug" params={{ slug: service.slug }}>
+                  {L.book}
+                </Link>
+              </Button>
+
+              <p className="mt-3 text-center text-xs text-gray-400">{L.cancel}</p>
             </div>
-          ) : null}
+          </aside>
         </div>
 
-        <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <p className="text-sm text-muted-foreground">{L.from}</p>
-            <p className="mt-1 text-3xl font-bold">{formatMoney(num(service.base_price))}</p>
-            {service.original_price ? (
-              <p className="text-sm text-muted-foreground line-through">
-                {formatMoney(num(service.original_price))}
-              </p>
-            ) : null}
-            <Button asChild size="lg" className="mt-4 w-full">
-              <Link to="/booking/$slug" params={{ slug: service.slug }}>
-                {L.book}
-              </Link>
-            </Button>
-            <p className="mt-3 text-xs text-muted-foreground">{L.cancel}</p>
-          </div>
-        </aside>
+        {/* ── Related services ── */}
+        {related.length ? (
+          <section className="border-t border-gray-100 py-16">
+            <div className="text-center">
+              <h2 className="text-lg font-semibold text-gray-900">{L.related}</h2>
+              <p className="mt-1 text-sm text-gray-400">{L.relatedHint}</p>
+            </div>
+            <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+              {related.map((s) => (
+                <ServiceCard key={s.id} service={s} />
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
-
-      {related.length ? (
-        <section className="mt-14">
-          <h2 className="text-lg font-semibold">{L.related}</h2>
-          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            {related.map((s) => (
-              <ServiceCard key={s.id} service={s} />
-            ))}
-          </div>
-        </section>
-      ) : null}
     </div>
   );
 }

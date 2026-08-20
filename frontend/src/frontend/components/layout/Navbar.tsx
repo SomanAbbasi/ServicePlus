@@ -28,7 +28,7 @@ export function Logo({ className = "" }: { className?: string }) {
       <img
         src={logoUrl}
         alt="Service Plus FMP"
-        className="h-9 w-auto object-contain sm:h-10"
+        className="h-8 w-auto object-contain sm:h-9"
         width={160}
         height={40}
       />
@@ -44,7 +44,7 @@ function UaeFlag() {
       title="United Arab Emirates"
       className="hidden overflow-hidden rounded-full border border-border sm:inline-flex"
     >
-      <svg viewBox="0 0 6 4" className="size-6" role="img" aria-hidden>
+      <svg viewBox="0 0 6 4" className="size-5" role="img" aria-hidden>
         <rect width="6" height="4" fill="#fff" />
         <rect width="6" height="1.333" fill="#00732f" />
         <rect y="2.667" width="6" height="1.333" fill="#000" />
@@ -90,22 +90,40 @@ export function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-3 sm:gap-3 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:gap-3 sm:px-6">
+        {/* Mobile: Logo */}
         <Logo />
 
+        {/* Mobile: Location icon only */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0 md:hidden"
+          aria-label={t("home.setLocation")}
+          onClick={() => setPickerOpen(true)}
+        >
+          <MapPin className="size-5 text-primary" />
+        </Button>
+
+        {/* Desktop: Location pill */}
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="inline-flex max-w-[9rem] items-center gap-1.5 rounded-full bg-primary-soft px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 sm:max-w-[16rem]"
+          className="hidden max-w-[14rem] items-center gap-1.5 rounded-full border border-border/60 bg-primary-soft/50 px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 md:inline-flex"
         >
           <MapPin className="size-4 shrink-0 text-primary" aria-hidden />
-          <span className="truncate">{location?.address ?? t("home.setLocation")}</span>
+          <span className="truncate">
+            {location?.address ?? t("home.setLocation")}
+          </span>
         </button>
 
+        {/* Desktop: Search */}
         <SearchSuggest className="hidden flex-1 md:block" />
 
-        <div className="ms-auto flex items-center gap-1">
+        {/* Right section */}
+        <div className="ms-auto flex items-center gap-0.5">
+          {/* Mobile: Search toggle */}
           <Button
             variant="ghost"
             size="icon"
@@ -116,59 +134,67 @@ export function Navbar() {
             <Search className="size-5" />
           </Button>
 
+          {/* Desktop: Language toggle */}
           <Button
             variant="ghost"
             size="sm"
-            className="hidden gap-1.5 sm:inline-flex"
+            className="hidden gap-1.5 px-2 sm:inline-flex"
             onClick={() => setLocale(locale === "en" ? "ar" : "en")}
+            aria-label="Toggle language"
           >
             <Globe className="size-4" aria-hidden />
-            {locale === "en" ? "العربية" : "English"}
+            <span className="text-xs font-semibold">
+              {locale === "en" ? "AR" : "EN"}
+            </span>
           </Button>
 
           <UaeFlag />
-
           <AccountLink />
 
+          {/* Menu */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" aria-label={t("nav.menu")}>
+              <Button variant="ghost" size="icon" aria-label={t("nav.menu")}>
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent className="w-80">
-              <SheetHeader>
-                <SheetTitle>{t("nav.menu")}</SheetTitle>
+            <SheetContent side="right" className="w-72 p-0">
+              <SheetHeader className="border-b border-border/50 px-5 py-4">
+                <SheetTitle className="text-base">{t("nav.menu")}</SheetTitle>
               </SheetHeader>
-              <nav className="grid gap-1 px-4 pb-6 text-sm">
+              <nav className="flex flex-col gap-0.5 p-3">
                 {links.map((item) => (
                   <Link
                     key={item.to}
                     to={item.to}
                     onClick={() => setOpen(false)}
-                    className="rounded-md px-3 py-2 hover:bg-muted"
+                    className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     {item.label}
                   </Link>
                 ))}
+              </nav>
+              <div className="border-t border-border/50 px-5 py-3">
                 <button
                   type="button"
                   onClick={() => setLocale(locale === "en" ? "ar" : "en")}
-                  className="rounded-md px-3 py-2 text-start hover:bg-muted sm:hidden"
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
+                  <Globe className="size-4" aria-hidden />
                   {locale === "en" ? "العربية" : "English"}
                 </button>
-              </nav>
+              </div>
             </SheetContent>
           </Sheet>
         </div>
       </div>
 
-      {mobileSearch ? (
-        <div className="px-3 pb-3 md:hidden">
+      {/* Mobile search bar */}
+      {mobileSearch && (
+        <div className="border-t border-border/50 px-3 py-2 md:hidden">
           <SearchSuggest autoFocus onNavigate={() => setMobileSearch(false)} />
         </div>
-      ) : null}
+      )}
 
       <LocationPicker
         open={pickerOpen}

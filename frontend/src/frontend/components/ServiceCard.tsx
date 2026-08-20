@@ -19,7 +19,7 @@ export function ServiceCard({
     <Link
       to="/services/$slug"
       params={{ slug: service.slug }}
-      className={`group block overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${className}`}
+      className={`group block overflow-hidden rounded-xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${className}`}
     >
       <div className="aspect-[4/3] overflow-hidden bg-muted">
         <img
@@ -31,7 +31,9 @@ export function ServiceCard({
       </div>
       <div className="space-y-1 p-3">
         <p className="truncate text-sm font-medium text-foreground">{name}</p>
-        <p className="text-xs text-muted-foreground">From {formatMoney(num(service.base_price))}</p>
+        <p className="text-xs text-muted-foreground">
+          {locale === "ar" ? "يبدأ من" : "From"} {formatMoney(num(service.base_price))}
+        </p>
       </div>
     </Link>
   );

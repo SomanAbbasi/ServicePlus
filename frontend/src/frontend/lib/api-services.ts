@@ -34,6 +34,7 @@ export interface ServiceSummary {
   review_count: number;
   category_id: string;
   name_ar?: string | null;
+  is_featured?: boolean;
 }
 
 export interface QuoteInput {

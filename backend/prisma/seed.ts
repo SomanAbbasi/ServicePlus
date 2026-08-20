@@ -768,11 +768,133 @@ async function main() {
       { categoryId: catCleaning.id, serviceId: svcDeepClean.id, sortOrder: 1 },
       { categoryId: catCleaning.id, serviceId: svcRegularClean.id, sortOrder: 2 },
       { categoryId: catFurnitureCleaning.id, serviceId: svcFurnitureCleaning.id, sortOrder: 1 },
+      { categoryId: catFurnitureCleaning.id, serviceId: svcSofaCleaning.id, sortOrder: 2 },
+      { categoryId: catFurnitureCleaning.id, serviceId: svcCarpetCleaning.id, sortOrder: 3 },
+      { categoryId: catFurnitureCleaning.id, serviceId: svcMattressCleaning.id, sortOrder: 4 },
+      { categoryId: catFurnitureCleaning.id, serviceId: svcCurtainCleaning.id, sortOrder: 5 },
       { categoryId: catAcCleaning.id, serviceId: svcAcCleaning.id, sortOrder: 1 },
       { categoryId: catPestControl.id, serviceId: svcPestControl.id, sortOrder: 1 },
       { categoryId: catDisinfection.id, serviceId: svcDisinfection.id, sortOrder: 1 },
     ],
     skipDuplicates: true,
+  });
+
+  // Service relations for related services
+  await prisma.serviceRelation.createMany({
+    data: [
+      // Furniture cleaning related
+      { serviceId: svcFurnitureCleaning.id, relatedServiceId: svcSofaCleaning.id },
+      { serviceId: svcFurnitureCleaning.id, relatedServiceId: svcCarpetCleaning.id },
+      { serviceId: svcFurnitureCleaning.id, relatedServiceId: svcMattressCleaning.id },
+      { serviceId: svcFurnitureCleaning.id, relatedServiceId: svcCurtainCleaning.id },
+      { serviceId: svcSofaCleaning.id, relatedServiceId: svcCarpetCleaning.id },
+      { serviceId: svcSofaCleaning.id, relatedServiceId: svcMattressCleaning.id },
+      { serviceId: svcCarpetCleaning.id, relatedServiceId: svcMattressCleaning.id },
+      // Home cleaning related
+      { serviceId: svcDeepClean.id, relatedServiceId: svcRegularClean.id },
+      { serviceId: svcDeepClean.id, relatedServiceId: svcAcCleaning.id },
+      { serviceId: svcDeepClean.id, relatedServiceId: svcFurnitureCleaning.id },
+      { serviceId: svcRegularClean.id, relatedServiceId: svcDeepClean.id },
+      { serviceId: svcRegularClean.id, relatedServiceId: svcAcCleaning.id },
+      // AC cleaning related
+      { serviceId: svcAcCleaning.id, relatedServiceId: svcDeepClean.id },
+      { serviceId: svcAcCleaning.id, relatedServiceId: svcDisinfection.id },
+      // Pest control related
+      { serviceId: svcPestControl.id, relatedServiceId: svcDisinfection.id },
+    ],
+    skipDuplicates: true,
+  });
+
+  const svcSofaCleaning = await prisma.service.upsert({
+    where: { slug: 'sofa-cleaning' },
+    update: {},
+    create: {
+      name: 'Sofa Cleaning',
+      slug: 'sofa-cleaning',
+      categoryId: catFurnitureCleaning.id,
+      shortDescription: 'Professional sofa cleaning for every size and style, at home.',
+      description: 'Professional sofa cleaning service using hot-water extraction and steam cleaning techniques. Suitable for fabric, leather, and suede sofas.',
+      imageUrl: 'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=600&q=80',
+      icon: 'Armchair',
+      bookingType: 'variant',
+      basePrice: 79,
+      materialsPrice: 0,
+      durationMinutes: 60,
+      rating: 4.7,
+      reviewCount: 189,
+      isFeatured: true,
+      isActive: true,
+      sortOrder: 2,
+    },
+  });
+
+  const svcCarpetCleaning = await prisma.service.upsert({
+    where: { slug: 'carpet-cleaning' },
+    update: {},
+    create: {
+      name: 'Carpet Cleaning',
+      slug: 'carpet-cleaning',
+      categoryId: catFurnitureCleaning.id,
+      shortDescription: 'Deep carpet cleaning to remove stains, dust, and allergens.',
+      description: 'Professional carpet cleaning using hot-water extraction, stain removal, and anti-allergen treatment. Suitable for all carpet types.',
+      imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&q=80',
+      icon: 'Armchair',
+      bookingType: 'variant',
+      basePrice: 99,
+      materialsPrice: 0,
+      durationMinutes: 90,
+      rating: 4.6,
+      reviewCount: 134,
+      isFeatured: true,
+      isActive: true,
+      sortOrder: 3,
+    },
+  });
+
+  const svcMattressCleaning = await prisma.service.upsert({
+    where: { slug: 'mattress-cleaning' },
+    update: {},
+    create: {
+      name: 'Mattress Cleaning',
+      slug: 'mattress-cleaning',
+      categoryId: catFurnitureCleaning.id,
+      shortDescription: 'Thorough mattress cleaning to remove dust mites and stains.',
+      description: 'Professional mattress cleaning using UV sanitisation and hot-water extraction. Removes dust mites, stains, and allergens for a healthier sleep.',
+      imageUrl: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80',
+      icon: 'Bed',
+      bookingType: 'variant',
+      basePrice: 99,
+      materialsPrice: 0,
+      durationMinutes: 60,
+      rating: 4.8,
+      reviewCount: 98,
+      isFeatured: false,
+      isActive: true,
+      sortOrder: 4,
+    },
+  });
+
+  const svcCurtainCleaning = await prisma.service.upsert({
+    where: { slug: 'curtain-cleaning' },
+    update: {},
+    create: {
+      name: 'Curtain Cleaning',
+      slug: 'curtain-cleaning',
+      categoryId: catFurnitureCleaning.id,
+      shortDescription: 'On-site curtain cleaning without removal.',
+      description: 'Professional on-site curtain cleaning using steam and dry-cleaning techniques. No need to remove your curtains.',
+      imageUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&q=80',
+      icon: 'Armchair',
+      bookingType: 'fixed',
+      basePrice: 149,
+      materialsPrice: 0,
+      durationMinutes: 90,
+      rating: 4.5,
+      reviewCount: 67,
+      isFeatured: false,
+      isActive: true,
+      sortOrder: 5,
+    },
   });
 
   const groupSofaSize = await prisma.serviceOptionGroup.upsert({
@@ -827,6 +949,71 @@ async function main() {
       durationMinutes: 120,
       sortOrder: 3,
     },
+  });
+
+  // Sofa Cleaning variants
+  const groupSofaType = await prisma.serviceOptionGroup.upsert({
+    where: { id: 'group-sofa-type' },
+    update: {},
+    create: {
+      id: 'group-sofa-type',
+      serviceId: svcSofaCleaning.id,
+      name: 'Sofa Type',
+      sortOrder: 1,
+    },
+  });
+
+  await prisma.serviceVariant.createMany({
+    data: [
+      { id: 'var-sofa-1seat', serviceId: svcSofaCleaning.id, groupId: groupSofaType.id, name: '1-Seater', price: 79, durationMinutes: 45, sortOrder: 1 },
+      { id: 'var-sofa-2seat', serviceId: svcSofaCleaning.id, groupId: groupSofaType.id, name: '2-Seater', price: 119, durationMinutes: 60, sortOrder: 2 },
+      { id: 'var-sofa-3seat', serviceId: svcSofaCleaning.id, groupId: groupSofaType.id, name: '3-Seater', price: 149, durationMinutes: 75, sortOrder: 3 },
+      { id: 'var-sofa-lshape', serviceId: svcSofaCleaning.id, groupId: groupSofaType.id, name: 'L-Shape Sofa', price: 179, originalPrice: 229, durationMinutes: 120, sortOrder: 4 },
+      { id: 'var-sofa-recliner', serviceId: svcSofaCleaning.id, groupId: groupSofaType.id, name: 'Recliner', price: 99, durationMinutes: 60, sortOrder: 5 },
+    ],
+    skipDuplicates: true,
+  });
+
+  // Carpet Cleaning variants
+  const groupCarpetType = await prisma.serviceOptionGroup.upsert({
+    where: { id: 'group-carpet-type' },
+    update: {},
+    create: {
+      id: 'group-carpet-type',
+      serviceId: svcCarpetCleaning.id,
+      name: 'Carpet Size',
+      sortOrder: 1,
+    },
+  });
+
+  await prisma.serviceVariant.createMany({
+    data: [
+      { id: 'var-carpet-small', serviceId: svcCarpetCleaning.id, groupId: groupCarpetType.id, name: 'Small (up to 4x6 ft)', price: 99, durationMinutes: 60, sortOrder: 1 },
+      { id: 'var-carpet-medium', serviceId: svcCarpetCleaning.id, groupId: groupCarpetType.id, name: 'Medium (up to 6x9 ft)', price: 149, durationMinutes: 90, sortOrder: 2 },
+      { id: 'var-carpet-large', serviceId: svcCarpetCleaning.id, groupId: groupCarpetType.id, name: 'Large (up to 9x12 ft)', price: 199, durationMinutes: 120, sortOrder: 3 },
+    ],
+    skipDuplicates: true,
+  });
+
+  // Mattress Cleaning variants
+  const groupMattressType = await prisma.serviceOptionGroup.upsert({
+    where: { id: 'group-mattress-type' },
+    update: {},
+    create: {
+      id: 'group-mattress-type',
+      serviceId: svcMattressCleaning.id,
+      name: 'Mattress Size',
+      sortOrder: 1,
+    },
+  });
+
+  await prisma.serviceVariant.createMany({
+    data: [
+      { id: 'var-mattress-single', serviceId: svcMattressCleaning.id, groupId: groupMattressType.id, name: 'Single', price: 99, durationMinutes: 45, sortOrder: 1 },
+      { id: 'var-mattress-double', serviceId: svcMattressCleaning.id, groupId: groupMattressType.id, name: 'Double', price: 149, durationMinutes: 60, sortOrder: 2 },
+      { id: 'var-mattress-queen', serviceId: svcMattressCleaning.id, groupId: groupMattressType.id, name: 'Queen / King', price: 199, durationMinutes: 75, sortOrder: 3 },
+    ],
+    skipDuplicates: true,
   });
 
   const addonSanitise = await prisma.addon.upsert({
@@ -1014,12 +1201,13 @@ async function main() {
   console.log('  Countries: 1 (UAE)');
   console.log('  Cities: 3 (Dubai, Abu Dhabi, Sharjah)');
   console.log('  Categories: 10');
-  console.log('  Services: 6');
-  console.log('  Variants: 3 (furniture sizes)');
+  console.log('  Services: 10');
+  console.log('  Variants: 11 (furniture sizes)');
   console.log('  Add-ons: 2');
   console.log('  Bundles: 1');
   console.log('  Coupons: 2 (WELCOME10, CLEAN20)');
   console.log('  Professionals: 3');
+  console.log('  Service Relations: 15');
 }
 
 main()

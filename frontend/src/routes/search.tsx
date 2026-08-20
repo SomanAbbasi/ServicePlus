@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { searchServices, getHomeCatalog } from "@/frontend/lib/api-services";
@@ -5,6 +6,8 @@ import { resolveImageUrl } from "@/frontend/lib/api-client";
 import { ServiceCard } from "@/frontend/components/ServiceCard";
 import { useLocale } from "@/frontend/lib/locale";
 import { localizedText } from "@/frontend/lib/i18n-content";
+import { iconByName } from "@/frontend/components/icons";
+import { ChevronLeft, ChevronRight, Home as HomeIcon } from "lucide-react";
 
 interface SearchParams {
   q: string;
@@ -45,6 +48,8 @@ function SearchPage() {
   const { q } = Route.useSearch();
   const { locale, t } = useLocale();
   const { data } = useSuspenseQuery(searchQuery(q));
+  const sliderRef = useRef<HTMLDivElement>(null);
+
   const services = "services" in data ? data.services : [];
   const categories = "categories" in data ? data.categories : [];
   const listings = ("listings" in data ? data.listings : []) as {
@@ -68,74 +73,160 @@ function SearchPage() {
   const listedIds = new Set(grouped.flatMap((g) => g.items.map((s) => s.id)));
   const ungrouped = services.filter((s) => !listedIds.has(s.id));
 
+  const isAr = locale === "ar";
+
+  const scroll = (direction: "left" | "right") => {
+    if (sliderRef.current) {
+      const amount = direction === "left" ? -280 : 280;
+      sliderRef.current.scrollBy({ left: isAr ? -amount : amount, behavior: "smooth" });
+    }
+  };
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-bold tracking-tight">
-        {q ? `Results for "${q}"` : "All services"}
-      </h1>
+    <div dir={isAr ? "rtl" : "ltr"} className="min-h-screen bg-slate-50/50 py-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        {/* Top Header & Back to Home Button */}
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-200">
+          <div>
+            <nav className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
+              <Link to="/" className="hover:text-cyan-600 transition-colors flex items-center gap-1">
+                <HomeIcon className="size-3.5" />
+                {t("nav.home")}
+              </Link>
+              <ChevronRight className="size-3" />
+              <span className="text-slate-800 font-bold">{t("search.allServices")}</span>
+            </nav>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight sm:text-3xl">
+              {q ? `${t("search.resultsFor")} "${q}"` : t("search.allServices")}
+            </h1>
+          </div>
 
-      {categories.length ? (
-        <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-1">
-          {categories.map((cat) => (
-            <Link
-              key={cat.id}
-              to="/categories/$slug"
-              params={{ slug: cat.slug }}
-              className="inline-flex shrink-0 items-center gap-3 rounded-full border border-border bg-card py-2 pe-5 ps-2 text-base font-medium shadow-sm transition-colors hover:border-primary"
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs transition-all hover:bg-slate-50 hover:border-cyan-500"
+          >
+            <div className="grid size-6 place-items-center rounded-full bg-slate-100 text-slate-600">
+              {isAr ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+            </div>
+            {t("category.backHome")}
+          </Link>
+        </div>
+
+        {/* Rounded Category Chips with Circular Avatars & Scroll Arrows */}
+        {categories.length ? (
+          <div className="relative mt-6">
+            {/* Scroll Left Button */}
+            <button
+              type="button"
+              onClick={() => scroll("left")}
+              aria-label="Scroll categories left"
+              className="absolute start-0 top-1/2 z-10 -translate-y-1/2 grid size-9 place-items-center rounded-full border border-slate-200 bg-white shadow-md text-slate-700 transition-all hover:bg-slate-50 hover:scale-105 active:scale-95"
             >
-              {cat.image_url ? (
-                <img
-                  src={resolveImageUrl(cat.image_url)}
-                  alt=""
-                  loading="lazy"
-                  className="size-11 rounded-full bg-muted object-cover"
-                />
-              ) : null}
-              {localizedText({ ...cat }, "name", locale) ?? cat.name}
-            </Link>
-          ))}
-        </div>
-      ) : null}
+              {isAr ? <ChevronRight className="size-5" /> : <ChevronLeft className="size-5" />}
+            </button>
 
-      {services.length ? (
-        <div className="mt-8 space-y-10">
-          {grouped.map(({ cat, items }) => (
-            <section key={cat.id}>
-              <div className="flex items-center justify-between gap-4">
-                <h2 className="text-lg font-semibold tracking-tight">
-                  {localizedText({ ...cat }, "name", locale) ?? cat.name}
+            {/* Category Pills Container */}
+            <div
+              ref={sliderRef}
+              className="flex items-center gap-3 overflow-x-auto px-10 py-2 scrollbar-none scroll-smooth"
+            >
+              {categories.map((cat) => {
+                const Icon = iconByName(cat.icon);
+                return (
+                  <Link
+                    key={cat.id}
+                    to="/categories/$slug"
+                    params={{ slug: cat.slug }}
+                    className="group inline-flex shrink-0 items-center gap-2.5 rounded-full border border-slate-200 bg-white py-1.5 pe-4 ps-2 text-xs font-bold text-slate-800 shadow-2xs transition-all hover:border-cyan-500 hover:bg-slate-50 hover:shadow-sm"
+                  >
+                    {cat.image_url ? (
+                      <img
+                        src={resolveImageUrl(cat.image_url)}
+                        alt={cat.name}
+                        loading="lazy"
+                        className="size-8 rounded-full object-cover ring-2 ring-slate-100 group-hover:ring-cyan-500 transition-all"
+                      />
+                    ) : (
+                      <div className="grid size-8 place-items-center rounded-full bg-cyan-50 text-cyan-600 group-hover:bg-cyan-600 group-hover:text-white transition-colors">
+                        <Icon className="size-4" />
+                      </div>
+                    )}
+                    <span>{localizedText({ ...cat }, "name", locale) ?? cat.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Scroll Right Button */}
+            <button
+              type="button"
+              onClick={() => scroll("right")}
+              aria-label="Scroll categories right"
+              className="absolute end-0 top-1/2 z-10 -translate-y-1/2 grid size-9 place-items-center rounded-full border border-slate-200 bg-white shadow-md text-slate-700 transition-all hover:bg-slate-50 hover:scale-105 active:scale-95"
+            >
+              {isAr ? <ChevronLeft className="size-5" /> : <ChevronRight className="size-5" />}
+            </button>
+          </div>
+        ) : null}
+
+        {/* Services Grouped by Category */}
+        {services.length ? (
+          <div className="mt-10 space-y-12">
+            {grouped.map(({ cat, items }) => (
+              <section key={cat.id} className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs">
+                <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    {cat.image_url && (
+                      <img
+                        src={resolveImageUrl(cat.image_url)}
+                        alt=""
+                        className="size-7 rounded-full object-cover"
+                      />
+                    )}
+                    <h2 className="text-lg font-bold text-slate-900">
+                      {localizedText({ ...cat }, "name", locale) ?? cat.name}
+                    </h2>
+                  </div>
+
+                  <Link
+                    to="/categories/$slug"
+                    params={{ slug: cat.slug }}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-cyan-600 hover:text-cyan-700 hover:underline"
+                  >
+                    See all
+                    <ChevronRight className="size-3.5" />
+                  </Link>
+                </div>
+
+                <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  {items.map((service) => (
+                    <ServiceCard key={service.id} service={service} />
+                  ))}
+                </div>
+              </section>
+            ))}
+
+            {ungrouped.length ? (
+              <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs">
+                <h2 className="text-lg font-bold text-slate-900 pb-4 border-b border-slate-100">
+                  {t("search.moreServices")}
                 </h2>
-                <Link
-                  to="/categories/$slug"
-                  params={{ slug: cat.slug }}
-                  className="text-sm font-medium text-primary hover:underline"
-                >
-                  See all
-                </Link>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                {items.map((service) => (
-                  <ServiceCard key={service.id} service={service} />
-                ))}
-              </div>
-            </section>
-          ))}
-          {ungrouped.length ? (
-            <section>
-              <h2 className="text-lg font-semibold tracking-tight">{t("search.moreServices")}</h2>
-              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                {ungrouped.map((service) => (
-                  <ServiceCard key={service.id} service={service} />
-                ))}
-              </div>
-            </section>
-          ) : null}
-        </div>
-      ) : (
-        <p className="mt-6 text-sm text-muted-foreground">
-          No services matched that search. Try a category above.
-        </p>
-      )}
+                <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  {ungrouped.map((service) => (
+                    <ServiceCard key={service.id} service={service} />
+                  ))}
+                </div>
+              </section>
+            ) : null}
+          </div>
+        ) : (
+          <div className="mt-12 text-center rounded-2xl border border-slate-200 bg-white p-12">
+            <p className="text-sm font-semibold text-slate-600">
+              No services matched that search. Try selecting a category above.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
