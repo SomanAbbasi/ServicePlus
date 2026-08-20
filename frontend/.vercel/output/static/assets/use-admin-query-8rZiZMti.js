@@ -1,1 +1,0 @@
-import{q as e}from"./index-GiyXzr2M.js";function t(t,n){let r=typeof window<`u`&&localStorage.getItem(`serviceplus_admin_authenticated`)===`true`;return e({queryKey:[`admin`,t],queryFn:()=>n(),enabled:r,staleTime:3e4,retry:!1})}export{t};

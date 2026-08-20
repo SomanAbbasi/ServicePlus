@@ -1,1 +1,0 @@
-import{i as e,t}from"./react-SIfiwpqq.js";import{st as n}from"./index-GiyXzr2M.js";var r=e(t());function i(){let e=n();return(0,r.useEffect)(()=>{e({to:`/dashboard`,replace:!0})},[e]),null}export{i as component};

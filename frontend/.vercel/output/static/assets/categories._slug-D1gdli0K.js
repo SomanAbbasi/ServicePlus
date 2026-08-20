@@ -1,1 +1,0 @@
-import{t as e}from"./jsx-runtime-0vZSBttN.js";import{a as t}from"./index-GiyXzr2M.js";var n=e(),r=()=>(0,n.jsx)(t,{title:`Category not found`});export{r as notFoundComponent};
