@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-0vZSBttN.js";import{n as t}from"./index-GiyXzr2M.js";var n=e(),r=()=>(0,n.jsx)(t,{title:`This service didn't load`});export{r as errorComponent};
