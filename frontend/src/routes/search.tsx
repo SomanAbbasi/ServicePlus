@@ -59,7 +59,15 @@ function SearchPage() {
   }[];
 
   const byId = new Map(services.map((s) => [s.id, s]));
-  const grouped = categories
+  const sortedCategories = [...categories].sort((a, b) => {
+    const isGeneralA = a.slug.includes("general") || a.slug.includes("cleaning");
+    const isGeneralB = b.slug.includes("general") || b.slug.includes("cleaning");
+    if (isGeneralA && !isGeneralB) return -1;
+    if (!isGeneralA && isGeneralB) return 1;
+    return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+  });
+
+  const grouped = sortedCategories
     .map((cat) => {
       const listed = listings
         .filter((l) => l.category_id === cat.id)
@@ -172,49 +180,54 @@ function SearchPage() {
         {/* Services Grouped by Category */}
         {services.length ? (
           <div className="mt-10 space-y-12">
-            {grouped.map(({ cat, items }) => (
-              <section key={cat.id} className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs">
-                <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-100">
-                  <div className="flex items-center gap-2.5">
-                    {cat.image_url && (
-                      <img
-                        src={resolveImageUrl(cat.image_url)}
-                        alt=""
-                        className="size-7 rounded-full object-cover"
-                      />
-                    )}
-                    <h2 className="text-lg font-bold text-slate-900">
-                      {localizedText({ ...cat }, "name", locale) ?? cat.name}
-                    </h2>
+            {grouped.map(({ cat, items }) => {
+              const catName = localizedText({ ...cat }, "name", locale) ?? cat.name;
+              return (
+                <section key={cat.id} className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs">
+                  <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                    <div className="flex items-center gap-2.5">
+                      {cat.image_url && (
+                        <img
+                          src={resolveImageUrl(cat.image_url)}
+                          alt=""
+                          className="size-7 rounded-full object-cover"
+                        />
+                      )}
+                      <h2 className="text-lg font-bold text-slate-900">
+                        {catName}
+                      </h2>
+                    </div>
+
+                    <Link
+                      to="/categories/$slug"
+                      params={{ slug: cat.slug }}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-cyan-600 hover:text-cyan-700 hover:underline"
+                    >
+                      See all
+                      <ChevronRight className="size-3.5" />
+                    </Link>
                   </div>
 
-                  <Link
-                    to="/categories/$slug"
-                    params={{ slug: cat.slug }}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-cyan-600 hover:text-cyan-700 hover:underline"
-                  >
-                    See all
-                    <ChevronRight className="size-3.5" />
-                  </Link>
-                </div>
-
-                <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                  {items.map((service) => (
-                    <ServiceCard key={service.id} service={service} />
-                  ))}
-                </div>
-              </section>
-            ))}
+                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {items.map((service) => (
+                      <ServiceCard key={service.id} service={service} categoryName={catName} />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
 
             {ungrouped.length ? (
               <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs">
                 <h2 className="text-lg font-bold text-slate-900 pb-4 border-b border-slate-100">
                   {t("search.moreServices")}
                 </h2>
-                <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                  {ungrouped.map((service) => (
-                    <ServiceCard key={service.id} service={service} />
-                  ))}
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {ungrouped.map((service) => {
+                    const catObj = categories.find((c) => c.id === service.category_id);
+                    const catName = catObj ? (localizedText({ ...catObj }, "name", locale) ?? catObj.name) : undefined;
+                    return <ServiceCard key={service.id} service={service} categoryName={catName} />;
+                  })}
                 </div>
               </section>
             ) : null}

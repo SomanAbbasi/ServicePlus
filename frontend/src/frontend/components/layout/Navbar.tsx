@@ -109,19 +109,21 @@ export function Navbar() {
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="hidden max-w-[14rem] items-center gap-1.5 rounded-full border border-border/60 bg-primary-soft/50 px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 md:inline-flex"
+          className="hidden max-w-[15rem] items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50/80 px-3.5 py-1.5 text-xs font-extrabold text-cyan-800 transition-colors hover:bg-cyan-100/80 md:inline-flex shrink-0 shadow-2xs"
         >
-          <MapPin className="size-4 shrink-0 text-primary" aria-hidden />
+          <MapPin className="size-3.5 shrink-0 text-cyan-600 fill-cyan-500/20" aria-hidden />
           <span className="truncate">
             {location?.address ?? t("home.setLocation")}
           </span>
         </button>
 
-        {/* Desktop: Search */}
-        <SearchSuggest className="hidden flex-1 md:block" />
+        {/* Desktop: Medium Search Bar */}
+        <div className="hidden md:flex flex-1 max-w-lg mx-2">
+          <SearchSuggest className="w-full" />
+        </div>
 
         {/* Right section */}
-        <div className="ms-auto flex items-center gap-0.5">
+        <div className="ms-auto flex items-center gap-2">
           {/* Mobile: Search toggle */}
           <Button
             variant="ghost"
@@ -133,29 +135,28 @@ export function Navbar() {
             <Search className="size-5" />
           </Button>
 
-          {/* Desktop: Language toggle */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hidden gap-1.5 px-2 sm:inline-flex"
+          {/* Language toggle text */}
+          <button
+            type="button"
+            className="hidden text-xs font-bold text-slate-700 hover:text-cyan-600 transition-colors sm:inline-block px-1"
             onClick={() => setLocale(locale === "en" ? "ar" : "en")}
-            aria-label="Toggle language"
           >
-            <Globe className="size-4" aria-hidden />
-            <span className="text-xs font-semibold">
-              {locale === "en" ? "AR" : "EN"}
-            </span>
-          </Button>
+            {locale === "en" ? "العربية" : "English"}
+          </button>
 
           <UaeFlag />
-          <AccountLink />
 
-          {/* Menu */}
+          {/* Account & Menu Combined Pill Button */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={t("nav.menu")}>
-                <Menu className="size-5" />
-              </Button>
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700 shadow-2xs transition-all hover:bg-slate-50 hover:border-slate-300"
+                aria-label="User account and menu"
+              >
+                <UserCircle className="size-4 text-slate-600" />
+                <Menu className="size-4 text-slate-600" />
+              </button>
             </SheetTrigger>
             <SheetContent side="right" className="w-72 p-0">
               <SheetHeader className="border-b border-border/50 px-5 py-4">

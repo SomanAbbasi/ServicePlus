@@ -1161,6 +1161,30 @@ function BookingWizard() {
                 <span className="font-bold text-slate-800 text-end">{materials ? "Yes" : "No"}</span>
               </div>
 
+              {/* Selected Options/Variants List */}
+              {Object.entries(optionQty).some(([, q]) => q > 0) && (
+                <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                  <span className="text-slate-400 font-semibold block mb-1">Selected Package / Options</span>
+                  {Object.entries(optionQty)
+                    .filter(([, q]) => q > 0)
+                    .map(([vId, q]) => {
+                      const v = allVariants.find((item: any) => item.id === vId);
+                      if (!v) return null;
+                      const itemPrice = Number(v.price || v.base_price || 0) * q;
+                      return (
+                        <div key={vId} className="flex justify-between items-center text-xs">
+                          <span className="font-bold text-slate-700 truncate me-2">
+                            {v.name} {q > 1 ? `(x${q})` : ""}
+                          </span>
+                          <span className="font-extrabold text-cyan-600 shrink-0">
+                            +AED {itemPrice.toFixed(0)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+
               {/* Selected Add-ons List if any */}
               {addonIds.length > 0 && (
                 <div className="pt-2 border-t border-slate-100 space-y-1.5">
@@ -1182,19 +1206,26 @@ function BookingWizard() {
               <div className="mt-6 pt-4 border-t border-slate-100 space-y-2">
                 <h3 className="font-extrabold text-slate-900 text-sm mb-3">Payment Summary</h3>
                 
-                {(quote?.breakdown as any)?.subtotal !== undefined && (
+                {(quote?.breakdown as any)?.subtotal !== undefined && Number((quote?.breakdown as any)?.subtotal) > 0 && (
                   <div className="flex justify-between items-center text-xs text-slate-600">
                     <span>Base Service</span>
                     <span>AED {Number((quote?.breakdown as any)?.subtotal || 0).toFixed(2)}</span>
                   </div>
                 )}
 
-                {(quote?.breakdown as any)?.addons_total ? (
+                {(quote?.breakdown as any)?.items !== undefined && Number((quote?.breakdown as any)?.items) > 0 && (
+                  <div className="flex justify-between items-center text-xs text-slate-600">
+                    <span>Package Options</span>
+                    <span>AED {Number((quote?.breakdown as any)?.items || 0).toFixed(2)}</span>
+                  </div>
+                )}
+
+                {(quote?.breakdown as any)?.addons !== undefined && Number((quote?.breakdown as any)?.addons) > 0 && (
                   <div className="flex justify-between items-center text-xs text-slate-600">
                     <span>Add-ons Total</span>
-                    <span>AED {Number((quote?.breakdown as any)?.addons_total || 0).toFixed(2)}</span>
+                    <span>AED {Number((quote?.breakdown as any)?.addons || 0).toFixed(2)}</span>
                   </div>
-                ) : null}
+                )}
 
                 {(quote?.breakdown as any)?.discount ? (
                   <div className="flex justify-between items-center text-xs text-emerald-600 font-bold">
@@ -1206,7 +1237,7 @@ function BookingWizard() {
                 <div className="flex justify-between items-center text-base font-extrabold text-slate-900 pt-2 border-t border-slate-100">
                   <span>Total</span>
                   <span className="text-slate-900 font-black">
-                    AED {Number((quote?.breakdown as any)?.total || 79).toFixed(2)}
+                    AED {Number((quote?.breakdown as any)?.total || 0).toFixed(2)}
                   </span>
                 </div>
               </div>
