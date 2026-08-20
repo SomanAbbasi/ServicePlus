@@ -173,7 +173,31 @@ async function request<T>(path: string, method: string, options: RequestOptions 
   }
 
   if (res.status === 204) return undefined as T;
-  const json = await res.json();
+
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    const rawText = await res.text().catch(() => "");
+    if (rawText.includes("<!DOCTYPE") || rawText.includes("<html") || rawText.includes("vercel.com/sso")) {
+      throw new ApiError(
+        res.status,
+        `Backend API returned an HTML page instead of JSON. Please disable Vercel Deployment Protection (Vercel Authentication) in your backend project settings (Vercel -> Settings -> Deployment Protection).`,
+        rawText
+      );
+    }
+  }
+
+  let json: unknown;
+  try {
+    json = await res.json();
+  } catch (err) {
+    const rawText = await res.text().catch(() => "");
+    throw new ApiError(
+      res.status,
+      `Failed to parse JSON response from ${url}: ${rawText.slice(0, 150)}`,
+      rawText
+    );
+  }
+
   return snakeizeKeys(json) as T;
 }
 
