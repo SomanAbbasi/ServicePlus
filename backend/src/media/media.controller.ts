@@ -4,11 +4,12 @@ import {
   Get,
   Body,
   Param,
+  Req,
   UseGuards,
   Res,
   NotFoundException,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { MediaService } from './media.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
@@ -39,14 +40,23 @@ export class MediaController {
     );
   }
 
-  @Get('file/*path')
-  async getFile(@Param('path') pathStr: string | string[], @Res() res: Response) {
-    const rawPath = Array.isArray(pathStr) ? pathStr.join('/') : pathStr;
-    const file = await this.mediaService.getFile(rawPath);
+  @Get('file/*')
+  async getFile(
+    @Req() req: Request,
+    @Param() params: Record<string, string>,
+    @Res() res: Response,
+  ) {
+    const rawParam = params['0'] || params['path'];
+    const urlPath = req.path ? req.path.replace(/^.*\/media\/file\/?/, '') : '';
+    const chosenPath = rawParam || urlPath;
+    const cleanPath = decodeURIComponent(chosenPath || '').replace(/^\/+/, '');
+
+    const file = await this.mediaService.getFile(cleanPath);
     if (!file) throw new NotFoundException('File not found');
-    res.setHeader('Content-Type', file.contentType);
+
+    res.setHeader('Content-Type', file.contentType || 'image/jpeg');
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.send(file.buffer);
   }
-
 }

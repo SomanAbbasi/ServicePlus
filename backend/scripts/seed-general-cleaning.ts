@@ -1127,7 +1127,7 @@ async function seedGeneralCleaning() {
       optionGroups: [
         {
           name: 'Shoe Cleaning',
-          imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+          imageUrl: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&q=80',
           sortOrder: 1,
           variants: [
             {
@@ -1135,7 +1135,7 @@ async function seedGeneralCleaning() {
               price: 59,
               originalPrice: 79,
               description: 'From messy to magical! Kids shoe cleaning to makes every little step shine.',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1514989940723-e8e51635b782?w=400&q=80',
               sortOrder: 1,
             },
             {
@@ -1143,7 +1143,7 @@ async function seedGeneralCleaning() {
               price: 99,
               originalPrice: 120,
               description: 'From scuffed to stunning! Sneaker cleaning that makes every step pop. Takes up to 4 days.',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=400&q=80',
               sortOrder: 2,
             },
             {
@@ -1151,7 +1151,7 @@ async function seedGeneralCleaning() {
               price: 149,
               originalPrice: 160,
               description: 'Premium sneaker cleaning service. Fresh, flawless & ready in up to 5 days.',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=400&q=80',
               sortOrder: 3,
             },
             {
@@ -1159,7 +1159,7 @@ async function seedGeneralCleaning() {
               price: 49,
               originalPrice: 69,
               description: 'From worn to wow! Minor shoe restoration starting at AED 49, takes up to 7 days.',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&q=80',
               sortOrder: 4,
             },
             {
@@ -1167,7 +1167,7 @@ async function seedGeneralCleaning() {
               price: 149,
               originalPrice: 199,
               description: 'Step up again! Major shoe repair with soles, stitching, colour & conditioning, ready in 10 days.',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1582845512747-e42001c95638?w=400&q=80',
               sortOrder: 5,
             },
             {
@@ -1175,7 +1175,7 @@ async function seedGeneralCleaning() {
               price: 59,
               originalPrice: 79,
               description: 'Restore the shine! Formal shoes hand-polished by experts within 3 days.',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=400&q=80',
               sortOrder: 6,
             },
             {
@@ -1183,7 +1183,7 @@ async function seedGeneralCleaning() {
               price: 99,
               originalPrice: 160,
               description: 'Expert formal shoe cleaning for a sharp, spotless look. Ready in up to 4 days.',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?w=400&q=80',
               sortOrder: 7,
             },
             {
@@ -1191,7 +1191,7 @@ async function seedGeneralCleaning() {
               price: 149,
               originalPrice: 189,
               description: 'Delicately cleaning your formal shoes. Sharp, spotless & ready to impress.',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1533867617858-e7b97e060509?w=400&q=80',
               sortOrder: 8,
             },
             {
@@ -1199,7 +1199,7 @@ async function seedGeneralCleaning() {
               price: 89,
               originalPrice: 100,
               description: 'Freshening up your sandals. Clean, comfy & ready for sunshine. Takes up to 4 days.',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1603487742131-4160ec999306?w=400&q=80',
               sortOrder: 9,
             },
             {
@@ -1207,7 +1207,7 @@ async function seedGeneralCleaning() {
               price: 139,
               originalPrice: 175,
               description: 'Polish your designer sandals, feel fresh & carefree. Takes up to 5 days.',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1562273138-f46be4ebdf33?w=400&q=80',
               sortOrder: 10,
             },
             {
@@ -1215,7 +1215,7 @@ async function seedGeneralCleaning() {
               price: 89,
               originalPrice: 110,
               description: 'From faded to fresh! Espadrille cleaning with pickup & delivery within 5 days.',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1575537302964-96cd47c06b1b?w=400&q=80',
               sortOrder: 11,
             },
             {
@@ -1223,14 +1223,14 @@ async function seedGeneralCleaning() {
               price: 139,
               originalPrice: 180,
               description: 'Back in style! Designer espadrilles cleaned with precision within 7 days.',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=400&q=80',
               sortOrder: 12,
             },
           ],
         },
         {
           name: 'Combos',
-          imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+          imageUrl: 'https://images.unsplash.com/photo-1556906781-9a412961c28c?w=400&q=80',
           sortOrder: 2,
           variants: [
             {
@@ -1238,7 +1238,7 @@ async function seedGeneralCleaning() {
               price: 225,
               originalPrice: 270,
               description: 'Have your 3 most-worn sneakers cleaned professionally with AED 20 off! Delivery time 3 - 4 days.',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1556906781-9a412961c28c?w=400&q=80',
               sortOrder: 1,
             },
             {
@@ -1246,7 +1246,7 @@ async function seedGeneralCleaning() {
               price: 425,
               originalPrice: 620,
               description: 'Revitalize 3 pairs of designer sneakers for a polished & elegant finish.',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1512374382149-233c42b6a83b?w=400&q=80',
               sortOrder: 2,
             },
             {
@@ -1254,7 +1254,7 @@ async function seedGeneralCleaning() {
               price: 709,
               originalPrice: 950,
               description: 'Get your squad in on the deal—clean 10 pairs of sneakers for the price of 8!',
-              imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1595341888016-a392ef81b7de?w=400&q=80',
               sortOrder: 3,
             },
           ],

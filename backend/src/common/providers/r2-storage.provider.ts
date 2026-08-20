@@ -59,7 +59,8 @@ export class R2StorageProvider implements StorageProvider {
     if (
       this.publicBaseUrl &&
       !this.publicBaseUrl.includes('pub-xxxxxx') &&
-      !this.publicBaseUrl.includes('your-bucket')
+      !this.publicBaseUrl.includes('your-bucket') &&
+      !this.publicBaseUrl.includes('.r2.dev')
     ) {
       return `${this.publicBaseUrl.replace(/\/+$/, '')}/${cleanPath}`;
     }
