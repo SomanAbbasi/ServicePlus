@@ -15,10 +15,12 @@ import {
   Lock,
   MapPin,
   Plus,
+  RefreshCw,
   ShieldCheck,
   Sparkles,
   Tag,
   Wallet,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { FALLBACK_IMAGE } from "@/frontend/components/icons";
@@ -41,7 +43,12 @@ import { Input } from "@/frontend/components/ui/input";
 import { Label } from "@/frontend/components/ui/label";
 import { Textarea } from "@/frontend/components/ui/textarea";
 import { useSession } from "@/frontend/lib/use-session";
-import { FREQUENCY_OPTIONS } from "@/frontend/lib/frequency";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/frontend/components/ui/dialog";
 import { useLocale } from "@/frontend/lib/locale";
 import { localizedText } from "@/frontend/lib/i18n-content";
 
@@ -77,6 +84,13 @@ function getDubaiNow() {
   return { todayStr, currentHour };
 }
 
+const FREQUENCY_LIST = [
+  { id: "one_time", title: "One Time", badge: null, popular: false },
+  { id: "every_2_weeks", title: "Every 2 Weeks", badge: "5% Off", popular: false },
+  { id: "once_a_week", title: "Once a Week", badge: "10% Off", popular: true },
+  { id: "multiple_times_a_week", title: "Multiple Times a Week", badge: "Up to 25% off", popular: false },
+];
+
 function BookingWizard() {
   const { slug } = Route.useParams();
   const navigate = useNavigate();
@@ -107,7 +121,15 @@ function BookingWizard() {
   const [manualAddress, setManualAddress] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const { save: saveLocation, location: savedLoc } = useSavedLocation();
+
+  // Frequency Modal & Draft State
   const [frequency, setFrequency] = useState("one_time");
+  const [freqOpen, setFreqOpen] = useState(false);
+  const [freqDraft, setFreqDraft] = useState("one_time");
+  const [freqAutoShown, setFreqAutoShown] = useState(false);
+
+  // Policy Modal
+  const [policyOpen, setPolicyOpen] = useState(false);
 
   // Coupon
   const [couponInput, setCouponInput] = useState("");
@@ -138,6 +160,15 @@ function BookingWizard() {
   const addons = (detail?.addons ?? []) as any[];
   const hasAddons = addons.length > 0;
   const totalSteps = hasAddons ? 5 : 4;
+
+  // Auto-pop frequency modal when entering date/time step for the first time
+  useEffect(() => {
+    if (step === 2 && !freqAutoShown) {
+      setFreqDraft(frequency);
+      setFreqOpen(true);
+      setFreqAutoShown(true);
+    }
+  }, [step, freqAutoShown, frequency]);
 
   const addonPayload = useMemo(() => addonIds.map((id) => ({ id, quantity: 1 })), [addonIds]);
 
@@ -269,7 +300,7 @@ function BookingWizard() {
     setTimeout(() => {
       setOtpSending(false);
       setOtpSent(true);
-      toast.info(isAr ? "رمز التحقق هو 123456" : "Verification OTP sent: 123456");
+      toast.info(isAr ? "رمز التحقق التجريبي هو 123456" : "Demo verification OTP sent: 123456");
     }, 600);
   };
 
@@ -279,7 +310,7 @@ function BookingWizard() {
       setPhoneVerified(true);
       toast.success(isAr ? "تم التحقق من رقم الهاتف بنجاح" : "Phone number verified successfully!");
     } else {
-      toast.error(isAr ? "رمز التحقق غير صحيح (استخدم 123456)" : "Invalid OTP code (Use 123456)");
+      toast.error(isAr ? "رمز التحقق غير صحيح (رمز العرض التجريبي: 123456)" : "Invalid OTP code (Demo OTP: 123456)");
     }
   };
 
@@ -347,6 +378,11 @@ function BookingWizard() {
     return `${day} ${month} ${year}`;
   }, [date]);
 
+  const frequencyTitle = useMemo(() => {
+    const found = FREQUENCY_LIST.find((f) => f.id === frequency);
+    return found ? `${found.title} Service` : "One Time Service";
+  }, [frequency]);
+
   return (
     <div dir={isAr ? "rtl" : "ltr"} className="min-h-screen bg-slate-50/60 pb-16 pt-6 overflow-x-hidden">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -368,7 +404,7 @@ function BookingWizard() {
         <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr] items-start min-w-0">
           {/* Main Booking Controls Left Column */}
           <div className="space-y-6 min-w-0">
-            {/* STEP 1: Details (Hours, Professionals, Materials - Justlife Pill Style) */}
+            {/* STEP 1: Details (Hours, Professionals, Materials) */}
             {step === 0 && (
               <section className="space-y-6 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
                 {/* 1. Hours Selector */}
@@ -422,7 +458,7 @@ function BookingWizard() {
                   </div>
                 </div>
 
-                {/* 3. Cleaning Materials Selector with Jif Badge */}
+                {/* 3. Cleaning Materials Selector */}
                 <div>
                   <div className="flex items-center gap-2 mb-3 flex-wrap">
                     <Label className="text-xs sm:text-sm font-bold text-slate-900">
@@ -558,13 +594,34 @@ function BookingWizard() {
             {/* STEP 2/3: Date & Time Picker */}
             {step === 2 && (
               <section className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
+                {/* Frequency Summary Box (Matching Screenshot media_1787226593343.png) */}
+                <div className="rounded-xl border border-cyan-300 bg-cyan-50/70 p-4 flex items-center justify-between">
+                  <div className="space-y-1.5">
+                    <p className="text-sm font-bold text-slate-900">Frequency</p>
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-3 py-1 text-xs font-extrabold text-white shadow-2xs">
+                      <RefreshCw className="size-3.5" />
+                      {frequencyTitle}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFreqDraft(frequency);
+                      setFreqOpen(true);
+                    }}
+                    className="text-xs font-extrabold text-cyan-600 hover:underline"
+                  >
+                    Change
+                  </button>
+                </div>
+
                 <div>
                   <h2 className="text-base font-bold text-slate-900">
                     {isAr ? "متى ترغب في استلام الخدمة؟" : "When would you like your service?"}
                   </h2>
                 </div>
 
-                {/* Horizontal Oval Date Selector with Arrow Controls */}
+                {/* Horizontal Oval Date Selector */}
                 <div className="relative">
                   <button
                     type="button"
@@ -613,7 +670,7 @@ function BookingWizard() {
                   </button>
                 </div>
 
-                {/* Time Slots Selector with Scroll Controls */}
+                {/* Time Slots Selector */}
                 <div>
                   <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                     <Label className="text-xs sm:text-sm font-bold text-slate-900">
@@ -683,7 +740,11 @@ function BookingWizard() {
                     <Info className="size-4 text-slate-400 shrink-0" />
                     <span>Enjoy free cancellation up to 6 hours before your booking start time.</span>
                   </div>
-                  <button type="button" className="text-xs font-bold text-cyan-600 underline shrink-0 ms-2">
+                  <button
+                    type="button"
+                    onClick={() => setPolicyOpen(true)}
+                    className="text-xs font-bold text-cyan-600 underline shrink-0 ms-2"
+                  >
                     View our policy
                   </button>
                 </div>
@@ -790,22 +851,27 @@ function BookingWizard() {
                       </div>
 
                       {otpSent && (
-                        <div className="flex gap-2 pt-1">
-                          <Input
-                            type="text"
-                            maxLength={6}
-                            value={otpCode}
-                            onChange={(e) => setOtpCode(e.target.value)}
-                            placeholder="Enter 6-digit OTP (123456)"
-                            className="text-xs bg-white font-mono tracking-widest"
-                          />
-                          <Button
-                            type="button"
-                            onClick={handleVerifyOtp}
-                            className="bg-slate-900 font-bold text-white hover:bg-slate-800 shrink-0 text-xs"
-                          >
-                            Verify OTP
-                          </Button>
+                        <div className="space-y-2 pt-1">
+                          <div className="flex gap-2">
+                            <Input
+                              type="text"
+                              maxLength={6}
+                              value={otpCode}
+                              onChange={(e) => setOtpCode(e.target.value)}
+                              placeholder="Enter 6-digit OTP (123456)"
+                              className="text-xs bg-white font-mono tracking-widest"
+                            />
+                            <Button
+                              type="button"
+                              onClick={handleVerifyOtp}
+                              className="bg-slate-900 font-bold text-white hover:bg-slate-800 shrink-0 text-xs"
+                            >
+                              Verify OTP
+                            </Button>
+                          </div>
+                          <p className="text-[11px] text-slate-500 font-semibold italic">
+                            💡 Demo verification code is: <span className="font-bold text-cyan-600">123456</span>
+                          </p>
                         </div>
                       )}
                     </div>
@@ -893,7 +959,7 @@ function BookingWizard() {
             )}
           </div>
 
-          {/* Right-Hand Sidebar ("Booking Details" — Responsive Container & Address Word-Wrap Fix) */}
+          {/* Right-Hand Sidebar ("Booking Details") */}
           <aside className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs min-w-0 w-full overflow-hidden">
             <h2 className="font-extrabold text-slate-900 text-base sm:text-lg border-b border-slate-100 pb-4">
               Booking Details
@@ -909,7 +975,7 @@ function BookingWizard() {
 
               <div className="flex justify-between items-center gap-2">
                 <span className="text-slate-400 font-semibold shrink-0">Frequency</span>
-                <span className="font-bold text-slate-800 text-end">One Time</span>
+                <span className="font-bold text-slate-800 text-end">{frequencyTitle}</span>
               </div>
 
               <div className="flex justify-between items-center gap-2">
@@ -953,6 +1019,134 @@ function BookingWizard() {
           </aside>
         </div>
       </div>
+
+      {/* FREQUENCY SELECTION MODAL (Matching Uploaded Screenshots media_1787226500832.png & media_1787226538814.png) */}
+      <Dialog open={freqOpen} onOpenChange={setFreqOpen}>
+        <DialogContent className="max-w-md p-6 rounded-3xl overflow-hidden">
+          <DialogHeader className="pb-3 border-b border-slate-100">
+            <DialogTitle className="text-lg font-extrabold text-slate-900">
+              Choose your frequency
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 pt-2 max-h-[60vh] overflow-y-auto px-1">
+            {FREQUENCY_LIST.map((item) => {
+              const selected = freqDraft === item.id;
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => setFreqDraft(item.id)}
+                  className={`relative flex cursor-pointer items-center justify-between rounded-2xl border p-4 transition-all ${
+                    selected
+                      ? "border-cyan-400 bg-cyan-50/40 ring-2 ring-cyan-400/30"
+                      : "border-slate-200 bg-white hover:border-slate-300"
+                  }`}
+                >
+                  {item.popular && (
+                    <span className="absolute -top-2.5 start-4 rounded-md bg-cyan-500 px-2 py-0.5 text-[10px] font-extrabold text-white">
+                      Most popular
+                    </span>
+                  )}
+
+                  <div>
+                    <p className="text-sm font-extrabold text-slate-900">{item.title}</p>
+                    {item.badge && (
+                      <span className="mt-1 inline-block rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+
+                  <div
+                    className={`grid size-6 place-items-center rounded-full border-2 transition-all ${
+                      selected ? "border-cyan-500 bg-cyan-500 text-white" : "border-slate-300 bg-white"
+                    }`}
+                  >
+                    {selected && <div className="size-2 rounded-full bg-white" />}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* ServicePlus Promise Footer Section */}
+            <div className="mt-6 border-t border-slate-100 pt-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-cyan-600 font-extrabold text-base">serviceplus</span>
+                <span className="font-extrabold text-slate-900 text-base">Promise</span>
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-2.5">
+                  <Tag className="size-4 text-slate-700 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold text-slate-900">Any Mess, Any Time</p>
+                    <p className="text-[11px] text-slate-500">Top-rated professionals, ready when you need them.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5">
+                  <CalendarClock className="size-4 text-slate-700 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold text-slate-900">Book Instantly, Stay Flexible</p>
+                    <p className="text-[11px] text-slate-500">Multiple slots available with no commitment.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100">
+            <Button
+              type="button"
+              onClick={() => {
+                setFrequency(freqDraft);
+                setFreqOpen(false);
+              }}
+              className="w-full bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold py-3.5 rounded-full text-sm shadow-md"
+            >
+              Select
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* CANCELLATION & SERVICE POLICY MODAL */}
+      <Dialog open={policyOpen} onOpenChange={setPolicyOpen}>
+        <DialogContent className="max-w-md p-6 rounded-3xl">
+          <DialogHeader className="pb-3 border-b border-slate-100">
+            <DialogTitle className="text-lg font-extrabold text-slate-900">
+              Service & Cancellation Policy
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2 text-xs leading-relaxed text-slate-600">
+            <div className="space-y-1">
+              <p className="font-extrabold text-slate-900 text-sm">Free Cancellation</p>
+              <p>You can cancel or reschedule your booking free of charge up to 6 hours before your scheduled start time.</p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="font-extrabold text-slate-900 text-sm">Late Cancellation Fee</p>
+              <p>Cancellations made less than 6 hours prior to start time may incur a nominal AED 25 fee to compensate assigned professionals.</p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="font-extrabold text-slate-900 text-sm">100% Satisfaction Guarantee</p>
+              <p>If you are not satisfied with your service, contact us within 24 hours and we will send a top professional to re-clean free of charge.</p>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100">
+            <Button
+              type="button"
+              onClick={() => setPolicyOpen(false)}
+              className="w-full bg-slate-900 text-white font-extrabold py-3 rounded-full text-xs"
+            >
+              Got it
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <LocationPicker
         open={pickerOpen}

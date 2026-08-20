@@ -29,16 +29,10 @@ function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t, locale } = useLocale();
-  const { session, loading } = useSession();
-
-  useEffect(() => {
-    if (!loading && !session) navigate({ to: "/auth", search: { redirect: "/dashboard" } });
-  }, [loading, session, navigate]);
 
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ["my-bookings"],
     queryFn: () => getMyBookings(),
-    enabled: Boolean(session),
   });
 
   const cancelMutation = useMutation({

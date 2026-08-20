@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, Store } from "lucide-react";
+import { Bell, Eye, EyeOff, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, Store } from "lucide-react";
 import { amIAdmin } from "@/frontend/lib/api-services";
 import { AdminSidebar, NAV_GROUPS } from "@/frontend/components/admin/AdminSidebar";
 import { Button } from "@/frontend/components/ui/button";

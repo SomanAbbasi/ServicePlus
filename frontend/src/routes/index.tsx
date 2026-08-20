@@ -57,7 +57,7 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-export function Home() {
+function Home() {
   const { data } = useSuspenseQuery(homeQuery);
   const { services, categories } = data;
   const navigate = useNavigate();

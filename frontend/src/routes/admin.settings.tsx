@@ -14,7 +14,7 @@ import { Lock, Mail, Clock, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/admin/settings")({ component: AdminSettings });
 
-export function AdminSettings() {
+function AdminSettings() {
   const qc = useQueryClient();
   
   // Local Settings States

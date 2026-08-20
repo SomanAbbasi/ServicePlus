@@ -55,10 +55,9 @@ function UaeFlag() {
 }
 
 function AccountLink() {
-  const { session } = useSession();
   return (
     <Button asChild variant="ghost" size="icon" aria-label="Account">
-      <Link to={session ? "/dashboard" : "/auth"}>
+      <Link to="/dashboard">
         <UserCircle className="size-5" />
       </Link>
     </Button>

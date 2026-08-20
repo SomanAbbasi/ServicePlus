@@ -19,19 +19,30 @@ import { Toaster } from "@/frontend/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="mt-6">
+    <div className="flex min-h-[70vh] flex-col items-center justify-center bg-slate-50/50 px-4 py-16 text-center">
+      <div className="mx-auto max-w-md space-y-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
+        <img
+          src="/serviceplus-logo.webp"
+          alt="ServicePlus"
+          className="mx-auto h-12 w-auto object-contain"
+        />
+        <div className="space-y-2">
+          <span className="inline-block rounded-full bg-cyan-100 px-3 py-1 text-xs font-extrabold text-cyan-800">
+            404 Error
+          </span>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+            Page Not Found
+          </h1>
+          <p className="text-xs text-slate-500 leading-relaxed font-medium">
+            Sorry! The page you are looking for doesn't exist or has been moved.
+          </p>
+        </div>
+        <div>
           <Link
             to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-full bg-cyan-600 px-6 py-3 text-xs font-bold text-white shadow-md transition-all hover:bg-cyan-700"
           >
-            Go home
+            Return to Homepage
           </Link>
         </div>
       </div>
