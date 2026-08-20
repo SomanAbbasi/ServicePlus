@@ -367,7 +367,7 @@ function BookingWizard() {
 
   const serviceTitle = localizedText(detail?.service, "name", locale) ?? "Home Cleaning";
   const displayAddress =
-    manualAddress || savedLoc?.address || "F93H+PHX - Al Mushrif - W24 02 - Abu Dhabi - United Arab Emirates";
+    manualAddress.trim() || (savedLoc?.address ? savedLoc.address : "");
 
   const formattedTimeRange = useMemo(() => {
     if (!slotStart) return "17:30-18:00";
@@ -601,13 +601,10 @@ function BookingWizard() {
 
                     {/* 3. Cleaning Materials Selector */}
                     <div>
-                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      <div className="mb-3">
                         <Label className="text-xs sm:text-sm font-bold text-slate-900">
                           {isAr ? "هل تحتاج مواد تنظيف؟" : "Need cleaning materials?"}
                         </Label>
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500">
-                          Powered by <span className="rounded bg-emerald-600 px-1.5 py-0.5 text-[10px] text-white italic font-black">Jif</span>
-                        </span>
                       </div>
                       <div className="flex flex-wrap gap-2.5">
                         <button
