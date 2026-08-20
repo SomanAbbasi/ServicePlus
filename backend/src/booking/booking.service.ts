@@ -355,7 +355,7 @@ export class BookingService {
         to: 'somanabbasi305@gmail.com',
         event: 'new_booking_alert',
         title: `[New Order Alert] Booking #${bookingNumber} — ServicePlus`,
-        body: `New booking #${bookingNumber} placed for ${service.name} on ${input.scheduledDate} at ${input.scheduledStart}. Total: AED ${quote.breakdown.total} (${input.paymentMethod.toUpperCase()}).`,
+        body: `New booking #${bookingNumber} placed for ${input.serviceSlug} on ${input.scheduledDate} at ${input.scheduledStart}. Total: AED ${quote.breakdown.total} (${input.paymentMethod.toUpperCase()}).`,
       });
     } catch (e) {
       console.error('Error sending admin notification email:', e);
