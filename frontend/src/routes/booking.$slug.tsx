@@ -153,7 +153,7 @@ function BookingWizard() {
   const [idempotencyKey] = useState(() => `bk_${Math.random().toString(36).slice(2)}`);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: detail } = useQuery({
+  const { data: detail, isPending: isDetailPending } = useQuery({
     queryKey: ["service", slug],
     queryFn: () => getServiceDetail(slug),
   });
@@ -430,7 +430,20 @@ function BookingWizard() {
             {/* STEP 1: Details or Deep Cleaning Multi-Group Option Selector */}
             {step === 0 && (
               <section className="space-y-6 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
-                {hasOptions ? (
+                {isDetailPending || !detail ? (
+                  <div className="space-y-6 animate-pulse">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="size-12 rounded-xl bg-slate-200 shrink-0" />
+                      <div className="size-12 rounded-xl bg-slate-200 shrink-0" />
+                      <div className="size-12 rounded-xl bg-slate-200 shrink-0" />
+                      <div className="size-12 rounded-xl bg-slate-200 shrink-0" />
+                    </div>
+                    <div className="space-y-4">
+                      <div className="h-24 rounded-2xl bg-slate-100" />
+                      <div className="h-24 rounded-2xl bg-slate-100" />
+                    </div>
+                  </div>
+                ) : hasOptions ? (
                   /* Deep Cleaning / Multi-Group Sub-Category Selector (Matching Screenshot media_1787231010179.png) */
                   <div className="space-y-6">
                     {/* Horizontal Group Selector Tabs */}

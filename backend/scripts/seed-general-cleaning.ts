@@ -881,7 +881,7 @@ async function seedGeneralCleaning() {
       optionGroups: [
         {
           name: 'Bag - Wash & Iron',
-          imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+          imageUrl: 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=400&q=80',
           sortOrder: 1,
           variants: [
             {
@@ -889,7 +889,7 @@ async function seedGeneralCleaning() {
               price: 89,
               originalPrice: 110,
               description: 'Up to 10 items, machine-washed at 40°C & delivered within 48 hours.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=400&q=80',
               sortOrder: 1,
             },
             {
@@ -905,14 +905,14 @@ async function seedGeneralCleaning() {
               price: 169,
               originalPrice: 195,
               description: 'Up to 30 items, machine-washed at 40°C & delivered within 48 hours.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1610557892470-55d9e80c0bce?w=400&q=80',
               sortOrder: 3,
             },
           ],
         },
         {
           name: 'Bag - Iron',
-          imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+          imageUrl: 'https://images.unsplash.com/photo-1489274495757-95c7c837b101?w=400&q=80',
           sortOrder: 2,
           variants: [
             {
@@ -920,7 +920,7 @@ async function seedGeneralCleaning() {
               price: 69,
               originalPrice: 80,
               description: 'Up to 10 items delivered in 48 hours.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1489274495757-95c7c837b101?w=400&q=80',
               sortOrder: 1,
             },
             {
@@ -928,7 +928,7 @@ async function seedGeneralCleaning() {
               price: 89,
               originalPrice: 95,
               description: 'Up to 20 items delivered in 48 hours.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1604014237800-1c9102c219da?w=400&q=80',
               sortOrder: 2,
             },
             {
@@ -936,14 +936,14 @@ async function seedGeneralCleaning() {
               price: 119,
               originalPrice: 130,
               description: 'Up to 30 items, delivered in 48 hours.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=400&q=80',
               sortOrder: 3,
             },
           ],
         },
         {
           name: 'Bag - Wash & Fold',
-          imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+          imageUrl: 'https://images.unsplash.com/photo-1604335399105-a0c585fd81a1?w=400&q=80',
           sortOrder: 3,
           variants: [
             {
@@ -951,7 +951,7 @@ async function seedGeneralCleaning() {
               price: 49,
               originalPrice: 70,
               description: 'Up to 10 items, machine-washed at 40°C & delivered within 48 hours.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1604335399105-a0c585fd81a1?w=400&q=80',
               sortOrder: 1,
             },
             {
@@ -959,7 +959,7 @@ async function seedGeneralCleaning() {
               price: 69,
               originalPrice: 79,
               description: 'Up to 20 items, machine-washed at 40°C & delivered within 48 hours.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&q=80',
               sortOrder: 2,
             },
             {
@@ -967,14 +967,14 @@ async function seedGeneralCleaning() {
               price: 89,
               originalPrice: 99,
               description: 'Up to 30 items, machine-washed at 40°C & delivered within 48 hours.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?w=400&q=80',
               sortOrder: 3,
             },
           ],
         },
         {
           name: 'Home Linen',
-          imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+          imageUrl: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80',
           sortOrder: 4,
           variants: [
             {
@@ -982,7 +982,7 @@ async function seedGeneralCleaning() {
               price: 59,
               originalPrice: 75,
               description: 'Expertly cleaned & air dried. Takes up to 3 days to deliver!',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=400&q=80',
               sortOrder: 1,
             },
             {
@@ -990,7 +990,7 @@ async function seedGeneralCleaning() {
               price: 89,
               originalPrice: 110,
               description: 'Get up to 15 towels, pillows, sheets & other household fabrics cleaned with care.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400&q=80',
               sortOrder: 2,
             },
             {
@@ -998,7 +998,7 @@ async function seedGeneralCleaning() {
               price: 149,
               originalPrice: 179,
               description: 'Wash & iron up to 15 towels, pillows, sheets & everyday home fabrics.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=400&q=80',
               sortOrder: 3,
             },
             {
@@ -1006,7 +1006,7 @@ async function seedGeneralCleaning() {
               price: 13,
               originalPrice: 19,
               description: 'Enjoy sound sleep every night on fresh bedsheets, expertly washed & delivered.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80',
               sortOrder: 4,
             },
             {
@@ -1014,7 +1014,7 @@ async function seedGeneralCleaning() {
               price: 19,
               originalPrice: 29,
               description: 'Fresh duvet covers that protect and refresh your bedding.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=400&q=80',
               sortOrder: 5,
             },
             {
@@ -1022,14 +1022,14 @@ async function seedGeneralCleaning() {
               price: 13,
               originalPrice: 19,
               description: 'Soft, fresh towels that feel clean and ready for use.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=400&q=80',
               sortOrder: 6,
             },
           ],
         },
         {
           name: 'Dry Cleaning',
-          imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+          imageUrl: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=400&q=80',
           sortOrder: 5,
           variants: [
             {
@@ -1037,7 +1037,7 @@ async function seedGeneralCleaning() {
               price: 29,
               originalPrice: 39,
               description: 'Give your outerwear some serious glow-up.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=80',
               sortOrder: 1,
             },
             {
@@ -1045,7 +1045,7 @@ async function seedGeneralCleaning() {
               price: 15,
               originalPrice: 17,
               description: 'Freshen up your fit with our dry cleaning service.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&q=80',
               sortOrder: 2,
             },
             {
@@ -1053,7 +1053,7 @@ async function seedGeneralCleaning() {
               price: 45,
               originalPrice: 55,
               description: 'Keep your 2-piece suit sharp with our expert dry cleaning.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&q=80',
               sortOrder: 3,
             },
             {
@@ -1061,7 +1061,7 @@ async function seedGeneralCleaning() {
               price: 15,
               originalPrice: 17,
               description: 'Level up your look with our dry cleaning that’s totally on point every time.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1475180098004-ca77a66827be?w=400&q=80',
               sortOrder: 4,
             },
             {
@@ -1069,7 +1069,7 @@ async function seedGeneralCleaning() {
               price: 25,
               originalPrice: 27,
               description: 'Suitable for formal or casual dresses without embroidery or beadwork.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400&q=80',
               sortOrder: 5,
             },
             {
@@ -1077,7 +1077,7 @@ async function seedGeneralCleaning() {
               price: 50,
               originalPrice: 70,
               description: 'Dry clean your delicate dress, without worrying.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=400&q=80',
               sortOrder: 6,
             },
             {
@@ -1085,7 +1085,7 @@ async function seedGeneralCleaning() {
               price: 19,
               originalPrice: 22,
               description: 'Elegance, refreshed with our abaya care.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&q=80',
               sortOrder: 7,
             },
             {
@@ -1093,7 +1093,7 @@ async function seedGeneralCleaning() {
               price: 19,
               originalPrice: 22,
               description: 'Give your kandura some serious flair with our dry cleaning.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1604014237800-1c9102c219da?w=400&q=80',
               sortOrder: 8,
             },
             {
@@ -1101,7 +1101,7 @@ async function seedGeneralCleaning() {
               price: 39,
               originalPrice: 50,
               description: 'Item not listed? Our custom service has you covered.',
-              imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&q=80',
+              imageUrl: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=400&q=80',
               sortOrder: 9,
             },
           ],
@@ -1261,6 +1261,249 @@ async function seedGeneralCleaning() {
         },
       ],
     },
+
+    // 8. Pest Control & Disinfection (Options)
+    {
+      name: 'Pest Control & Disinfection',
+      nameAr: 'مكافحة الآفات والتطهير',
+      slug: 'pest-control',
+      imageUrl: 'https://images.unsplash.com/photo-1615460549969-36fa19521a4f?w=800&q=80',
+      shortDescription: 'Targeted treatment for cockroaches, bed bugs, ants, mosquitoes, rodents & full home disinfection.',
+      shortDescriptionAr: 'علاج متخصص وموجه للصراصير، بق الفراش، النمل، البعوض، القوارض وتطهير المنازل بالكامل.',
+      basePrice: 89,
+      originalPrice: 129,
+      rating: 4.73,
+      reviewCount: 50420,
+      sortOrder: 8,
+      isFeatured: true,
+      bookingType: 'options',
+      optionGroups: [
+        {
+          name: 'Cockroaches',
+          nameAr: 'الصراصير',
+          imageUrl: 'https://images.unsplash.com/photo-1615460549969-36fa19521a4f?w=400&q=80',
+          sortOrder: 1,
+          variants: [
+            {
+              name: 'Apartment',
+              nameAr: 'شقة',
+              price: 139,
+              originalPrice: 169,
+              description: "Roaches crashing your apartment? We'll squash 'em, any size!",
+              descriptionAr: 'الصراصير تداهم شقتك؟ سنقضي عليها بالكامل مهما كان حجمها!',
+              imageUrl: 'https://images.unsplash.com/photo-1615460549969-36fa19521a4f?w=400&q=80',
+              sortOrder: 1,
+            },
+            {
+              name: 'Villa',
+              nameAr: 'فيلة',
+              price: 219,
+              originalPrice: 269,
+              description: "Roaches roaming your villa? We'll clear every room, fast!",
+              descriptionAr: 'الصراصير تنتشر في فيلتك؟ سنطهر كل غرفة بسرعة!',
+              imageUrl: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=400&q=80',
+              sortOrder: 2,
+            },
+            {
+              name: 'Kitchen',
+              nameAr: 'المطبخ',
+              price: 99,
+              originalPrice: 139,
+              description: 'Say bye to kitchen lurkers. We handle the dirty work.',
+              descriptionAr: 'قل وداعاً لآفات المطبخ. نحن نتكفل بالمهمة الصعبة.',
+              imageUrl: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=400&q=80',
+              sortOrder: 3,
+            },
+            {
+              name: 'Bathroom',
+              nameAr: 'الحمام',
+              price: 89,
+              originalPrice: 129,
+              description: 'Bugs in your bathroom? Not anymore. We take care of it.',
+              descriptionAr: 'الحشرات في حمامك؟ ليس بعد اليوم. نحن نهتم بالأمر.',
+              imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400&q=80',
+              sortOrder: 4,
+            },
+          ],
+        },
+        {
+          name: 'General',
+          nameAr: 'عام',
+          imageUrl: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=400&q=80',
+          sortOrder: 2,
+          variants: [
+            {
+              name: 'Apartment',
+              nameAr: 'شقة',
+              price: 169,
+              originalPrice: 199,
+              description: 'Ants, roaches, spiders? One visit clears your whole apartment!',
+              descriptionAr: 'نمل، صراصير، عناكب؟ زيارة واحدة تنظف شقتك بالكامل!',
+              imageUrl: 'https://images.unsplash.com/photo-1615460549969-36fa19521a4f?w=400&q=80',
+              sortOrder: 1,
+            },
+            {
+              name: 'Villa',
+              nameAr: 'فيلة',
+              price: 289,
+              originalPrice: 339,
+              description: 'Ants, roaches, spiders? One visit clears your whole villa!',
+              descriptionAr: 'نمل، صراصير، عناكب؟ زيارة واحدة تنظف فيلتك بالكامل!',
+              imageUrl: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=400&q=80',
+              sortOrder: 2,
+            },
+          ],
+        },
+        {
+          name: 'Mosquitoes',
+          nameAr: 'البعوض',
+          imageUrl: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&q=80',
+          sortOrder: 3,
+          variants: [
+            {
+              name: 'Apartment',
+              nameAr: 'شقة',
+              price: 139,
+              originalPrice: 169,
+              description: "BzzZZZzzz ruining your peace? We'll make your apartment mosquito free!",
+              descriptionAr: 'طنين البعوض يزعج راحتك؟ سنجعل شقتك خالية تماماً من البعوض!',
+              imageUrl: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&q=80',
+              sortOrder: 1,
+            },
+            {
+              name: 'Villa',
+              nameAr: 'فيلة',
+              price: 219,
+              originalPrice: 269,
+              description: "Mosquitos buzzing around your villa? We'll make it a no-fly zone!",
+              descriptionAr: 'البعوض يحوم حول فيلتك؟ سنجعل حديقتك وفيلتك منطقة خالية من البعوض!',
+              imageUrl: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&q=80',
+              sortOrder: 2,
+            },
+          ],
+        },
+        {
+          name: 'Bed Bugs',
+          nameAr: 'بق الفراش',
+          imageUrl: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80',
+          sortOrder: 4,
+          variants: [
+            {
+              name: 'Apartment',
+              nameAr: 'شقة',
+              price: 139,
+              originalPrice: 179,
+              description: "Bed bugs stealing your sleep? We'll evict 'em from any apartment!",
+              descriptionAr: 'بق الفراش يحرمك من النوم؟ سنطرده تماماً من شقتك!',
+              imageUrl: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80',
+              sortOrder: 1,
+            },
+            {
+              name: 'Villa',
+              nameAr: 'فيلة',
+              price: 219,
+              originalPrice: 279,
+              description: "Bed bugs in your villa? Sleep easy, we'll clear every room!",
+              descriptionAr: 'بق الفراش في فيلتك؟ نم بمرتاح البال، سنطهر كل الغرف!',
+              imageUrl: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=400&q=80',
+              sortOrder: 2,
+            },
+          ],
+        },
+        {
+          name: 'Ants',
+          nameAr: 'النمل',
+          imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&q=80',
+          sortOrder: 5,
+          variants: [
+            {
+              name: 'Apartment',
+              nameAr: 'شقة',
+              price: 139,
+              originalPrice: 169,
+              description: "Ants marching through your apartment? We'll stop them in their tracks!",
+              descriptionAr: 'النمل ينتشر في شقتك؟ سنوقف زحفه فوراً!',
+              imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&q=80',
+              sortOrder: 1,
+            },
+            {
+              name: 'Villa',
+              nameAr: 'فيلة',
+              price: 219,
+              originalPrice: 269,
+              description: "Ants invading your villa? We'll send the colony packing!",
+              descriptionAr: 'النمل يغزو فيلتك؟ سنقضي على مستعمرة النمل بالكامل!',
+              imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&q=80',
+              sortOrder: 2,
+            },
+          ],
+        },
+        {
+          name: 'Rodents',
+          nameAr: 'القوارض',
+          imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&q=80',
+          sortOrder: 6,
+          variants: [
+            {
+              name: 'Apartment',
+              nameAr: 'شقة',
+              price: 139,
+              originalPrice: 179,
+              description: "Rats running wild around your home? We'll show 'em the exit, fast!",
+              descriptionAr: 'الفئران تعبث ببيتك؟ سنخرجها بسرعة وفعالية!',
+              imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&q=80',
+              sortOrder: 1,
+            },
+            {
+              name: 'Villa',
+              nameAr: 'فيلة',
+              price: 219,
+              originalPrice: 279,
+              description: "Mice sneaking around your villa? We'll evict every one of them!",
+              descriptionAr: 'الفئران تتسلل إلى فيلتك؟ سنقضي عليها تماماً!',
+              imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&q=80',
+              sortOrder: 2,
+            },
+          ],
+        },
+        {
+          name: 'Apartment Disinfection',
+          nameAr: 'تطهير الشقق',
+          imageUrl: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=400&q=80',
+          sortOrder: 7,
+          variants: [
+            {
+              name: 'Apartment',
+              nameAr: 'شقة',
+              price: 149,
+              originalPrice: 199,
+              description: "Germs crashing your space? We'll sanitize your whole apartment!",
+              descriptionAr: 'الجراثيم تهدد مكانك؟ سنعقم شقتك بالكامل بأحدث التقنيات!',
+              imageUrl: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=400&q=80',
+              sortOrder: 1,
+            },
+          ],
+        },
+        {
+          name: 'Villa Disinfection',
+          nameAr: 'تطهير الفلل',
+          imageUrl: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=400&q=80',
+          sortOrder: 8,
+          variants: [
+            {
+              name: 'Villa',
+              nameAr: 'فيلة',
+              price: 399,
+              originalPrice: 499,
+              description: "Germ-free goals? We'll disinfect every inch of your villa!",
+              descriptionAr: 'تريد بيتاً خالياً من الجراثيم؟ سنعقم كل شبر في فيلتك!',
+              imageUrl: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=400&q=80',
+              sortOrder: 1,
+            },
+          ],
+        },
+      ],
+    },
   ];
 
   for (const sData of servicesData) {
@@ -1340,6 +1583,7 @@ async function seedGeneralCleaning() {
           data: {
             serviceId: service.id,
             name: gData.name,
+            nameAr: (gData as any).nameAr || null,
             imageUrl: gData.imageUrl,
             sortOrder: gData.sortOrder,
             isActive: true,
@@ -1349,6 +1593,7 @@ async function seedGeneralCleaning() {
         group = await prisma.serviceOptionGroup.update({
           where: { id: group.id },
           data: {
+            nameAr: (gData as any).nameAr || group.nameAr,
             imageUrl: gData.imageUrl,
             sortOrder: gData.sortOrder,
             isActive: true,
@@ -1367,9 +1612,11 @@ async function seedGeneralCleaning() {
               serviceId: service.id,
               groupId: group.id,
               name: vData.name,
+              nameAr: (vData as any).nameAr || null,
               price: vData.price,
               originalPrice: vData.originalPrice,
               description: vData.description,
+              descriptionAr: (vData as any).descriptionAr || null,
               imageUrl: vData.imageUrl,
               sortOrder: vData.sortOrder,
               isActive: true,
@@ -1379,9 +1626,11 @@ async function seedGeneralCleaning() {
           await prisma.serviceVariant.update({
             where: { id: existingVariant.id },
             data: {
+              nameAr: (vData as any).nameAr || existingVariant.nameAr,
               price: vData.price,
               originalPrice: vData.originalPrice,
               description: vData.description,
+              descriptionAr: (vData as any).descriptionAr || existingVariant.descriptionAr,
               imageUrl: vData.imageUrl,
               sortOrder: vData.sortOrder,
               isActive: true,

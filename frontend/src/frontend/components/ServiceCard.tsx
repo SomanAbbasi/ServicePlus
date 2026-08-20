@@ -64,20 +64,11 @@ export function ServiceCard({
           </p>
         </div>
 
-        <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-              FROM
-            </span>
-            <span className="text-base font-black text-slate-900">
-              {formatMoney(price)}
-            </span>
-          </div>
-
+        <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-end">
           <Link
             to="/booking/$slug"
             params={{ slug: service.slug }}
-            className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500 px-4 py-2.5 text-xs font-extrabold text-white transition-all hover:bg-cyan-600 shadow-sm active:scale-95"
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-cyan-500 px-4 py-2.5 text-xs font-extrabold text-white transition-all hover:bg-cyan-600 shadow-sm active:scale-95"
           >
             {t("bookNow")}
             {isAr ? <ArrowLeft className="size-3.5" /> : <ArrowRight className="size-3.5" />}

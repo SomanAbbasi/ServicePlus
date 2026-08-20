@@ -94,7 +94,7 @@ export class PricingServiceEngine {
       base +=
         ((rate * Math.max(1, hours) * service.extra_professional_pct) / 100) *
         extras;
-    } else if (service.booking_type === 'variant') {
+    } else if (service.booking_type === 'variant' || service.booking_type === 'options') {
       base = 0;
     } else {
       base = service.base_price * Math.max(1, professionals);

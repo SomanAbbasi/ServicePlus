@@ -54,6 +54,12 @@ const STATUSES: BookingStatus[] = [
   "PAYMENT_FAILED",
 ];
 
+const ACTION_STATUSES: BookingStatus[] = [
+  "CONFIRMED",
+  "COMPLETED",
+  "CANCELLED",
+];
+
 const PAGE_SIZE = 20;
 
 function AdminBookings() {
@@ -226,7 +232,7 @@ function AdminBookings() {
                         }
                         className="h-8 rounded-md border border-input bg-transparent px-1 text-xs"
                       >
-                        {STATUSES.map((s) => (
+                        {Array.from(new Set([b.status, ...ACTION_STATUSES])).map((s) => (
                           <option key={s} value={s}>
                             {s}
                           </option>
