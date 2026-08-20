@@ -13,8 +13,24 @@ async function bootstrap() {
   const port = config.get<number>('PORT', 3001);
   const apiPrefix = config.get<string>('API_PREFIX', 'api');
 
+  const allowedOrigins = [
+    config.get<string>('FRONTEND_URL', 'http://localhost:3000'),
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ];
+
   app.enableCors({
-    origin: config.get<string>('FRONTEND_URL', 'http://localhost:5173'),
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        /\.vercel\.app$/.test(new URL(origin).hostname)
+      ) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     credentials: true,
   });
 

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const API_BASE = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3001";
+const RAW_API_BASE = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3001/api";
+const API_ORIGIN = RAW_API_BASE.replace(/\/api\/?$/, "") || "http://localhost:3001";
 
 /** Public read-through proxy for media stored in the backend. */
 export const Route = createFileRoute("/api/public/media/$")({
@@ -10,7 +11,7 @@ export const Route = createFileRoute("/api/public/media/$")({
         const path = (params as Record<string, string>)["_splat"] ?? "";
         if (!path || path.includes("..")) return new Response("Not found", { status: 404 });
 
-        const upstream = `${API_BASE}/media/${path}`;
+        const upstream = `${API_ORIGIN}/api/media/${path}`;
         const res = await fetch(upstream);
         if (!res.ok) return new Response("Not found", { status: 404 });
 
