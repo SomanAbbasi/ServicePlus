@@ -171,6 +171,11 @@ function BookingWizard() {
     }
   }, [step, freqAutoShown, frequency]);
 
+  // Always scroll to top on step or slug changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [step, slug]);
+
   const addonPayload = useMemo(() => addonIds.map((id) => ({ id, quantity: 1 })), [addonIds]);
 
   const optionGroups: any[] = (detail as any)?.option_groups ?? [];
@@ -325,6 +330,7 @@ function BookingWizard() {
 
   // Step Advancement logic
   const goNext = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     if (step === 0) {
       setStep(hasAddons ? 1 : 2);
     } else {
@@ -333,6 +339,7 @@ function BookingWizard() {
   };
 
   const goBack = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     if (step === 2 && !hasAddons) {
       setStep(0);
     } else {
