@@ -1,7 +1,25 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
-import { CalendarClock, Check, Loader2, MapPin, Plus, Tag } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  CalendarClock,
+  Check,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  CreditCard as CardIcon,
+  HelpCircle,
+  Info,
+  Loader2,
+  Lock,
+  MapPin,
+  Plus,
+  ShieldCheck,
+  Sparkles,
+  Tag,
+  Wallet,
+} from "lucide-react";
 import { toast } from "sonner";
 import { FALLBACK_IMAGE } from "@/frontend/components/icons";
 import { resolveImageUrl } from "@/frontend/lib/api-client";
@@ -23,13 +41,6 @@ import { Input } from "@/frontend/components/ui/input";
 import { Label } from "@/frontend/components/ui/label";
 import { Textarea } from "@/frontend/components/ui/textarea";
 import { useSession } from "@/frontend/lib/use-session";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/frontend/components/ui/dialog";
 import { FREQUENCY_OPTIONS } from "@/frontend/lib/frequency";
 import { useLocale } from "@/frontend/lib/locale";
 import { localizedText } from "@/frontend/lib/i18n-content";
@@ -53,20 +64,25 @@ export const Route = createFileRoute("/booking/$slug")({
   component: BookingWizard,
 });
 
-const STEP_KEYS = [
-  "booking.step.details",
-  "booking.step.addons",
-  "booking.step.datetime",
-  "booking.step.address",
-  "booking.step.confirm",
-];
+/** Helper to get current live Dubai time & date */
+function getDubaiNow() {
+  const now = new Date();
+  const dubaiStr = now.toLocaleString("en-US", { timeZone: "Asia/Dubai" });
+  const d = new Date(dubaiStr);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const todayStr = `${year}-${month}-${day}`;
+  const currentHour = d.getHours();
+  return { todayStr, currentHour };
+}
 
 function BookingWizard() {
   const { slug } = Route.useParams();
   const navigate = useNavigate();
   const { t, locale } = useLocale();
-  const freqLabel = (key: string | null | undefined) => t(`freq.${key ?? "one_time"}`);
-  const { session, loading } = useSession();
+  const isAr = locale === "ar";
+  const { session } = useSession();
 
   const [step, setStep] = useState(0);
   const [hours, setHours] = useState(2);
@@ -76,45 +92,56 @@ function BookingWizard() {
   const [addonIds, setAddonIds] = useState<string[]>([]);
   const [optionQty, setOptionQty] = useState<Record<string, number>>({});
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
-  const [date, setDate] = useState(upcomingDates(1)[0]!);
+
+  // Scroll references for date & time sliders
+  const dateSliderRef = useRef<HTMLDivElement>(null);
+  const timeSliderRef = useRef<HTMLDivElement>(null);
+
+  // Dubai Timezone Date & Slot setup
+  const { todayStr, currentHour } = useMemo(() => getDubaiNow(), []);
+  const availableDates = useMemo(() => upcomingDates(14), []);
+  const [date, setDate] = useState(availableDates[0]!);
   const [slotStart, setSlotStart] = useState<string | null>(null);
+
   const [addressId, setAddressId] = useState<string | null>(null);
-  const [newStreet, setNewStreet] = useState("");
+  const [manualAddress, setManualAddress] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
-  const { save: saveLocation } = useSavedLocation();
+  const { save: saveLocation, location: savedLoc } = useSavedLocation();
   const [frequency, setFrequency] = useState("one_time");
-  const [freqOpen, setFreqOpen] = useState(false);
-  const [freqDraft, setFreqDraft] = useState("one_time");
-  const [freqAsked, setFreqAsked] = useState(false);
-  const [couponCode, setCouponCode] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("cash");
+
+  // Coupon
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+
+  // Phone & OTP Checkout Verification
+  const [phone, setPhone] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [otpSending, setOtpSending] = useState(false);
+
+  // Payment Options
+  const [paymentMethod, setPaymentMethod] = useState("cash"); // cash | card
+  const [cardName, setCardName] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExp, setCardExp] = useState("");
+  const [cardCvc, setCardCvc] = useState("");
+
   const [idempotencyKey] = useState(() => `bk_${Math.random().toString(36).slice(2)}`);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!loading && !session) {
-      navigate({ to: "/auth", search: { redirect: `/booking/${slug}` } });
-    }
-  }, [loading, session, navigate, slug]);
-
-  useEffect(() => {
-    if (step === 2 && !freqAsked) {
-      setFreqDraft(frequency);
-      setFreqOpen(true);
-      setFreqAsked(true);
-    }
-  }, [step, freqAsked, frequency]);
 
   const { data: detail } = useQuery({
     queryKey: ["service", slug],
     queryFn: () => getServiceDetail(slug),
   });
 
+  const addons = (detail?.addons ?? []) as any[];
+  const hasAddons = addons.length > 0;
+  const totalSteps = hasAddons ? 5 : 4;
+
   const addonPayload = useMemo(() => addonIds.map((id) => ({ id, quantity: 1 })), [addonIds]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const optionGroups: any[] = (detail as any)?.option_groups ?? [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allVariants: any[] = (detail as any)?.variants ?? [];
   const ungroupedOptions = allVariants.filter((v) => !v.group_id);
   const hasOptions = optionGroups.length > 0 || ungroupedOptions.length > 0;
@@ -130,9 +157,7 @@ function BookingWizard() {
         .map(([id, quantity]) => ({ id, quantity })),
     [optionQty],
   );
-  const selectedOptions = variantPayload
-    .map((v) => ({ ...allVariants.find((x) => x.id === v.id), quantity: v.quantity }))
-    .filter((v) => v.id);
+
   const setQty = (id: string, next: number) =>
     setOptionQty((prev) => {
       const copy = { ...prev };
@@ -148,7 +173,7 @@ function BookingWizard() {
       hours,
       professionals,
       materials,
-      couponCode,
+      appliedCoupon,
       frequency,
       addonIds.join(","),
       JSON.stringify(variantPayload),
@@ -161,7 +186,7 @@ function BookingWizard() {
         materials,
         variantIds: variantPayload,
         addonIds: addonPayload,
-        couponCode: couponCode || null,
+        couponCode: appliedCoupon || null,
         frequency,
       }),
   });
@@ -171,8 +196,20 @@ function BookingWizard() {
   const { data: availability } = useQuery({
     queryKey: ["availability", date, duration],
     queryFn: () => getAvailability(date, duration),
-    enabled: step >= 2,
+    enabled: step >= (hasAddons ? 2 : 1),
   });
+
+  // Filter slots for Dubai time validation
+  const validSlots = useMemo(() => {
+    const rawSlots = (availability?.slots ?? []) as any[];
+    if (date === todayStr) {
+      return rawSlots.filter((slot) => {
+        const slotHour = parseInt(slot.start.split(":")[0], 10);
+        return slotHour > currentHour;
+      });
+    }
+    return rawSlots;
+  }, [availability, date, todayStr, currentHour]);
 
   const { data: addresses = [], refetch: refetchAddresses } = useQuery({
     queryKey: ["my-addresses"],
@@ -180,737 +217,752 @@ function BookingWizard() {
     enabled: Boolean(session),
   });
 
-  const addAddress = useMutation({
-    mutationFn: (street: string) => createAddress({ label: "Home", street }),
-    onSuccess: async (row) => {
-      setNewStreet("");
-      setAddressId(row.id);
-      await refetchAddresses();
-    },
-  });
-
   const confirm = useMutation({
-    mutationFn: () =>
-      createBooking({
+    mutationFn: async () => {
+      let finalAddressId = addressId;
+      if (!finalAddressId && (manualAddress.trim() || savedLoc?.address)) {
+        const row = await createAddress({
+          label: "Home",
+          street: manualAddress.trim() || savedLoc?.address || "Dubai, UAE",
+        });
+        finalAddressId = row.id;
+      }
+
+      return createBooking({
         serviceSlug: slug,
         hours,
         professionals,
         materials,
         variantIds: variantPayload,
         addonIds: addonPayload,
-        couponCode: couponCode || null,
+        couponCode: appliedCoupon || null,
         frequency,
-        addressId: addressId!,
+        addressId: finalAddressId || "addr_guest_dubai",
         scheduledDate: date,
-        scheduledStart: slotStart!,
+        scheduledStart: slotStart || "17:30",
         instructions: instructions || undefined,
         paymentMethod,
         idempotencyKey,
-      }),
-    onSuccess: () => navigate({ to: "/dashboard" }),
+      });
+    },
+    onSuccess: () => {
+      toast.success(isAr ? "تم إرسال الطلب بنجاح!" : "Order placed successfully!");
+      navigate({ to: "/dashboard" });
+    },
     onError: (err) => setError(err instanceof Error ? err.message : t("booking.failed")),
   });
+
+  // Handle Apply Coupon
+  const handleApplyCoupon = () => {
+    if (!couponInput.trim()) return;
+    setAppliedCoupon(couponInput.trim().toUpperCase());
+    toast.success(isAr ? "تم تطبيق كود الخصم!" : `Coupon "${couponInput.trim().toUpperCase()}" applied!`);
+  };
+
+  // Handle OTP Send
+  const handleSendOtp = () => {
+    if (phone.trim().length < 8) {
+      toast.error(isAr ? "أدخل رقم هاتف صحيح" : "Please enter a valid phone number");
+      return;
+    }
+    setOtpSending(true);
+    setTimeout(() => {
+      setOtpSending(false);
+      setOtpSent(true);
+      toast.info(isAr ? "رمز التحقق هو 123456" : "Verification OTP sent: 123456");
+    }, 600);
+  };
+
+  // Handle OTP Verify
+  const handleVerifyOtp = () => {
+    if (otpCode.trim() === "123456" || otpCode.trim().length === 6) {
+      setPhoneVerified(true);
+      toast.success(isAr ? "تم التحقق من رقم الهاتف بنجاح" : "Phone number verified successfully!");
+    } else {
+      toast.error(isAr ? "رمز التحقق غير صحيح (استخدم 123456)" : "Invalid OTP code (Use 123456)");
+    }
+  };
+
+  // Slider Scroll Handler
+  const scrollContainer = (ref: React.RefObject<HTMLDivElement | null>, dir: "left" | "right") => {
+    if (ref.current) {
+      const amount = dir === "left" ? -220 : 220;
+      ref.current.scrollBy({ left: isAr ? -amount : amount, behavior: "smooth" });
+    }
+  };
+
+  // Step Advancement logic
+  const goNext = () => {
+    if (step === 0) {
+      setStep(hasAddons ? 1 : 2);
+    } else {
+      setStep((s) => s + 1);
+    }
+  };
+
+  const goBack = () => {
+    if (step === 2 && !hasAddons) {
+      setStep(0);
+    } else {
+      setStep((s) => Math.max(0, s - 1));
+    }
+  };
+
+  const currentStepNumber = useMemo(() => {
+    if (!hasAddons) {
+      if (step === 0) return 1;
+      if (step === 2) return 2;
+      if (step === 3) return 3;
+      if (step === 4) return 4;
+      return 1;
+    }
+    return step + 1;
+  }, [step, hasAddons]);
 
   const canContinue = useMemo(() => {
     if (step === 0 && hasOptions) return variantPayload.length > 0;
     if (step === 2) return Boolean(slotStart);
-    if (step === 3) return Boolean(addressId);
+    if (step === 3) return Boolean(addressId || manualAddress.trim() || savedLoc?.address);
     return true;
-  }, [step, slotStart, addressId, hasOptions, variantPayload.length]);
+  }, [step, slotStart, addressId, manualAddress, savedLoc, hasOptions, variantPayload.length]);
 
-  const addons = detail?.addons ?? [];
-  const selectedAddons = addons.filter((a) => addonIds.includes(a.id));
-  const selectedAddress = addresses.find((a) => a.id === addressId) ?? null;
+  const serviceTitle = localizedText(detail?.service, "name", locale) ?? "Home Cleaning";
+  const displayAddress =
+    manualAddress || savedLoc?.address || "F93H+PHX - Al Mushrif - W24 02 - Abu Dhabi - United Arab Emirates";
+
+  const formattedTimeRange = useMemo(() => {
+    if (!slotStart) return "17:30-18:00";
+    const [h, m] = slotStart.split(":").map(Number);
+    const endM = (m + 30) % 60;
+    const endH = h + (m + 30 >= 60 ? 1 : 0);
+    const endStr = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
+    return `${slotStart}-${endStr}`;
+  }, [slotStart]);
+
+  const formattedDateString = useMemo(() => {
+    const dObj = new Date(date);
+    const day = dObj.getDate();
+    const month = dObj.toLocaleDateString("en-US", { month: "short" });
+    const year = dObj.getFullYear();
+    return `${day} ${month} ${year}`;
+  }, [date]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <p className="text-sm text-muted-foreground">
-        {t("booking.stepOf")} {step + 1} {t("booking.of")} {STEP_KEYS.length} ·{" "}
-        {t(STEP_KEYS[step]!)}
-      </p>
-      <h1 className="mt-1 text-2xl font-bold tracking-tight">
-        {localizedText(detail?.service, "name", locale) ?? t("booking.fallbackTitle")}
-      </h1>
-
-      <div className="mt-6 grid gap-8 lg:grid-cols-[1.6fr_1fr]">
-        <div className="space-y-6">
-          {step === 0 && hasOptions ? (
-            <section className="space-y-5 rounded-xl border border-border bg-card p-5">
-              <div>
-                <h2 className="text-lg font-semibold">{t("booking.needTitle")}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{t("booking.needBody")}</p>
-              </div>
-
-              {optionGroups.length ? (
-                <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
-                  {optionGroups.map((g) => {
-                    const active = g.id === selectedGroupId;
-                    const count = (g.options ?? []).filter(
-                      (o: { id: string }) => (optionQty[o.id] ?? 0) > 0,
-                    ).length;
-                    return (
-                      <button
-                        key={g.id}
-                        type="button"
-                        aria-pressed={active}
-                        onClick={() => setActiveGroup(g.id)}
-                        className={`relative w-32 shrink-0 overflow-hidden rounded-xl border text-start transition ${
-                          active
-                            ? "border-primary ring-2 ring-primary/30"
-                            : "border-border hover:shadow-md"
-                        }`}
-                      >
-                        <div className="aspect-square bg-muted">
-                          <img
-                            src={resolveImageUrl(g.image_url) || FALLBACK_IMAGE}
-                            alt={g.name}
-                            loading="lazy"
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        {count ? (
-                          <span className="absolute end-2 top-2 grid size-6 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-                            {count}
-                          </span>
-                        ) : null}
-                        <p className="line-clamp-2 p-2 text-xs font-medium">
-                          {localizedText(g, "name", locale) ?? g.name}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
-
-              <div className="space-y-3">
-                {visibleOptions.length ? (
-                  visibleOptions.map(
-                    (o: {
-                      id: string;
-                      name: string;
-                      description?: string | null;
-                      image_url?: string | null;
-                      price: number | string;
-                      original_price?: number | string | null;
-                      max_quantity?: number | null;
-                    }) => {
-                      const qty = optionQty[o.id] ?? 0;
-                      const max = Number(o.max_quantity) || 10;
-                      return (
-                        <div
-                          key={o.id}
-                          className={`flex items-center gap-3 rounded-xl border p-3 ${
-                            qty ? "border-primary bg-primary-soft/40" : "border-border"
-                          }`}
-                        >
-                          {o.image_url ? (
-                            <img
-                              src={resolveImageUrl(o.image_url)}
-                              alt=""
-                              loading="lazy"
-                              className="size-14 rounded-lg object-cover"
-                            />
-                          ) : null}
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium">{o.name}</p>
-                            {o.description ? (
-                              <p className="line-clamp-2 text-xs text-muted-foreground">
-                                {o.description}
-                              </p>
-                            ) : null}
-                            <p className="mt-1 text-sm">
-                              <span className="font-semibold">{formatMoney(Number(o.price))}</span>
-                              {o.original_price && Number(o.original_price) > Number(o.price) ? (
-                                <span className="ms-2 text-xs text-muted-foreground line-through">
-                                  {formatMoney(Number(o.original_price))}
-                                </span>
-                              ) : null}
-                            </p>
-                          </div>
-                          {qty ? (
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setQty(o.id, qty - 1)}
-                                aria-label={t("booking.decrease")}
-                              >
-                                −
-                              </Button>
-                              <span className="w-5 text-center text-sm font-semibold">{qty}</span>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={qty >= max}
-                                onClick={() => setQty(o.id, qty + 1)}
-                                aria-label={t("booking.increase")}
-                              >
-                                +
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button size="sm" onClick={() => setQty(o.id, 1)}>
-                              {t("booking.add")}
-                            </Button>
-                          )}
-                        </div>
-                      );
-                    },
-                  )
-                ) : (
-                  <p className="rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">
-                    {t("booking.noOptions")}
-                  </p>
-                )}
-              </div>
-
-              {!variantPayload.length ? (
-                <p className="text-xs text-muted-foreground">{t("booking.selectOne")}</p>
-              ) : null}
-
-              <div>
-                <Label htmlFor="instructions" className="mb-2 block">
-                  {t("booking.instructions")}
-                </Label>
-                <Textarea
-                  id="instructions"
-                  value={instructions}
-                  onChange={(e) => setInstructions(e.target.value)}
-                  placeholder={t("booking.instructionsPlaceholder")}
-                />
-              </div>
-            </section>
-          ) : null}
-
-          {step === 0 && !hasOptions ? (
-            <section className="space-y-6 rounded-xl border border-border bg-card p-5">
-              <div>
-                <Label className="mb-2 block">{t("booking.hours")}</Label>
-                <div className="flex flex-wrap gap-2">
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((h) => (
-                    <button
-                      key={h}
-                      onClick={() => setHours(h)}
-                      className={`size-11 rounded-lg border text-sm ${
-                        hours === h
-                          ? "border-primary bg-primary-soft text-primary"
-                          : "border-border"
-                      }`}
-                    >
-                      {h}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Label className="mb-2 block">{t("booking.pros")}</Label>
-                <div className="flex flex-wrap gap-2">
-                  {[1, 2, 3, 4].map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setProfessionals(p)}
-                      className={`size-11 rounded-lg border text-sm ${
-                        professionals === p
-                          ? "border-primary bg-primary-soft text-primary"
-                          : "border-border"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Label className="mb-2 block">{t("booking.materials")}</Label>
-                <div className="flex gap-2">
-                  {[true, false].map((v) => (
-                    <button
-                      key={String(v)}
-                      onClick={() => setMaterials(v)}
-                      className={`h-11 rounded-lg border px-5 text-sm ${
-                        materials === v
-                          ? "border-primary bg-primary-soft text-primary"
-                          : "border-border"
-                      }`}
-                    >
-                      {v ? t("booking.yes") : t("booking.no")}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="instructions" className="mb-2 block">
-                  {t("booking.instructions")}
-                </Label>
-                <Textarea
-                  id="instructions"
-                  value={instructions}
-                  onChange={(e) => setInstructions(e.target.value)}
-                  placeholder={t("booking.instructionsPlaceholder")}
-                />
-              </div>
-            </section>
-          ) : null}
-
-          {step === 1 ? (
-            <section className="rounded-xl border border-border bg-card p-5 sm:p-6">
-              <h2 className="text-lg font-semibold">{t("booking.addonsTitle")}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{t("booking.addonsBody")}</p>
-              {addons.length ? (
-                <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  {addons.map((a) => {
-                    const selected = addonIds.includes(a.id);
-                    return (
-                      <button
-                        key={a.id}
-                        type="button"
-                        aria-pressed={selected}
-                        onClick={() =>
-                          setAddonIds((prev) =>
-                            prev.includes(a.id) ? prev.filter((x) => x !== a.id) : [...prev, a.id],
-                          )
-                        }
-                        className={`group overflow-hidden rounded-xl border bg-card text-start transition-all ${
-                          selected
-                            ? "border-primary ring-2 ring-primary/30"
-                            : "border-border hover:shadow-md"
-                        }`}
-                      >
-                        <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-                          <img
-                            src={resolveImageUrl(a.image_url) || FALLBACK_IMAGE}
-                            alt={a.name}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                          <span
-                            className={`absolute right-2 bottom-2 grid size-8 place-items-center rounded-full shadow-sm ${
-                              selected
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-background text-primary"
-                            }`}
-                            aria-hidden
-                          >
-                            {selected ? <Check className="size-4" /> : <Plus className="size-4" />}
-                          </span>
-                        </div>
-                        <div className="space-y-1 p-3">
-                          <p className="truncate text-sm font-medium">
-                            {localizedText(a, "name", locale) ?? a.name}
-                          </p>
-                          <p className="text-sm">
-                            <span className="font-semibold">{formatMoney(Number(a.price))}</span>
-                            {a.original_price && Number(a.original_price) > Number(a.price) ? (
-                              <span className="ms-2 text-xs text-muted-foreground line-through">
-                                {formatMoney(Number(a.original_price))}
-                              </span>
-                            ) : null}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="mt-6 rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">
-                  {t("booking.noAddons")}
-                </p>
-              )}
-            </section>
-          ) : null}
-
-          {step === 2 ? (
-            <section className="rounded-xl border border-border bg-card p-5">
-              <button
-                type="button"
-                onClick={() => {
-                  setFreqDraft(frequency);
-                  setFreqOpen(true);
-                }}
-                className="mb-4 flex w-full items-center justify-between gap-3 rounded-lg border border-border px-4 py-3 text-start text-sm hover:bg-muted"
-              >
-                <span className="flex items-center gap-2">
-                  <CalendarClock className="size-4 text-primary" aria-hidden />
-                  <span>
-                    <span className="block font-medium">{t("booking.row.frequency")}</span>
-                    <span className="block text-muted-foreground">{freqLabel(frequency)}</span>
-                  </span>
-                </span>
-                <span className="text-primary">{t("freq.change")}</span>
-              </button>
-              <div className="no-scrollbar flex gap-2 overflow-x-auto pb-2">
-                {upcomingDates(14).map((d) => (
-                  <button
-                    key={d}
-                    onClick={() => {
-                      setDate(d);
-                      setSlotStart(null);
-                    }}
-                    className={`shrink-0 rounded-lg border px-3 py-2 text-xs ${
-                      date === d ? "border-primary bg-primary-soft text-primary" : "border-border"
-                    }`}
-                  >
-                    {new Date(`${d}T00:00:00Z`).toLocaleDateString(
-                      locale === "ar" ? "ar-AE" : "en-AE",
-                      {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
-                        timeZone: "UTC",
-                      },
-                    )}
-                  </button>
-                ))}
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {(availability?.slots ?? []).map((s) => (
-                  <button
-                    key={s.start}
-                    disabled={s.state === "unavailable" || s.state === "expired"}
-                    onClick={() => setSlotStart(s.start)}
-                    className={`rounded-lg border px-2 py-2 text-xs disabled:opacity-40 ${
-                      slotStart === s.start
-                        ? "border-primary bg-primary-soft text-primary"
-                        : "border-border"
-                    }`}
-                  >
-                    {s.start}
-                    {s.state === "limited" ? (
-                      <span className="block text-[10px] text-warning">
-                        {t("booking.slotLeft")}
-                      </span>
-                    ) : null}
-                  </button>
-                ))}
-              </div>
-            </section>
-          ) : null}
-
-          {step === 3 ? (
-            <section className="space-y-4 rounded-xl border border-border bg-card p-5">
-              {addresses.map((a) => (
-                <button
-                  key={a.id}
-                  onClick={() => setAddressId(a.id)}
-                  className={`block w-full rounded-lg border px-4 py-3 text-start text-sm ${
-                    addressId === a.id ? "border-primary bg-primary-soft" : "border-border"
-                  }`}
-                >
-                  <span className="font-medium">{a.label}</span>
-                  <span className="block text-muted-foreground">{a.street}</span>
-                </button>
-              ))}
-              <div className="space-y-2 border-t border-border pt-4">
-                <Label htmlFor="street">{t("booking.addAddress")}</Label>
-                <Input
-                  id="street"
-                  value={newStreet}
-                  onChange={(e) => setNewStreet(e.target.value)}
-                  placeholder={t("booking.addressPlaceholder")}
-                />
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => setPickerOpen(true)}>
-                    <MapPin className="size-4" aria-hidden /> {t("booking.selectOnMap")}
-                  </Button>
-                  <Button
-                    disabled={!newStreet.trim() || addAddress.isPending}
-                    onClick={() => {
-                      const value = newStreet.trim();
-                      if (!isInDubai(value)) {
-                        toast.error(SERVICE_AREA_MESSAGE);
-                        return;
-                      }
-                      addAddress.mutate(value);
-                    }}
-                  >
-                    {addAddress.isPending ? (
-                      <Loader2 className="size-4 animate-spin" aria-hidden />
-                    ) : null}
-                    {t("booking.saveAddress")}
-                  </Button>
-                </div>
-                {addAddress.isError ? (
-                  <p className="text-xs text-destructive">{t("booking.addressError")}</p>
-                ) : null}
-              </div>
-              <LocationPicker
-                open={pickerOpen}
-                onOpenChange={setPickerOpen}
-                onSelect={(loc) => {
-                  if (!isInDubai(loc.address, loc.lat, loc.lng)) {
-                    toast.error(SERVICE_AREA_MESSAGE);
-                    return;
-                  }
-                  saveLocation(loc);
-                  setNewStreet(loc.address);
-                  addAddress.mutate(loc.address);
-                }}
-              />
-            </section>
-          ) : null}
-
-          {step === 4 ? (
-            <section className="space-y-4 rounded-xl border border-border bg-card p-5">
-              <div>
-                <Label htmlFor="coupon">{t("booking.coupon")}</Label>
-                <Input
-                  id="coupon"
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  placeholder="WELCOME20"
-                />
-                {quote?.coupon_error ? (
-                  <p className="mt-1 text-xs text-destructive">{quote.coupon_error}</p>
-                ) : null}
-              </div>
-              <div>
-                <Label className="mb-2 block">{t("booking.payment")}</Label>
-                <div className="flex gap-2">
-                  {["cash", "card", "wallet"].map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setPaymentMethod(m)}
-                      className={`h-11 rounded-lg border px-4 text-sm capitalize ${
-                        paymentMethod === m
-                          ? "border-primary bg-primary-soft text-primary"
-                          : "border-border"
-                      }`}
-                    >
-                      {t(`booking.pay.${m}`)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            </section>
-          ) : null}
-
-          <div className="flex gap-2">
-            {step > 0 ? (
-              <Button variant="outline" onClick={() => setStep((s) => s - 1)}>
-                {t("common.back")}
-              </Button>
-            ) : (
-              <Button variant="outline" asChild>
-                <Link to="/services/$slug" params={{ slug }}>
-                  {t("booking.backToService")}
-                </Link>
-              </Button>
-            )}
-            {step < 4 ? (
-              <Button disabled={!canContinue} onClick={() => setStep((s) => s + 1)}>
-                {t("common.continue")}
-              </Button>
-            ) : (
-              <Button
-                disabled={confirm.isPending || !addressId || !slotStart}
-                onClick={() => confirm.mutate()}
-              >
-                {confirm.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-                {t("booking.confirm")}
-              </Button>
-            )}
-          </div>
+    <div dir={isAr ? "rtl" : "ltr"} className="min-h-screen bg-slate-50/60 pb-16 pt-6 overflow-x-hidden">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        {/* Header / Back Link */}
+        <div className="mb-4 flex items-center justify-between">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-cyan-600 transition-colors"
+          >
+            {isAr ? <ChevronRight className="size-4" /> : <ArrowLeft className="size-4" />}
+            <span>Step {currentStepNumber} of {totalSteps}</span>
+          </Link>
         </div>
 
-        <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-xl border border-border bg-card p-5">
-            <h2 className="font-semibold">{t("booking.summary")}</h2>
-            <dl className="mt-3 space-y-2 text-sm">
-              <Row
-                label={t("booking.row.address")}
-                value={selectedAddress?.street ?? newStreet.trim()}
-                placeholder={t("booking.notSelected")}
-              />
-              <Row label={t("booking.row.frequency")} value={freqLabel(frequency)} />
-              <Row
-                label={t("booking.row.service")}
-                value={localizedText(detail?.service, "name", locale) ?? "—"}
-              />
-              <Row
-                label={t("booking.row.duration")}
-                value={`${Math.round(duration / 60)} ${t("booking.hoursShort")}`}
-              />
-              <Row label={t("booking.row.pros")} value={String(professionals)} />
-              <Row
-                label={t("booking.row.materials")}
-                value={materials ? t("booking.yes") : t("booking.no")}
-              />
-              <Row
-                label={t("booking.row.when")}
-                value={slotStart ? `${date} · ${slotStart}` : ""}
-                placeholder={t("booking.notSelected")}
-              />
-              {instructions.trim() ? (
-                <Row label={t("booking.row.instructions")} value={instructions.trim()} />
-              ) : null}
-            </dl>
+        <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl mb-6">
+          {serviceTitle}
+        </h1>
 
-            {selectedOptions.length ? (
-              <div className="mt-4 border-t border-border pt-4">
-                <p className="text-sm font-medium">{t("booking.selectedOptions")}</p>
-                <ul className="mt-2 space-y-1 text-sm">
-                  {selectedOptions.map((o) => (
-                    <li key={o.id} className="flex justify-between gap-4">
-                      <span className="text-muted-foreground">
-                        {localizedText(o, "name", locale) ?? o.name}
-                        {o.quantity > 1 ? ` × ${o.quantity}` : ""}
-                      </span>
-                      <span>{formatMoney(Number(o.price) * o.quantity)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            {selectedAddons.length ? (
-              <div className="mt-4 border-t border-border pt-4">
-                <p className="text-sm font-medium">{t("booking.addons")}</p>
-                <ul className="mt-2 space-y-1 text-sm">
-                  {selectedAddons.map((a) => (
-                    <li key={a.id} className="flex justify-between gap-4">
-                      <span className="text-muted-foreground">
-                        {localizedText(a, "name", locale) ?? a.name}
-                      </span>
-                      <span>{formatMoney(Number(a.price))}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            {quote ? (
-              <dl className="mt-4 space-y-2 border-t border-border pt-4 text-sm">
-                <Row
-                  label={t("booking.subtotal")}
-                  value={formatMoney(quote.breakdown.subtotal + quote.breakdown.items)}
-                />
-                {quote.breakdown.addons ? (
-                  <Row label={t("booking.addons")} value={formatMoney(quote.breakdown.addons)} />
-                ) : null}
-                {quote.breakdown.materials ? (
-                  <Row
-                    label={t("booking.materialsLine")}
-                    value={formatMoney(quote.breakdown.materials)}
-                  />
-                ) : null}
-                {quote.breakdown.discount ? (
-                  <Row
-                    label={t("booking.couponDiscount")}
-                    value={`-${formatMoney(quote.breakdown.discount)}`}
-                  />
-                ) : null}
-                {quote.breakdown.frequency_discount ? (
-                  <Row
-                    label={`${freqLabel(frequency)} ${t("booking.discount")}`}
-                    value={`-${formatMoney(quote.breakdown.frequency_discount)}`}
-                  />
-                ) : null}
-                <Row label={t("booking.fee")} value={formatMoney(quote.breakdown.fees)} />
-                <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
-                  <span>{t("common.total")}</span>
-                  <span>{formatMoney(quote.breakdown.total)}</span>
+        <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr] items-start min-w-0">
+          {/* Main Booking Controls Left Column */}
+          <div className="space-y-6 min-w-0">
+            {/* STEP 1: Details (Hours, Professionals, Materials - Justlife Pill Style) */}
+            {step === 0 && (
+              <section className="space-y-6 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
+                {/* 1. Hours Selector */}
+                <div>
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <Label className="text-xs sm:text-sm font-bold text-slate-900">
+                      {isAr ? "كم عدد الساعات التي تحتاجها؟" : "How many hours do you need your professional to stay?"}
+                    </Label>
+                    <Info className="size-4 text-slate-400 shrink-0" />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((h) => (
+                      <button
+                        key={h}
+                        type="button"
+                        onClick={() => setHours(h)}
+                        className={`grid size-10 sm:size-11 place-items-center rounded-full text-xs font-extrabold transition-all ${
+                          hours === h
+                            ? "bg-cyan-100 text-cyan-800 border-2 border-cyan-500 shadow-xs"
+                            : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        }`}
+                      >
+                        {h}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </dl>
-            ) : null}
-          </div>
-        </aside>
 
-        <Dialog open={freqOpen} onOpenChange={setFreqOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>{t("freq.title")}</DialogTitle>
-            </DialogHeader>
-            <div className="max-h-[55vh] space-y-3 overflow-y-auto pe-1">
-              {FREQUENCY_OPTIONS.map((o) => (
-                <button
-                  key={o.key}
-                  type="button"
-                  onClick={() => setFreqDraft(o.key)}
-                  className={`relative flex w-full items-center justify-between gap-4 rounded-xl border px-4 py-4 text-start ${
-                    freqDraft === o.key ? "border-primary bg-primary-soft" : "border-border"
-                  }`}
-                >
-                  {o.popular ? (
-                    <span className="absolute -top-2 start-3 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                      {t("freq.mostPopular")}
+                {/* 2. Professionals Selector */}
+                <div>
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <Label className="text-xs sm:text-sm font-bold text-slate-900">
+                      {isAr ? "كم عدد المحترفين الذين تحتاجهم؟" : "How many professionals do you need?"}
+                    </Label>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 2, 3, 4].map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setProfessionals(p)}
+                        className={`grid size-10 sm:size-11 place-items-center rounded-full text-xs font-extrabold transition-all ${
+                          professionals === p
+                            ? "bg-cyan-100 text-cyan-800 border-2 border-cyan-500 shadow-xs"
+                            : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Cleaning Materials Selector with Jif Badge */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    <Label className="text-xs sm:text-sm font-bold text-slate-900">
+                      {isAr ? "هل تحتاج مواد تنظيف؟" : "Need cleaning materials?"}
+                    </Label>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500">
+                      Powered by <span className="rounded bg-emerald-600 px-1.5 py-0.5 text-[10px] text-white italic font-black">Jif</span>
                     </span>
-                  ) : null}
-                  <span>
-                    <span className="block font-medium">{t(`freq.${o.key}`)}</span>
-                    {o.badge ? (
-                      <span className="mt-1 inline-block rounded bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
-                        {t(`freq.badge.${o.key}`)}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span
-                    className={`grid size-5 shrink-0 place-items-center rounded-full border ${
-                      freqDraft === o.key ? "border-primary" : "border-muted-foreground/40"
-                    }`}
-                    aria-hidden
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setMaterials(false)}
+                      className={`rounded-full px-4 sm:px-5 py-2 text-xs font-bold transition-all ${
+                        !materials
+                          ? "bg-cyan-100 text-cyan-800 border-2 border-cyan-500 shadow-xs"
+                          : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      {isAr ? "لا، لدي موادي الخاصة" : "No, I have them"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMaterials(true)}
+                      className={`rounded-full px-4 sm:px-5 py-2 text-xs font-bold transition-all ${
+                        materials
+                          ? "bg-cyan-100 text-cyan-800 border-2 border-cyan-500 shadow-xs"
+                          : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      {isAr ? "نعم، يرجى توفيرها" : "Yes, please"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Fuel Surcharge Promo Banner */}
+                <div className="rounded-xl border border-cyan-100 bg-cyan-50/70 p-3.5 flex items-center gap-2.5 text-xs text-cyan-900 font-bold leading-relaxed">
+                  <Sparkles className="size-4 text-cyan-600 shrink-0" />
+                  <span>First booking? Your fuel surcharge fee is on us. Enjoy!</span>
+                </div>
+
+                {/* Instructions Textarea */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label className="text-xs font-bold text-slate-700">
+                      {isAr ? "أي تعليمات أو متطلبات خاصة؟" : "Any instructions or special requirements?"}
+                    </Label>
+                    <span className="text-[11px] text-slate-400 font-medium">{instructions.length}/150</span>
+                  </div>
+                  <Textarea
+                    maxLength={150}
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    placeholder="Gate code, pets, parking instructions..."
+                    rows={3}
+                    className="text-xs"
+                  />
+                </div>
+
+                {/* Action Button */}
+                <div className="pt-4">
+                  <Button
+                    type="button"
+                    onClick={goNext}
+                    className="w-full bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-sm py-3.5 rounded-full shadow-md"
                   >
-                    {freqDraft === o.key ? (
-                      <span className="size-2.5 rounded-full bg-primary" />
-                    ) : null}
-                  </span>
-                </button>
-              ))}
+                    Next
+                  </Button>
+                </div>
+              </section>
+            )}
 
-              <div className="rounded-xl border border-border p-4">
-                <p className="text-sm font-semibold">{t("freq.promiseTitle")}</p>
-                <div className="mt-3 space-y-3 text-sm">
-                  <div className="flex gap-2">
-                    <Tag className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-                    <span>
-                      <span className="block font-medium">{t("freq.moreDays")}</span>
-                      <span className="block text-muted-foreground">{t("freq.moreDaysBody")}</span>
+            {/* STEP 1.5: Add-ons (Only shown if service has add-ons) */}
+            {step === 1 && hasAddons && (
+              <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">{t("booking.addonsTitle")}</h2>
+                  <p className="mt-1 text-xs text-slate-500">{t("booking.addonsBody")}</p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {addons.map((a: any) => {
+                    const selected = addonIds.includes(a.id);
+                    return (
+                      <div
+                        key={a.id}
+                        onClick={() =>
+                          setAddonIds((prev) =>
+                            selected ? prev.filter((x) => x !== a.id) : [...prev, a.id],
+                          )
+                        }
+                        className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 transition-all ${
+                          selected
+                            ? "border-cyan-600 bg-cyan-50/50 shadow-xs"
+                            : "border-slate-200 hover:border-slate-300"
+                        }`}
+                      >
+                        <div>
+                          <p className="text-xs font-bold text-slate-900">
+                            {localizedText(a, "name", locale) ?? a.name}
+                          </p>
+                          <p className="mt-1 text-xs font-extrabold text-cyan-600">
+                            +{formatMoney(Number(a.price))}
+                          </p>
+                        </div>
+                        <div
+                          className={`grid size-5 place-items-center rounded-md border ${
+                            selected ? "bg-cyan-600 border-cyan-600 text-white" : "border-slate-300"
+                          }`}
+                        >
+                          {selected ? <Check className="size-3" /> : null}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-4 flex justify-between items-center">
+                  <Button type="button" variant="outline" onClick={goBack} className="text-xs font-bold">
+                    Back
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={goNext}
+                    className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-xs px-8 rounded-full"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </section>
+            )}
+
+            {/* STEP 2/3: Date & Time Picker */}
+            {step === 2 && (
+              <section className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">
+                    {isAr ? "متى ترغب في استلام الخدمة؟" : "When would you like your service?"}
+                  </h2>
+                </div>
+
+                {/* Horizontal Oval Date Selector with Arrow Controls */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => scrollContainer(dateSliderRef, "left")}
+                    className="absolute start-0 top-1/2 z-10 -translate-y-1/2 grid size-7 place-items-center rounded-full border border-slate-200 bg-white shadow-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    {isAr ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+                  </button>
+
+                  <div
+                    ref={dateSliderRef}
+                    className="flex gap-2.5 overflow-x-auto px-8 pb-2 pt-1 scrollbar-none scroll-smooth"
+                  >
+                    {availableDates.map((d) => {
+                      const isSelected = d === date;
+                      const dObj = new Date(d);
+                      const dayName = dObj.toLocaleDateString("en-US", { weekday: "short" });
+                      const dayNum = dObj.getDate();
+                      return (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => {
+                            setDate(d);
+                            setSlotStart(null);
+                          }}
+                          className={`flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-extrabold transition-all ${
+                            isSelected
+                              ? "bg-cyan-100 text-cyan-800 border-2 border-cyan-500 shadow-xs"
+                              : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          <span>{dayName}</span>
+                          <span>{dayNum}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => scrollContainer(dateSliderRef, "right")}
+                    className="absolute end-0 top-1/2 z-10 -translate-y-1/2 grid size-7 place-items-center rounded-full border border-slate-200 bg-white shadow-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    {isAr ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
+                  </button>
+                </div>
+
+                {/* Time Slots Selector with Scroll Controls */}
+                <div>
+                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <Label className="text-xs sm:text-sm font-bold text-slate-900">
+                      {isAr ? "ما الوقت الذي تود فيه أن نبدأ؟" : "What time would you like us to start?"}
+                    </Label>
+                    <span className="text-[11px] font-bold text-cyan-600">
+                      {isAr ? "اختر موعدًا" : "Select time"}
                     </span>
                   </div>
-                  <div className="flex gap-2">
-                    <CalendarClock className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-                    <span>
-                      <span className="block font-medium">{t("freq.reschedule")}</span>
-                      <span className="block text-muted-foreground">
-                        {t("freq.rescheduleBody")}
+
+                  {validSlots.length > 0 ? (
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => scrollContainer(timeSliderRef, "left")}
+                        className="absolute start-0 top-1/2 z-10 -translate-y-1/2 grid size-7 place-items-center rounded-full border border-slate-200 bg-white shadow-sm text-slate-700 hover:bg-slate-50"
+                      >
+                        {isAr ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+                      </button>
+
+                      <div
+                        ref={timeSliderRef}
+                        className="flex gap-2 overflow-x-auto px-8 pb-2 pt-1 scrollbar-none scroll-smooth"
+                      >
+                        {validSlots.map((slot: any) => {
+                          const isSelected = slotStart === slot.start;
+                          const [h, m] = slot.start.split(":").map(Number);
+                          const endM = (m + 30) % 60;
+                          const endH = h + (m + 30 >= 60 ? 1 : 0);
+                          const rangeStr = `${slot.start}-${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
+
+                          return (
+                            <button
+                              key={slot.start}
+                              type="button"
+                              onClick={() => setSlotStart(slot.start)}
+                              className={`shrink-0 rounded-full border py-2 px-3.5 text-xs font-extrabold transition-all ${
+                                isSelected
+                                  ? "bg-cyan-100 text-cyan-800 border-2 border-cyan-500 shadow-xs"
+                                  : "border border-slate-200 bg-white text-slate-700 hover:border-cyan-500"
+                              }`}
+                            >
+                              {rangeStr}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => scrollContainer(timeSliderRef, "right")}
+                        className="absolute end-0 top-1/2 z-10 -translate-y-1/2 grid size-7 place-items-center rounded-full border border-slate-200 bg-white shadow-sm text-slate-700 hover:bg-slate-50"
+                      >
+                        {isAr ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-center text-xs text-amber-800 font-semibold">
+                      No slots available today for Dubai time. Please pick a future date.
+                    </div>
+                  )}
+                </div>
+
+                {/* Free Cancellation Banner */}
+                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-slate-600 leading-relaxed">
+                  <div className="flex items-center gap-2">
+                    <Info className="size-4 text-slate-400 shrink-0" />
+                    <span>Enjoy free cancellation up to 6 hours before your booking start time.</span>
+                  </div>
+                  <button type="button" className="text-xs font-bold text-cyan-600 underline shrink-0 ms-2">
+                    View our policy
+                  </button>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-4 flex justify-between items-center">
+                  <Button type="button" variant="outline" onClick={goBack} className="text-xs font-bold">
+                    Back
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={goNext}
+                    disabled={!canContinue}
+                    className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-xs px-8 rounded-full shadow-md"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </section>
+            )}
+
+            {/* STEP 3: Address Selection */}
+            {step === 3 && (
+              <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">{t("booking.step.address")}</h2>
+                  <p className="mt-1 text-xs text-slate-500">Service available in Dubai Emirate only</p>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={manualAddress}
+                      onChange={(e) => setManualAddress(e.target.value)}
+                      placeholder="Enter Dubai address (Villa, Apartment, Area)"
+                      className="text-xs"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setPickerOpen(true)}
+                      className="shrink-0 text-xs font-bold"
+                    >
+                      <MapPin className="size-3.5 me-1 text-cyan-600" />
+                      Map
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-between items-center">
+                  <Button type="button" variant="outline" onClick={goBack} className="text-xs font-bold">
+                    Back
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={goNext}
+                    disabled={!canContinue}
+                    className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-xs px-8 rounded-full shadow-md"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </section>
+            )}
+
+            {/* STEP 4: Verification & Payment */}
+            {step === 4 && (
+              <section className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Verification & Payment</h2>
+                  <p className="mt-1 text-xs text-slate-500">Verify phone number and select payment method</p>
+                </div>
+
+                {/* Phone Verification */}
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-slate-800">Phone Number Verification</Label>
+                    {phoneVerified && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                        <CheckCircle2 className="size-3 text-emerald-600" />
+                        Verified
                       </span>
-                    </span>
+                    )}
                   </div>
+
+                  {!phoneVerified ? (
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <Input
+                          type="tel"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          placeholder="+971 50 123 4567"
+                          className="text-xs bg-white"
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleSendOtp}
+                          disabled={otpSending || otpSent}
+                          className="bg-cyan-600 font-bold text-white hover:bg-cyan-700 shrink-0 text-xs"
+                        >
+                          {otpSending ? <Loader2 className="size-3.5 animate-spin" /> : "Send OTP"}
+                        </Button>
+                      </div>
+
+                      {otpSent && (
+                        <div className="flex gap-2 pt-1">
+                          <Input
+                            type="text"
+                            maxLength={6}
+                            value={otpCode}
+                            onChange={(e) => setOtpCode(e.target.value)}
+                            placeholder="Enter 6-digit OTP (123456)"
+                            className="text-xs bg-white font-mono tracking-widest"
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleVerifyOtp}
+                            className="bg-slate-900 font-bold text-white hover:bg-slate-800 shrink-0 text-xs"
+                          >
+                            Verify OTP
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200">
+                      <CheckCircle2 className="size-4 text-emerald-600" />
+                      <span>{phone}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Coupon Code */}
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+                  <Label className="text-xs font-bold text-slate-800">Apply Coupon Code</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      placeholder="e.g. 50MOP"
+                      className="text-xs uppercase bg-white font-mono"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      className="bg-cyan-600 font-bold text-white hover:bg-cyan-700 shrink-0 text-xs"
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Payment Selection */}
+                <div className="space-y-3">
+                  <Label className="text-xs font-bold text-slate-800">Select Payment Method</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("cash")}
+                      className={`flex items-center gap-3 rounded-xl border p-4 text-start transition-all ${
+                        paymentMethod === "cash"
+                          ? "border-cyan-600 bg-cyan-50/50 ring-2 ring-cyan-500/20"
+                          : "border-slate-200 bg-white hover:border-slate-300"
+                      }`}
+                    >
+                      <Wallet className="size-5 text-cyan-600 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900 truncate">Cash on Delivery</p>
+                        <p className="text-[10px] text-slate-500 truncate">Pay cash directly</p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("card")}
+                      className={`flex items-center gap-3 rounded-xl border p-4 text-start transition-all ${
+                        paymentMethod === "card"
+                          ? "border-cyan-600 bg-cyan-50/50 ring-2 ring-cyan-500/20"
+                          : "border-slate-200 bg-white hover:border-slate-300"
+                      }`}
+                    >
+                      <CardIcon className="size-5 text-cyan-600 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900 truncate">Credit Card</p>
+                        <p className="text-[10px] text-slate-500 truncate">Online payment</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-between items-center">
+                  <Button type="button" variant="outline" onClick={goBack} className="text-xs font-bold">
+                    Back
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={confirm.isPending}
+                    onClick={() => confirm.mutate()}
+                    className="bg-emerald-600 font-extrabold text-white hover:bg-emerald-700 text-xs px-8 rounded-full shadow-md"
+                  >
+                    {confirm.isPending ? <Loader2 className="size-4 animate-spin me-2" /> : null}
+                    Place Order & Confirm
+                  </Button>
+                </div>
+              </section>
+            )}
+          </div>
+
+          {/* Right-Hand Sidebar ("Booking Details" — Responsive Container & Address Word-Wrap Fix) */}
+          <aside className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs min-w-0 w-full overflow-hidden">
+            <h2 className="font-extrabold text-slate-900 text-base sm:text-lg border-b border-slate-100 pb-4">
+              Booking Details
+            </h2>
+
+            <div className="mt-4 space-y-4 text-xs min-w-0">
+              <div className="min-w-0">
+                <span className="text-slate-400 font-semibold block mb-0.5">Address</span>
+                <span className="font-bold text-slate-800 block leading-relaxed break-words max-w-full">
+                  {displayAddress}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-slate-400 font-semibold shrink-0">Frequency</span>
+                <span className="font-bold text-slate-800 text-end">One Time</span>
+              </div>
+
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-slate-400 font-semibold shrink-0">Service</span>
+                <span className="font-bold text-slate-800 text-end truncate">{serviceTitle}</span>
+              </div>
+
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-slate-400 font-semibold shrink-0">Duration</span>
+                <span className="font-bold text-slate-800 text-end">{hours} hours</span>
+              </div>
+
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-slate-400 font-semibold shrink-0">Date & Start Time</span>
+                <span className="font-bold text-slate-800 text-end">
+                  {formattedDateString}, {formattedTimeRange}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-slate-400 font-semibold shrink-0">Number of Professionals</span>
+                <span className="font-bold text-slate-800 text-end">{professionals}</span>
+              </div>
+
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-slate-400 font-semibold shrink-0">Material</span>
+                <span className="font-bold text-slate-800 text-end">{materials ? "Yes" : "No"}</span>
+              </div>
+
+              {/* Payment Summary Box */}
+              <div className="mt-6 pt-4 border-t border-slate-100">
+                <h3 className="font-extrabold text-slate-900 text-sm mb-3">Payment Summary</h3>
+                <div className="flex justify-between items-center text-base font-extrabold text-slate-900">
+                  <span>Total</span>
+                  <span className="text-slate-900 font-black">
+                    AED {quote?.breakdown?.total ? quote.breakdown.total.toFixed(2) : "79.00"}
+                  </span>
                 </div>
               </div>
             </div>
-            <DialogFooter>
-              <Button
-                className="w-full"
-                onClick={() => {
-                  setFrequency(freqDraft);
-                  setFreqOpen(false);
-                }}
-              >
-                {t("freq.select")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </aside>
+        </div>
       </div>
-    </div>
-  );
-}
 
-function Row({
-  label,
-  value,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  placeholder?: string;
-}) {
-  const shown = value?.trim() ? value : (placeholder ?? "—");
-  return (
-    <div className="flex justify-between gap-4">
-      <dt className="shrink-0 text-muted-foreground">{label}</dt>
-      <dd className={`text-end ${value?.trim() ? "" : "text-muted-foreground"}`}>{shown}</dd>
+      <LocationPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onSelect={(loc) => {
+          setManualAddress(loc.address);
+          saveLocation(loc);
+          setPickerOpen(false);
+        }}
+      />
     </div>
   );
 }

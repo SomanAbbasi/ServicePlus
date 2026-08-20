@@ -75,16 +75,11 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { to: "/admin/reviews", label: "Reviews", icon: Star },
       { to: "/admin/notifications", label: "Notifications", icon: Bell },
-      { to: "/admin/support", label: "Support", icon: LifeBuoy },
     ],
   },
   {
     label: "System",
-    items: [
-      { to: "/admin/reports", label: "Reports", icon: FileBarChart },
-      { to: "/admin/settings", label: "Settings", icon: Settings },
-      { to: "/admin/audit-logs", label: "Audit logs", icon: History },
-    ],
+    items: [{ to: "/admin/settings", label: "Settings", icon: Settings }],
   },
 ];
 

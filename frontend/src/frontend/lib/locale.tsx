@@ -141,7 +141,7 @@ const EN: Record<string, string> = {
   "loc.addressLabel": "Service address",
   "loc.confirm": "Confirm location",
   "loc.outsideDubai":
-    "Sorry, our service is not currently available in this region. We serve Dubai only.",
+    "Sorry! Our service is currently available in Dubai only.",
 
   // auth
   "auth.signInTitle": "Sign in to ServicePlus",
@@ -452,7 +452,7 @@ const AR: Record<string, string> = {
   "loc.addressPlaceholder": "المبنى، الشقة، الشارع",
   "loc.addressLabel": "عنوان الخدمة",
   "loc.confirm": "تأكيد الموقع",
-  "loc.outsideDubai": "عذرًا، خدمتنا غير متوفرة حاليًا في هذه المنطقة. نخدم دبي فقط.",
+  "loc.outsideDubai": "عذرًا! خدمتنا متوفرة حاليًا في إمارة دبي فقط.",
 
   "auth.signInTitle": "تسجيل الدخول إلى سيرفس بلس",
   "auth.codeTitle": "أدخل رمز التحقق",

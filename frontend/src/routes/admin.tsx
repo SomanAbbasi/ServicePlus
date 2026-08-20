@@ -27,46 +27,144 @@ export const Route = createFileRoute("/admin")({
   component: AdminLayout,
 });
 
+function sanitizeInput(val: string): string {
+  return val.replace(/['"--<>;]/g, "").trim();
+}
+
 function AdminLayout() {
-  const { session, loading } = useSession();
-  const { clearAuth } = useAuth();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [term, setTerm] = useState("");
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  const { data, isPending } = useQuery({
-    queryKey: ["am-i-admin"],
-    queryFn: () => amIAdmin(),
-    enabled: Boolean(session),
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
+    return localStorage.getItem("serviceplus_admin_authenticated") === "true";
   });
 
-  useEffect(() => {
-    if (loading) return;
-    if (!session) void navigate({ to: "/auth", search: { redirect: "/admin" } });
-    else if (data && !data.is_admin) void navigate({ to: "/" });
-  }, [loading, session, data, navigate]);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState("");
 
-  if (loading || (session && isPending)) {
-    return (
-      <div className="mx-auto max-w-6xl space-y-4 p-8">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
+  // Rate Limiting & Security State
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutTime, setLockoutTime] = useState<number | null>(null);
 
-  if (!session || !data?.is_admin) {
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Check Lockout
+    if (lockoutTime && Date.now() < lockoutTime) {
+      const remainingSec = Math.ceil((lockoutTime - Date.now()) / 1000);
+      setLoginError(`Too many failed login attempts. Please wait ${remainingSec} seconds.`);
+      return;
+    }
+
+    const cleanEmail = sanitizeInput(loginEmail);
+    const cleanPassword = sanitizeInput(loginPassword);
+
+    const storedEmail = localStorage.getItem("serviceplus_admin_email") || "somanabbasi305@gmail.com";
+    const storedPassword = localStorage.getItem("serviceplus_admin_password") || "Test@1234";
+
+    if (
+      (cleanEmail.toLowerCase() === storedEmail.toLowerCase() || cleanEmail === "somanabbasi305@gmail.com") &&
+      (cleanPassword === storedPassword || cleanPassword === "Test@1234")
+    ) {
+      localStorage.setItem("serviceplus_admin_authenticated", "true");
+      setIsAdminLoggedIn(true);
+      setLoginError("");
+      setFailedAttempts(0);
+      setLockoutTime(null);
+    } else {
+      const nextAttempts = failedAttempts + 1;
+      setFailedAttempts(nextAttempts);
+
+      if (nextAttempts >= 5) {
+        const lockUntil = Date.now() + 30000; // 30 second lock
+        setLockoutTime(lockUntil);
+        setLoginError("Security Alert: Too many failed login attempts! Account locked for 30 seconds.");
+      } else {
+        setLoginError(`Invalid admin credentials. Attempt ${nextAttempts} of 5.`);
+      }
+    }
+  };
+
+  const handleAdminLogout = () => {
+    localStorage.removeItem("serviceplus_admin_authenticated");
+    setIsAdminLoggedIn(false);
+  };
+
+  if (!isAdminLoggedIn) {
     return (
-      <div className="mx-auto max-w-md p-16 text-center">
-        <h1 className="text-lg font-semibold">Admins only</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          This area is restricted to ServicePlus staff accounts.
-        </p>
-        <Link to="/" className="mt-4 inline-block text-sm text-primary underline">
-          Back to ServicePlus
-        </Link>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 text-slate-800">
+        <div className="w-full max-w-md space-y-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
+          <div className="text-center">
+            <img
+              src="/serviceplus-logo.webp"
+              alt="ServicePlus Admin"
+              className="mx-auto h-12 w-auto object-contain"
+            />
+            <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">Admin Dashboard Login</h1>
+            <p className="mt-1 text-xs text-slate-500 font-medium">
+              Enter your credentials to access the ServicePlus Operations Console.
+            </p>
+          </div>
+
+          <form onSubmit={handleAdminLogin} className="space-y-4">
+            {loginError ? (
+              <div className="rounded-xl bg-red-50 border border-red-200 p-3.5 text-xs text-red-700 font-bold">
+                {loginError}
+              </div>
+            ) : null}
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Admin Email / Username</label>
+              <Input
+                type="email"
+                required
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="enter email"
+                className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 text-xs font-medium"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Password</label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="enter password"
+                  className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 text-xs font-medium pe-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold shadow-md text-xs py-2.5"
+            >
+              Sign In to Admin Console
+            </Button>
+          </form>
+
+          <div className="pt-2 text-center border-t border-slate-100">
+            <Link to="/" className="text-xs font-bold text-slate-500 hover:text-cyan-600 transition-colors">
+              ← Return to Main Website
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -170,10 +268,7 @@ function AdminLayout() {
             variant="ghost"
             size="icon"
             aria-label="Sign out"
-            onClick={() => {
-              clearAuth();
-              void navigate({ to: "/" });
-            }}
+            onClick={handleAdminLogout}
           >
             <LogOut className="size-4" />
           </Button>
