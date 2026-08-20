@@ -1,5 +1,26 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+
+# Dependencies and build output
 node_modules/
 dist/
-.env
-storage/
+.output/
+.vercel/
+*.tsbuildinfo
 *.js.map
+
+# Storage & Logs
+storage/
+logs/
+*.log
+npm-debug.log*
+
+# Editor files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
