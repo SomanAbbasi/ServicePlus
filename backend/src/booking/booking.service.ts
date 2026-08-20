@@ -338,13 +338,66 @@ export class BookingService {
       ],
     });
 
+    // Fetch detailed records for rich Admin notification email
+    const [userProfile, fullAddress, fullService, adminEmailSetting] = await Promise.all([
+      this.prisma.profile.findUnique({ where: { id: userId }, select: { phone: true, fullName: true, email: true } }),
+      this.prisma.address.findUnique({ where: { id: input.addressId }, select: { street: true, building: true, label: true } }),
+      this.prisma.service.findUnique({ where: { id: serviceId }, select: { name: true } }),
+      this.prisma.setting.findFirst({ where: { key: 'admin_email' } }),
+    ]);
+
+    const targetAdminEmail = String(adminEmailSetting?.value || 'somanabbasi305@gmail.com');
+    const serviceName = fullService?.name || input.serviceSlug;
+    const customerPhone = userProfile?.phone || userProfile?.fullName || 'Customer';
+    const addressStr = fullAddress ? `${fullAddress.street}${fullAddress.building ? ', ' + fullAddress.building : ''} (${fullAddress.label})` : 'Address provided';
+
+    const itemsSummaryList = [
+      ...quote.lines.variants.map((v) => `• ${v.label} (x${v.quantity}) — AED ${(v.unit_price * v.quantity).toFixed(2)}`),
+      ...quote.lines.addons.map((a) => `• Add-on: ${a.label} (x${a.quantity}) — AED ${(a.unit_price * a.quantity).toFixed(2)}`),
+    ];
+    const itemsFormattedText = itemsSummaryList.length ? itemsSummaryList.join('\n') : '• Standard Service';
+
+    const emailBody = `
+========================================================
+🎉 NEW ORDER PLACED — BOOKING #${bookingNumber}
+========================================================
+
+Customer Contact: ${customerPhone}
+Service: ${serviceName}
+Scheduled Date: ${input.scheduledDate}
+Time Slot: ${input.scheduledStart} - ${end}
+
+Delivery Address:
+${addressStr}
+
+Selected Package Options & Items:
+${itemsFormattedText}
+
+Payment Summary:
+Method: ${input.paymentMethod.toUpperCase()}
+Total Amount: AED ${quote.breakdown.total.toFixed(2)}
+========================================================
+`;
+
+    // Customer Notification
     await this.prisma.notification.create({
       data: {
         userId,
         bookingId: booking.id,
         title: 'Booking confirmed',
-        body: `Booking ${booking.bookingNumber} on ${input.scheduledDate} at ${input.scheduledStart}.`,
+        body: `Booking #${bookingNumber} on ${input.scheduledDate} at ${input.scheduledStart}.`,
         event: 'booking_confirmed',
+      },
+    });
+
+    // Admin System Notification (for real-time dashboard updates)
+    await this.prisma.notification.create({
+      data: {
+        userId: null,
+        bookingId: booking.id,
+        title: `New Order #${bookingNumber}`,
+        body: `${serviceName} for ${customerPhone} on ${input.scheduledDate} at ${input.scheduledStart}. Total: AED ${quote.breakdown.total.toFixed(2)} (${input.paymentMethod.toUpperCase()}).`,
+        event: 'new_booking_alert',
       },
     });
 
@@ -352,10 +405,10 @@ export class BookingService {
     try {
       await this.notificationProvider.send({
         channel: 'email',
-        to: 'somanabbasi305@gmail.com',
+        to: targetAdminEmail,
         event: 'new_booking_alert',
-        title: `[New Order Alert] Booking #${bookingNumber} — ServicePlus`,
-        body: `New booking #${bookingNumber} placed for ${input.serviceSlug} on ${input.scheduledDate} at ${input.scheduledStart}. Total: AED ${quote.breakdown.total} (${input.paymentMethod.toUpperCase()}).`,
+        title: `[New Order Alert] Booking #${bookingNumber} — ${serviceName} (AED ${quote.breakdown.total.toFixed(2)})`,
+        body: emailBody,
       });
     } catch (e) {
       console.error('Error sending admin notification email:', e);

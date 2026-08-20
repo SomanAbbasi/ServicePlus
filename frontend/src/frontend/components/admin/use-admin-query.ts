@@ -7,7 +7,8 @@ export function useAdminQuery<T>(key: string, fn: () => Promise<T>) {
     queryKey: ["admin", key],
     queryFn: () => fn(),
     enabled: isAuth,
-    staleTime: 30_000,
+    refetchInterval: 3000,
+    staleTime: 2000,
     retry: false,
   });
 }

@@ -18,8 +18,11 @@ export function ServiceCard({
 }) {
   const { locale, t } = useLocale();
   const isAr = locale === "ar";
-  const name = localizedText({ ...service }, "name", locale) ?? service.name;
+  const svcRecord = service as unknown as Record<string, unknown>;
+  const name = localizedText(svcRecord, "name", locale) ?? service.name;
   const description =
+    localizedText(svcRecord, "shortDescription", locale) ??
+    localizedText(svcRecord, "short_description", locale) ??
     service.short_description ??
     (isAr ? "خدمة منزلية احترافية وموثوقة." : "Professional home service.");
   const imageUrl = resolveImageUrl(service.image_url) || FALLBACK_IMAGE;

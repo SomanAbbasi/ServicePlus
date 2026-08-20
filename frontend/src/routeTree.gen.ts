@@ -11,10 +11,17 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BlogRouteImport } from './routes/blog'
+import { Route as CareersRouteImport } from './routes/careers'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as HelpRouteImport } from './routes/help'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAddonsRouteImport } from './routes/admin.addons'
 import { Route as AdminAuditLogsRouteImport } from './routes/admin.audit-logs'
@@ -51,6 +58,11 @@ const SplatRoute = SplatRouteImport.update({
   path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -61,14 +73,44 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CareersRoute = CareersRouteImport.update({
+  id: '/careers',
+  path: '/careers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -200,10 +242,17 @@ const ApiPublicMediaSplatRoute = ApiPublicMediaSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRoute
+  '/careers': typeof CareersRoute
+  '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/help': typeof HelpRoute
+  '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/terms': typeof TermsRoute
   '/admin/addons': typeof AdminAddonsRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/availability': typeof AdminAvailabilityRoute
@@ -233,9 +282,16 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRoute
+  '/careers': typeof CareersRoute
+  '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/help': typeof HelpRoute
+  '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/terms': typeof TermsRoute
   '/admin/addons': typeof AdminAddonsRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/availability': typeof AdminAvailabilityRoute
@@ -266,10 +322,17 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRoute
+  '/careers': typeof CareersRoute
+  '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/help': typeof HelpRoute
+  '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/terms': typeof TermsRoute
   '/admin/addons': typeof AdminAddonsRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/availability': typeof AdminAvailabilityRoute
@@ -301,10 +364,17 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$'
+    | '/about'
     | '/admin'
     | '/auth'
+    | '/blog'
+    | '/careers'
+    | '/contact'
     | '/dashboard'
+    | '/help'
+    | '/privacy'
     | '/search'
+    | '/terms'
     | '/admin/addons'
     | '/admin/audit-logs'
     | '/admin/availability'
@@ -334,9 +404,16 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$'
+    | '/about'
     | '/auth'
+    | '/blog'
+    | '/careers'
+    | '/contact'
     | '/dashboard'
+    | '/help'
+    | '/privacy'
     | '/search'
+    | '/terms'
     | '/admin/addons'
     | '/admin/audit-logs'
     | '/admin/availability'
@@ -366,10 +443,17 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$'
+    | '/about'
     | '/admin'
     | '/auth'
+    | '/blog'
+    | '/careers'
+    | '/contact'
     | '/dashboard'
+    | '/help'
+    | '/privacy'
     | '/search'
+    | '/terms'
     | '/admin/addons'
     | '/admin/audit-logs'
     | '/admin/availability'
@@ -400,10 +484,17 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
+  AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BlogRoute: typeof BlogRoute
+  CareersRoute: typeof CareersRoute
+  ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
+  HelpRoute: typeof HelpRoute
+  PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
+  TermsRoute: typeof TermsRoute
   BookingSlugRoute: typeof BookingSlugRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   ServicesSlugRoute: typeof ServicesSlugRoute
@@ -426,6 +517,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -440,6 +538,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/careers': {
+      id: '/careers'
+      path: '/careers'
+      fullPath: '/careers'
+      preLoaderRoute: typeof CareersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -447,11 +566,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/search': {
       id: '/search'
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -685,10 +825,17 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
+  AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
+  BlogRoute: BlogRoute,
+  CareersRoute: CareersRoute,
+  ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
+  HelpRoute: HelpRoute,
+  PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
+  TermsRoute: TermsRoute,
   BookingSlugRoute: BookingSlugRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
   ServicesSlugRoute: ServicesSlugRoute,

@@ -103,15 +103,19 @@ function ServiceDetail() {
   if (!data) return <Fallback title="Service not found" />;
   const { variants, related } = data;
   const service = data.service as unknown as SvcRow;
-  const category = (service as { service_categories?: { slug: string; name: string } })
+  const category = (service as { service_categories?: { slug: string; name: string; name_ar?: string; nameAr?: string } })
     .service_categories;
 
-  const name = localizedText(service, "name", locale) ?? service.name;
+  const name = (localizedText(service, "name", locale) ?? service.name) as string;
+  const categoryName = category
+    ? ((localizedText(category as unknown as Record<string, unknown>, "name", locale) ?? category.name) as string)
+    : null;
   const tagline =
-    localizedText(service, "short_description", locale) ??
+    (localizedText(service, "short_description", locale) ??
+    localizedText(service, "shortDescription", locale) ??
     (ar
       ? "احجز محترفاً موثوقاً خلال أقل من دقيقة."
-      : "Book a vetted professional in under a minute.");
+      : "Book a vetted professional in under a minute.")) as string;
   const intro = paragraphs(
     localizedText(service, "intro", locale) ?? localizedText(service, "description", locale),
   );
@@ -124,7 +128,7 @@ function ServiceDetail() {
         home: "الرئيسية",
         book: "احجز الآن",
         included: "ما الذي يشمله",
-        options: "الخيارات",
+        options: "الخيارات المتاحة",
         faq: "الأسئلة الشائعة",
         from: "يبدأ من",
         cancel: "إلغاء مجاني حتى 6 ساعات قبل الموعد.",
@@ -168,7 +172,7 @@ function ServiceDetail() {
                 params={{ slug: category.slug }}
                 className="transition-colors hover:text-foreground"
               >
-                {category.name}
+                {categoryName}
               </Link>
             </>
           ) : null}
@@ -190,7 +194,7 @@ function ServiceDetail() {
           <div className="order-2 flex flex-col gap-5 lg:order-1">
             {category ? (
               <span className="w-fit rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
-                {category.name}
+                {categoryName}
               </span>
             ) : null}
 
@@ -271,22 +275,27 @@ function ServiceDetail() {
               <section>
                 <h2 className="text-lg font-semibold text-gray-900">{L.options}</h2>
                 <ul className="mt-4 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100">
-                  {variants.map((v) => (
-                    <li
-                      key={v.id}
-                      className="flex items-center justify-between gap-4 bg-white px-5 py-4 transition-colors hover:bg-gray-50"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{v.name}</p>
-                        {v.description ? (
-                          <p className="mt-0.5 text-xs text-gray-400">{v.description}</p>
-                        ) : null}
-                      </div>
-                      <span className="shrink-0 text-sm font-semibold text-gray-900">
-                        {formatMoney(num(v.price))}
-                      </span>
-                    </li>
-                  ))}
+                  {variants.map((v: any) => {
+                    const vRec = v as Record<string, unknown>;
+                    const vName = (localizedText(vRec, "name", locale) ?? v.name) as string;
+                    const vDesc = (localizedText(vRec, "description", locale) ?? v.description) as string | null;
+                    return (
+                      <li
+                        key={String(v.id)}
+                        className="flex items-center justify-between gap-4 bg-white px-5 py-4 transition-colors hover:bg-gray-50"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900">{vName}</p>
+                          {vDesc ? (
+                            <p className="mt-0.5 text-xs text-gray-400">{vDesc}</p>
+                          ) : null}
+                        </div>
+                        <span className="shrink-0 text-sm font-semibold text-gray-900">
+                          {formatMoney(num(v.price))}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </section>
             ) : null}

@@ -55,7 +55,7 @@ function Dashboard() {
         </div>
       ) : (
         <ul className="mt-6 space-y-4">
-          {bookings.map((b) => {
+          {bookings.map((b: any) => {
             const status = b.status as BookingStatus;
             return (
               <li key={b.id} className="rounded-xl border border-border bg-card p-4">

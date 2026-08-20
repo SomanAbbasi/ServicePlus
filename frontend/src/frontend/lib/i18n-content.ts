@@ -20,8 +20,11 @@ export function localizedText(
 ): string | null {
   if (!row) return null;
   if (locale === "ar") {
-    const ar = row[`${field}_ar`];
-    if (typeof ar === "string" && ar.trim()) return ar;
+    const arSnake = row[`${field}_ar`];
+    if (typeof arSnake === "string" && arSnake.trim()) return arSnake;
+    const fieldCamel = field.charAt(0).toUpperCase() + field.slice(1);
+    const arCamel = row[`${field}${fieldCamel}`] ?? row[`${field}Ar`];
+    if (typeof arCamel === "string" && arCamel.trim()) return arCamel;
   }
   const en = row[field];
   return typeof en === "string" && en.trim() ? en : null;

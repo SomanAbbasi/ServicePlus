@@ -86,10 +86,10 @@ function getDubaiNow() {
 }
 
 const FREQUENCY_LIST = [
-  { id: "one_time", title: "One Time", badge: null, popular: false },
-  { id: "every_2_weeks", title: "Every 2 Weeks", badge: "5% Off", popular: false },
-  { id: "once_a_week", title: "Once a Week", badge: "10% Off", popular: true },
-  { id: "multiple_times_a_week", title: "Multiple Times a Week", badge: "Up to 25% off", popular: false },
+  { id: "one_time", title: "One Time", titleAr: "مرة واحدة", badge: null, badgeAr: null, popular: false },
+  { id: "every_2_weeks", title: "Every 2 Weeks", titleAr: "كل أسبوعين", badge: "5% Off", badgeAr: "خصم 5%", popular: false },
+  { id: "once_a_week", title: "Once a Week", titleAr: "مرة كل أسبوع", badge: "10% Off", badgeAr: "خصم 10%", popular: true },
+  { id: "multiple_times_a_week", title: "Multiple Times a Week", titleAr: "عدة مرات في الأسبوع", badge: "Up to 25% off", badgeAr: "خصم حتى 25%", popular: false },
 ];
 
 function BookingWizard() {
@@ -365,9 +365,10 @@ function BookingWizard() {
     return true;
   }, [step, slotStart, addressId, manualAddress, savedLoc, hasOptions, variantPayload.length]);
 
-  const serviceTitle = localizedText(detail?.service, "name", locale) ?? "Home Cleaning";
+  const svcObj = (detail?.service ?? {}) as Record<string, unknown>;
+  const serviceTitle = (localizedText(svcObj, "name", locale) ?? (svcObj.name as string) ?? (isAr ? "تنظيف المنازل" : "Home Cleaning")) as string;
   const displayAddress =
-    manualAddress.trim() || (savedLoc?.address ? savedLoc.address : "");
+    manualAddress.trim() || (savedLoc?.address ? savedLoc.address : (isAr ? "دبي، الإمارات العربية المتحدة" : "Dubai, UAE"));
 
   const formattedTimeRange = useMemo(() => {
     if (!slotStart) return "17:30-18:00";
@@ -383,15 +384,18 @@ function BookingWizard() {
   const formattedDateString = useMemo(() => {
     const dObj = new Date(date);
     const day = dObj.getDate();
-    const month = dObj.toLocaleDateString("en-US", { month: "short" });
+    const month = dObj.toLocaleDateString(isAr ? "ar-AE" : "en-US", { month: "short" });
     const year = dObj.getFullYear();
     return `${day} ${month} ${year}`;
-  }, [date]);
+  }, [date, isAr]);
 
   const frequencyTitle = useMemo(() => {
     const found = FREQUENCY_LIST.find((f) => f.id === frequency);
+    if (isAr) {
+      return found ? (found.id === "one_time" ? "خدمة مرة واحدة" : found.titleAr) : "خدمة مرة واحدة";
+    }
     return found ? `${found.title} Service` : "One Time Service";
-  }, [frequency]);
+  }, [frequency, isAr]);
 
   return (
     <div dir={isAr ? "rtl" : "ltr"} className="min-h-screen bg-slate-50/60 pb-16 pt-6 overflow-x-hidden">
@@ -403,7 +407,9 @@ function BookingWizard() {
             className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-cyan-600 transition-colors"
           >
             {isAr ? <ChevronRight className="size-4" /> : <ArrowLeft className="size-4" />}
-            <span>Step {currentStepNumber} of {totalSteps}</span>
+            <span>
+              {isAr ? `الخطوة ${currentStepNumber} من ${totalSteps}` : `Step ${currentStepNumber} of ${totalSteps}`}
+            </span>
           </Link>
         </div>
 
@@ -412,13 +418,16 @@ function BookingWizard() {
             <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
               {serviceTitle}
             </h1>
-            {detail?.service?.rating ? (
+            {(detail?.service as any)?.rating ? (
               <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 font-semibold">
                 <div className="flex items-center gap-1 text-amber-500 font-extrabold">
                   <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                  <span>{String(detail.service.rating)}</span>
+                  <span>{String((detail!.service as any).rating)}</span>
                 </div>
-                <span>({detail.service.reviewCount ? Number(detail.service.reviewCount).toLocaleString() : "28,557"} bookings)</span>
+                <span>
+                  ({(detail!.service as any).reviewCount ? String((detail!.service as any).reviewCount) : "28,557"}{" "}
+                  {isAr ? "حجزًا" : "bookings"})
+                </span>
               </div>
             ) : null}
           </div>
@@ -444,7 +453,7 @@ function BookingWizard() {
                     </div>
                   </div>
                 ) : hasOptions ? (
-                  /* Deep Cleaning / Multi-Group Sub-Category Selector (Matching Screenshot media_1787231010179.png) */
+                  /* Deep Cleaning / Multi-Group Sub-Category Selector */
                   <div className="space-y-6">
                     {/* Horizontal Group Selector Tabs */}
                     {optionGroups.length > 0 && (
@@ -452,6 +461,7 @@ function BookingWizard() {
                         {optionGroups.map((g) => {
                           const isGroupSelected = selectedGroupId === g.id;
                           const groupImg = resolveImageUrl(g.imageUrl || g.image_url) || FALLBACK_IMAGE;
+                          const groupName = localizedText(g, "name", locale) ?? g.name;
                           return (
                             <button
                               key={g.id}
@@ -464,12 +474,14 @@ function BookingWizard() {
                               }`}
                             >
                               <div className="size-12 rounded-xl overflow-hidden bg-slate-100 mb-2">
-                                <img src={groupImg} alt={g.name} className="size-full object-cover" />
+                                <img src={groupImg} alt={groupName} className="size-full object-cover" />
                               </div>
-                              <span className={`text-[11px] font-bold leading-tight line-clamp-2 ${
-                                isGroupSelected ? "text-cyan-900" : "text-slate-700"
-                              }`}>
-                                {g.name}
+                              <span
+                                className={`text-[11px] font-bold leading-tight line-clamp-2 ${
+                                  isGroupSelected ? "text-cyan-900" : "text-slate-700"
+                                }`}
+                              >
+                                {groupName}
                               </span>
                             </button>
                           );
@@ -483,6 +495,8 @@ function BookingWizard() {
                         const qty = optionQty[opt.id] || 0;
                         const optImg = resolveImageUrl(opt.imageUrl || opt.image_url) || FALLBACK_IMAGE;
                         const optOriginal = opt.originalPrice || opt.original_price;
+                        const optName = localizedText(opt, "name", locale) ?? opt.name;
+                        const optDesc = localizedText(opt, "description", locale) ?? opt.description;
 
                         return (
                           <div
@@ -491,13 +505,13 @@ function BookingWizard() {
                           >
                             <div className="flex items-start gap-3.5 min-w-0">
                               <div className="size-16 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100">
-                                <img src={optImg} alt={opt.name} className="size-full object-cover" />
+                                <img src={optImg} alt={optName} className="size-full object-cover" />
                               </div>
                               <div className="min-w-0 space-y-1">
-                                <h4 className="text-sm font-extrabold text-slate-900">{opt.name}</h4>
-                                {opt.description && (
+                                <h4 className="text-sm font-extrabold text-slate-900">{optName}</h4>
+                                {optDesc && (
                                   <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
-                                    {opt.description}
+                                    {optDesc}
                                   </p>
                                 )}
                                 <div className="flex items-center gap-2 pt-1">
@@ -520,7 +534,7 @@ function BookingWizard() {
                                   onClick={() => setQty(opt.id, 1)}
                                   className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs px-5 py-2 rounded-full shadow-2xs"
                                 >
-                                  Add +
+                                  {isAr ? "إضافة +" : "Add +"}
                                 </Button>
                               ) : (
                                 <div className="flex items-center gap-2 rounded-full border border-cyan-500 bg-cyan-50 px-2 py-1">
@@ -554,7 +568,7 @@ function BookingWizard() {
                         disabled={!canContinue}
                         className="w-full bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-sm py-3.5 rounded-full shadow-md"
                       >
-                        Next
+                        {isAr ? "التالي" : "Next"}
                       </Button>
                     </div>
                   </div>
@@ -648,14 +662,18 @@ function BookingWizard() {
                     {/* Fuel Surcharge Promo Banner */}
                     <div className="rounded-xl border border-cyan-100 bg-cyan-50/70 p-3.5 flex items-center gap-2.5 text-xs text-cyan-900 font-bold leading-relaxed">
                       <Sparkles className="size-4 text-cyan-600 shrink-0" />
-                      <span>First booking? Your fuel surcharge fee is on us. Enjoy!</span>
+                      <span>
+                        {isAr
+                          ? "الحجز الأول؟ رسوم إنتقال المحترف مجاناً علينا. استمتع برحلتك!"
+                          : "First booking? Your fuel surcharge fee is on us. Enjoy!"}
+                      </span>
                     </div>
 
                     {/* Instructions Textarea */}
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <Label className="text-xs font-bold text-slate-700">
-                          {isAr ? "أي تعليمات أو متطلبات خاصة؟" : "Any instructions or special requirements?"}
+                          {isAr ? "تعليمات أو متطلبات خاصة؟" : "Any instructions or special requirements?"}
                         </Label>
                         <span className="text-[11px] text-slate-400 font-medium">{instructions.length}/150</span>
                       </div>
@@ -663,7 +681,7 @@ function BookingWizard() {
                         maxLength={150}
                         value={instructions}
                         onChange={(e) => setInstructions(e.target.value)}
-                        placeholder="Gate code, pets, parking instructions..."
+                        placeholder={isAr ? "رمز البوابة، حيوانات أليفة، موقف السيارات..." : "Gate code, pets, parking instructions..."}
                         rows={3}
                         className="text-xs"
                       />
@@ -676,7 +694,7 @@ function BookingWizard() {
                         onClick={goNext}
                         className="w-full bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-sm py-3.5 rounded-full shadow-md"
                       >
-                        Next
+                        {isAr ? "التالي" : "Next"}
                       </Button>
                     </div>
                   </>
@@ -684,12 +702,12 @@ function BookingWizard() {
               </section>
             )}
 
-            {/* STEP 1.5: Popular Add-ons Grid (Matching Screenshot media_1787230745646.png) */}
+            {/* STEP 1.5: Popular Add-ons Grid */}
             {step === 1 && hasAddons && (
               <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
                 <div>
-                  <h2 className="text-lg font-extrabold text-slate-900">Popular Add-ons</h2>
-                  <p className="mt-0.5 text-xs font-bold text-slate-600">People also added</p>
+                  <h2 className="text-lg font-extrabold text-slate-900">{isAr ? "الإضافات الشائعة" : "Popular Add-ons"}</h2>
+                  <p className="mt-0.5 text-xs font-bold text-slate-600">{isAr ? "أضاف عملاء آخرون هذه الخدمات إلى حجزهم" : "People also added"}</p>
                 </div>
 
                 <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
@@ -698,6 +716,7 @@ function BookingWizard() {
                     const addonImg = resolveImageUrl(a.image_url || a.imageUrl) || FALLBACK_IMAGE;
                     const addonPrice = Number(a.price || 0);
                     const originalPrice = a.original_price || a.originalPrice;
+                    const addonName = localizedText(a, "name", locale) ?? a.name;
 
                     return (
                       <div
@@ -716,7 +735,7 @@ function BookingWizard() {
                         <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
                           <img
                             src={addonImg}
-                            alt={a.name}
+                            alt={addonName}
                             className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                           />
                           {/* Circular Cyan Plus / Check Action Button */}
@@ -731,7 +750,7 @@ function BookingWizard() {
 
                         <div className="flex flex-1 flex-col justify-between p-3">
                           <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
-                            {localizedText(a, "name", locale) ?? a.name}
+                            {addonName}
                           </h4>
                           <div className="mt-1 flex items-center gap-1.5">
                             <span className="text-xs font-extrabold text-slate-900">
@@ -751,14 +770,14 @@ function BookingWizard() {
 
                 <div className="pt-4 flex justify-between items-center">
                   <Button type="button" variant="outline" onClick={goBack} className="text-xs font-bold">
-                    Back
+                    {isAr ? "رجوع" : "Back"}
                   </Button>
                   <Button
                     type="button"
                     onClick={goNext}
                     className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-xs px-8 rounded-full shadow-md"
                   >
-                    Next
+                    {isAr ? "التالي" : "Next"}
                   </Button>
                 </div>
               </section>
@@ -767,10 +786,10 @@ function BookingWizard() {
             {/* STEP 2/3: Date & Time Picker */}
             {step === 2 && (
               <section className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
-                {/* Frequency Summary Box (Matching Screenshot media_1787226593343.png) */}
+                {/* Frequency Summary Box */}
                 <div className="rounded-xl border border-cyan-300 bg-cyan-50/70 p-4 flex items-center justify-between">
                   <div className="space-y-1.5">
-                    <p className="text-sm font-bold text-slate-900">Frequency</p>
+                    <p className="text-sm font-bold text-slate-900">{isAr ? "التكرار" : "Frequency"}</p>
                     <span className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-3 py-1 text-xs font-extrabold text-white shadow-2xs">
                       <RefreshCw className="size-3.5" />
                       {frequencyTitle}
@@ -784,7 +803,7 @@ function BookingWizard() {
                     }}
                     className="text-xs font-extrabold text-cyan-600 hover:underline"
                   >
-                    Change
+                    {isAr ? "تغيير" : "Change"}
                   </button>
                 </div>
 
@@ -811,7 +830,7 @@ function BookingWizard() {
                     {availableDates.map((d) => {
                       const isSelected = d === date;
                       const dObj = new Date(d);
-                      const dayName = dObj.toLocaleDateString("en-US", { weekday: "short" });
+                      const dayName = dObj.toLocaleDateString(isAr ? "ar-AE" : "en-US", { weekday: "short" });
                       const dayNum = dObj.getDate();
                       return (
                         <button
@@ -902,7 +921,7 @@ function BookingWizard() {
                     </div>
                   ) : (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-center text-xs text-amber-800 font-semibold">
-                      No slots available today for Dubai time. Please pick a future date.
+                      {isAr ? "لا توجد مواعيد متاحة اليوم حسب توقيت دبي. يرجى اختيار تاريخ قادم." : "No slots available today for Dubai time. Please pick a future date."}
                     </div>
                   )}
                 </div>
@@ -911,21 +930,21 @@ function BookingWizard() {
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-slate-600 leading-relaxed">
                   <div className="flex items-center gap-2">
                     <Info className="size-4 text-slate-400 shrink-0" />
-                    <span>Enjoy free cancellation up to 6 hours before your booking start time.</span>
+                    <span>{isAr ? "استمتع بإلغاء مجاني حتى 6 ساعات قبل موعد بدء الحجز." : "Enjoy free cancellation up to 6 hours before your booking start time."}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setPolicyOpen(true)}
                     className="text-xs font-bold text-cyan-600 underline shrink-0 ms-2"
                   >
-                    View our policy
+                    {isAr ? "عرض السياسة" : "View our policy"}
                   </button>
                 </div>
 
                 {/* Action Buttons */}
                 <div className="pt-4 flex justify-between items-center">
                   <Button type="button" variant="outline" onClick={goBack} className="text-xs font-bold">
-                    Back
+                    {isAr ? "رجوع" : "Back"}
                   </Button>
                   <Button
                     type="button"
@@ -933,7 +952,7 @@ function BookingWizard() {
                     disabled={!canContinue}
                     className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-xs px-8 rounded-full shadow-md"
                   >
-                    Next
+                    {isAr ? "التالي" : "Next"}
                   </Button>
                 </div>
               </section>
@@ -944,7 +963,7 @@ function BookingWizard() {
               <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900">{t("booking.step.address")}</h2>
-                  <p className="mt-1 text-xs text-slate-500">Service available in Dubai Emirate only</p>
+                  <p className="mt-1 text-xs text-slate-500">{isAr ? "الخدمة متوفرة في إمارة دبي فقط" : "Service available in Dubai Emirate only"}</p>
                 </div>
 
                 <div className="space-y-3">
@@ -952,7 +971,7 @@ function BookingWizard() {
                     <Input
                       value={manualAddress}
                       onChange={(e) => setManualAddress(e.target.value)}
-                      placeholder="Enter Dubai address (Villa, Apartment, Area)"
+                      placeholder={isAr ? "أدخل عنوان دبي (فيلا، شقة، منطقة)" : "Enter Dubai address (Villa, Apartment, Area)"}
                       className="text-xs"
                     />
                     <Button
@@ -962,14 +981,14 @@ function BookingWizard() {
                       className="shrink-0 text-xs font-bold"
                     >
                       <MapPin className="size-3.5 me-1 text-cyan-600" />
-                      Map
+                      {isAr ? "الخريطة" : "Map"}
                     </Button>
                   </div>
                 </div>
 
                 <div className="pt-4 flex justify-between items-center">
                   <Button type="button" variant="outline" onClick={goBack} className="text-xs font-bold">
-                    Back
+                    {isAr ? "رجوع" : "Back"}
                   </Button>
                   <Button
                     type="button"
@@ -977,7 +996,7 @@ function BookingWizard() {
                     disabled={!canContinue}
                     className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-xs px-8 rounded-full shadow-md"
                   >
-                    Next
+                    {isAr ? "التالي" : "Next"}
                   </Button>
                 </div>
               </section>
@@ -987,18 +1006,18 @@ function BookingWizard() {
             {step === 4 && (
               <section className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">Verification & Payment</h2>
-                  <p className="mt-1 text-xs text-slate-500">Verify phone number and select payment method</p>
+                  <h2 className="text-lg font-bold text-slate-900">{t("booking.paymentVerification")}</h2>
+                  <p className="mt-1 text-xs text-slate-500">{t("booking.verifyPhoneSubtitle")}</p>
                 </div>
 
                 {/* Phone Verification */}
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-bold text-slate-800">Phone Number Verification</Label>
+                    <Label className="text-xs font-bold text-slate-800">{t("booking.phoneVerification")}</Label>
                     {phoneVerified && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
                         <CheckCircle2 className="size-3 text-emerald-600" />
-                        Verified
+                        {t("booking.verified")}
                       </span>
                     )}
                   </div>
@@ -1010,7 +1029,7 @@ function BookingWizard() {
                           type="tel"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
-                          placeholder="+971 50 123 4567"
+                          placeholder={isAr ? "مثال: 0501234567" : "+971 50 123 4567"}
                           className="text-xs bg-white"
                         />
                         <Button
@@ -1019,7 +1038,7 @@ function BookingWizard() {
                           disabled={otpSending || otpSent}
                           className="bg-cyan-600 font-bold text-white hover:bg-cyan-700 shrink-0 text-xs"
                         >
-                          {otpSending ? <Loader2 className="size-3.5 animate-spin" /> : "Send OTP"}
+                          {otpSending ? <Loader2 className="size-3.5 animate-spin" /> : t("auth.sendCode")}
                         </Button>
                       </div>
 
@@ -1031,7 +1050,7 @@ function BookingWizard() {
                               maxLength={6}
                               value={otpCode}
                               onChange={(e) => setOtpCode(e.target.value)}
-                              placeholder="Enter 6-digit OTP (123456)"
+                              placeholder={isAr ? "أدخل رمز التحقق 6 أرقام (123456)" : "Enter 6-digit OTP (123456)"}
                               className="text-xs bg-white font-mono tracking-widest"
                             />
                             <Button
@@ -1039,11 +1058,12 @@ function BookingWizard() {
                               onClick={handleVerifyOtp}
                               className="bg-slate-900 font-bold text-white hover:bg-slate-800 shrink-0 text-xs"
                             >
-                              Verify OTP
+                              {t("auth.verify")}
                             </Button>
                           </div>
                           <p className="text-[11px] text-slate-500 font-semibold italic">
-                            💡 Demo verification code is: <span className="font-bold text-cyan-600">123456</span>
+                            💡 {isAr ? "رمز التحقق التجريبي هو: " : "Demo verification code is: "}
+                            <span className="font-bold text-cyan-600">123456</span>
                           </p>
                         </div>
                       )}
@@ -1058,12 +1078,12 @@ function BookingWizard() {
 
                 {/* Coupon Code */}
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
-                  <Label className="text-xs font-bold text-slate-800">Apply Coupon Code</Label>
+                  <Label className="text-xs font-bold text-slate-800">{t("booking.applyCoupon")}</Label>
                   <div className="flex gap-2">
                     <Input
                       value={couponInput}
                       onChange={(e) => setCouponInput(e.target.value)}
-                      placeholder="e.g. 50MOP"
+                      placeholder={t("booking.couponPlaceholder")}
                       className="text-xs uppercase bg-white font-mono"
                     />
                     <Button
@@ -1071,14 +1091,14 @@ function BookingWizard() {
                       onClick={handleApplyCoupon}
                       className="bg-cyan-600 font-bold text-white hover:bg-cyan-700 shrink-0 text-xs"
                     >
-                      Apply
+                      {t("booking.apply")}
                     </Button>
                   </div>
                 </div>
 
                 {/* Payment Selection */}
                 <div className="space-y-3">
-                  <Label className="text-xs font-bold text-slate-800">Select Payment Method</Label>
+                  <Label className="text-xs font-bold text-slate-800">{t("booking.selectPaymentMethod")}</Label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
@@ -1091,8 +1111,8 @@ function BookingWizard() {
                     >
                       <Wallet className="size-5 text-cyan-600 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-900 truncate">Cash on Delivery</p>
-                        <p className="text-[10px] text-slate-500 truncate">Pay cash directly</p>
+                        <p className="text-xs font-bold text-slate-900 truncate">{t("booking.pay.cashOnDelivery")}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{t("booking.pay.cashSubtitle")}</p>
                       </div>
                     </button>
 
@@ -1107,8 +1127,8 @@ function BookingWizard() {
                     >
                       <CardIcon className="size-5 text-cyan-600 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-900 truncate">Credit Card</p>
-                        <p className="text-[10px] text-slate-500 truncate">Online payment</p>
+                        <p className="text-xs font-bold text-slate-900 truncate">{t("booking.pay.creditCard")}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{t("booking.pay.cardSubtitle")}</p>
                       </div>
                     </button>
                   </div>
@@ -1116,7 +1136,7 @@ function BookingWizard() {
 
                 <div className="pt-4 flex justify-between items-center">
                   <Button type="button" variant="outline" onClick={goBack} className="text-xs font-bold">
-                    Back
+                    {t("common.back")}
                   </Button>
                   <Button
                     type="button"
@@ -1125,7 +1145,7 @@ function BookingWizard() {
                     className="bg-emerald-600 font-extrabold text-white hover:bg-emerald-700 text-xs px-8 rounded-full shadow-md"
                   >
                     {confirm.isPending ? <Loader2 className="size-4 animate-spin me-2" /> : null}
-                    Place Order & Confirm
+                    {t("booking.placeOrder")}
                   </Button>
                 </div>
               </section>
@@ -1135,63 +1155,66 @@ function BookingWizard() {
           {/* Right-Hand Sidebar ("Booking Details") */}
           <aside className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs min-w-0 w-full overflow-hidden">
             <h2 className="font-extrabold text-slate-900 text-base sm:text-lg border-b border-slate-100 pb-4">
-              Booking Details
+              {t("booking.detailsTitle")}
             </h2>
 
             <div className="mt-4 space-y-4 text-xs min-w-0">
               <div className="min-w-0">
-                <span className="text-slate-400 font-semibold block mb-0.5">Address</span>
+                <span className="text-slate-400 font-semibold block mb-0.5">{t("booking.row.address")}</span>
                 <span className="font-bold text-slate-800 block leading-relaxed break-words max-w-full">
                   {displayAddress}
                 </span>
               </div>
 
               <div className="flex justify-between items-center gap-2">
-                <span className="text-slate-400 font-semibold shrink-0">Frequency</span>
+                <span className="text-slate-400 font-semibold shrink-0">{t("booking.row.frequency")}</span>
                 <span className="font-bold text-slate-800 text-end">{frequencyTitle}</span>
               </div>
 
               <div className="flex justify-between items-center gap-2">
-                <span className="text-slate-400 font-semibold shrink-0">Service</span>
+                <span className="text-slate-400 font-semibold shrink-0">{t("booking.row.service")}</span>
                 <span className="font-bold text-slate-800 text-end truncate">{serviceTitle}</span>
               </div>
 
               <div className="flex justify-between items-center gap-2">
-                <span className="text-slate-400 font-semibold shrink-0">Duration</span>
-                <span className="font-bold text-slate-800 text-end">{hours} hours</span>
+                <span className="text-slate-400 font-semibold shrink-0">{t("booking.row.duration")}</span>
+                <span className="font-bold text-slate-800 text-end">
+                  {isAr ? `${hours} ساعات` : `${hours} hours`}
+                </span>
               </div>
 
               <div className="flex justify-between items-center gap-2">
-                <span className="text-slate-400 font-semibold shrink-0">Date & Start Time</span>
+                <span className="text-slate-400 font-semibold shrink-0">{t("booking.row.when")}</span>
                 <span className="font-bold text-slate-800 text-end">
                   {formattedDateString}, {formattedTimeRange}
                 </span>
               </div>
 
               <div className="flex justify-between items-center gap-2">
-                <span className="text-slate-400 font-semibold shrink-0">Number of Professionals</span>
+                <span className="text-slate-400 font-semibold shrink-0">{t("booking.row.pros")}</span>
                 <span className="font-bold text-slate-800 text-end">{professionals}</span>
               </div>
 
               <div className="flex justify-between items-center gap-2">
-                <span className="text-slate-400 font-semibold shrink-0">Material</span>
-                <span className="font-bold text-slate-800 text-end">{materials ? "Yes" : "No"}</span>
+                <span className="text-slate-400 font-semibold shrink-0">{t("booking.row.materials")}</span>
+                <span className="font-bold text-slate-800 text-end">{materials ? (isAr ? "نعم" : "Yes") : (isAr ? "لا" : "No")}</span>
               </div>
 
               {/* Selected Options/Variants List */}
               {Object.entries(optionQty).some(([, q]) => q > 0) && (
                 <div className="pt-2 border-t border-slate-100 space-y-1.5">
-                  <span className="text-slate-400 font-semibold block mb-1">Selected Package / Options</span>
+                  <span className="text-slate-400 font-semibold block mb-1">{t("booking.selectedPackageOptions")}</span>
                   {Object.entries(optionQty)
                     .filter(([, q]) => q > 0)
                     .map(([vId, q]) => {
                       const v = allVariants.find((item: any) => item.id === vId);
                       if (!v) return null;
                       const itemPrice = Number(v.price || v.base_price || 0) * q;
+                      const vName = localizedText(v, "name", locale) ?? v.name;
                       return (
                         <div key={vId} className="flex justify-between items-center text-xs">
                           <span className="font-bold text-slate-700 truncate me-2">
-                            {v.name} {q > 1 ? `(x${q})` : ""}
+                            {vName} {q > 1 ? `(x${q})` : ""}
                           </span>
                           <span className="font-extrabold text-cyan-600 shrink-0">
                             +AED {itemPrice.toFixed(0)}
@@ -1205,54 +1228,57 @@ function BookingWizard() {
               {/* Selected Add-ons List if any */}
               {addonIds.length > 0 && (
                 <div className="pt-2 border-t border-slate-100 space-y-1.5">
-                  <span className="text-slate-400 font-semibold block mb-1">Selected Add-ons</span>
+                  <span className="text-slate-400 font-semibold block mb-1">{t("booking.addons")}</span>
                   {addons
                     .filter((a: any) => addonIds.includes(a.id))
-                    .map((a: any) => (
-                      <div key={a.id} className="flex justify-between items-center text-xs">
-                        <span className="font-bold text-slate-700 truncate">{a.name}</span>
-                        <span className="font-extrabold text-cyan-600 shrink-0">
-                          +AED {Number(a.price).toFixed(0)}
-                        </span>
-                      </div>
-                    ))}
+                    .map((a: any) => {
+                      const aName = localizedText(a, "name", locale) ?? a.name;
+                      return (
+                        <div key={a.id} className="flex justify-between items-center text-xs">
+                          <span className="font-bold text-slate-700 truncate">{aName}</span>
+                          <span className="font-extrabold text-cyan-600 shrink-0">
+                            +AED {Number(a.price).toFixed(0)}
+                          </span>
+                        </div>
+                      );
+                    })}
                 </div>
               )}
 
               {/* Payment Summary Box */}
               <div className="mt-6 pt-4 border-t border-slate-100 space-y-2">
-                <h3 className="font-extrabold text-slate-900 text-sm mb-3">Payment Summary</h3>
+                <h3 className="font-extrabold text-slate-900 text-sm mb-3">{t("booking.paymentSummary")}</h3>
                 
                 {(quote?.breakdown as any)?.subtotal !== undefined && Number((quote?.breakdown as any)?.subtotal) > 0 && (
                   <div className="flex justify-between items-center text-xs text-slate-600">
-                    <span>Base Service</span>
+                    <span>{t("booking.baseServiceLine")}</span>
                     <span>AED {Number((quote?.breakdown as any)?.subtotal || 0).toFixed(2)}</span>
                   </div>
                 )}
 
                 {(quote?.breakdown as any)?.items !== undefined && Number((quote?.breakdown as any)?.items) > 0 && (
                   <div className="flex justify-between items-center text-xs text-slate-600">
-                    <span>Package Options</span>
+                    <span>{t("booking.packageOptionsLine")}</span>
                     <span>AED {Number((quote?.breakdown as any)?.items || 0).toFixed(2)}</span>
                   </div>
                 )}
 
                 {(quote?.breakdown as any)?.addons !== undefined && Number((quote?.breakdown as any)?.addons) > 0 && (
                   <div className="flex justify-between items-center text-xs text-slate-600">
-                    <span>Add-ons Total</span>
+                    <span>{t("booking.addons")}</span>
                     <span>AED {Number((quote?.breakdown as any)?.addons || 0).toFixed(2)}</span>
                   </div>
                 )}
 
                 {(quote?.breakdown as any)?.discount ? (
                   <div className="flex justify-between items-center text-xs text-emerald-600 font-bold">
-                    <span>Discount</span>
+                    <span>{t("booking.couponDiscount")}</span>
                     <span>-AED {Number((quote?.breakdown as any)?.discount || 0).toFixed(2)}</span>
                   </div>
                 ) : null}
 
                 <div className="flex justify-between items-center text-base font-extrabold text-slate-900 pt-2 border-t border-slate-100">
-                  <span>Total</span>
+                  <span>{t("common.total")}</span>
                   <span className="text-slate-900 font-black">
                     AED {Number((quote?.breakdown as any)?.total || 0).toFixed(2)}
                   </span>
@@ -1263,12 +1289,12 @@ function BookingWizard() {
         </div>
       </div>
 
-      {/* FREQUENCY SELECTION MODAL (Matching Uploaded Screenshots media_1787226500832.png & media_1787226538814.png) */}
+      {/* FREQUENCY SELECTION MODAL */}
       <Dialog open={freqOpen} onOpenChange={setFreqOpen}>
         <DialogContent className="max-w-md p-6 rounded-3xl overflow-hidden">
           <DialogHeader className="pb-3 border-b border-slate-100">
             <DialogTitle className="text-lg font-extrabold text-slate-900">
-              Choose your frequency
+              {isAr ? "اختر عدد مرات التكرار" : "Choose your frequency"}
             </DialogTitle>
           </DialogHeader>
 
@@ -1287,15 +1313,15 @@ function BookingWizard() {
                 >
                   {item.popular && (
                     <span className="absolute -top-2.5 start-4 rounded-md bg-cyan-500 px-2 py-0.5 text-[10px] font-extrabold text-white">
-                      Most popular
+                      {isAr ? "الأكثر طلبًا" : "Most popular"}
                     </span>
                   )}
 
                   <div>
-                    <p className="text-sm font-extrabold text-slate-900">{item.title}</p>
-                    {item.badge && (
+                    <p className="text-sm font-extrabold text-slate-900">{isAr ? item.titleAr : item.title}</p>
+                    {(isAr ? item.badgeAr : item.badge) && (
                       <span className="mt-1 inline-block rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800">
-                        {item.badge}
+                        {isAr ? item.badgeAr : item.badge}
                       </span>
                     )}
                   </div>
@@ -1314,24 +1340,24 @@ function BookingWizard() {
             {/* ServicePlus Promise Footer Section */}
             <div className="mt-6 border-t border-slate-100 pt-4 space-y-3">
               <div className="flex items-center gap-2">
-                <span className="text-cyan-600 font-extrabold text-base">serviceplus</span>
-                <span className="font-extrabold text-slate-900 text-base">Promise</span>
+                <span className="text-cyan-600 font-extrabold text-base">سيرفس بلس</span>
+                <span className="font-extrabold text-slate-900 text-base">{isAr ? "الوعد" : "Promise"}</span>
               </div>
 
               <div className="space-y-2.5">
                 <div className="flex items-start gap-2.5">
                   <Tag className="size-4 text-slate-700 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-bold text-slate-900">Any Mess, Any Time</p>
-                    <p className="text-[11px] text-slate-500">Top-rated professionals, ready when you need them.</p>
+                    <p className="text-xs font-bold text-slate-900">{isAr ? "أي تنظيف، في أي وقت" : "Any Mess, Any Time"}</p>
+                    <p className="text-[11px] text-slate-500">{isAr ? "محترفون بأعلى تقييم، جاهزون عندما تحتاجهم." : "Top-rated professionals, ready when you need them."}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2.5">
                   <CalendarClock className="size-4 text-slate-700 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-bold text-slate-900">Book Instantly, Stay Flexible</p>
-                    <p className="text-[11px] text-slate-500">Multiple slots available with no commitment.</p>
+                    <p className="text-xs font-bold text-slate-900">{isAr ? "احجز فورًا، مرونة كاملة" : "Book Instantly, Stay Flexible"}</p>
+                    <p className="text-[11px] text-slate-500">{isAr ? "مواعيد متعددة متاحة بدون أي التزام." : "Multiple slots available with no commitment."}</p>
                   </div>
                 </div>
               </div>
@@ -1347,7 +1373,7 @@ function BookingWizard() {
               }}
               className="w-full bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold py-3.5 rounded-full text-sm shadow-md"
             >
-              Select
+              {isAr ? "تحديد" : "Select"}
             </Button>
           </div>
         </DialogContent>
@@ -1358,24 +1384,24 @@ function BookingWizard() {
         <DialogContent className="max-w-md p-6 rounded-3xl">
           <DialogHeader className="pb-3 border-b border-slate-100">
             <DialogTitle className="text-lg font-extrabold text-slate-900">
-              Service & Cancellation Policy
+              {isAr ? "سياسة الخدمة والإلغاء" : "Service & Cancellation Policy"}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 pt-2 text-xs leading-relaxed text-slate-600">
             <div className="space-y-1">
-              <p className="font-extrabold text-slate-900 text-sm">Free Cancellation</p>
-              <p>You can cancel or reschedule your booking free of charge up to 6 hours before your scheduled start time.</p>
+              <p className="font-extrabold text-slate-900 text-sm">{isAr ? "الإلغاء المجاني" : "Free Cancellation"}</p>
+              <p>{isAr ? "يمكنك إلغاء أو إعادة جدولة حجزك مجانًا حتى 6 ساعات قبل موعد بدء الخدمة المحدد." : "You can cancel or reschedule your booking free of charge up to 6 hours before your scheduled start time."}</p>
             </div>
 
             <div className="space-y-1">
-              <p className="font-extrabold text-slate-900 text-sm">Late Cancellation Fee</p>
-              <p>Cancellations made less than 6 hours prior to start time may incur a nominal AED 25 fee to compensate assigned professionals.</p>
+              <p className="font-extrabold text-slate-900 text-sm">{isAr ? "رسوم الإلغاء المتأخر" : "Late Cancellation Fee"}</p>
+              <p>{isAr ? "الإلغاء قبل أقل من 6 ساعات من موعد بدء الخدمة قد يخضع لرسوم رمزية قدرها 25 درهمًا لتعويض المحترفين المعينين." : "Cancellations made less than 6 hours prior to start time may incur a nominal AED 25 fee to compensate assigned professionals."}</p>
             </div>
 
             <div className="space-y-1">
-              <p className="font-extrabold text-slate-900 text-sm">100% Satisfaction Guarantee</p>
-              <p>If you are not satisfied with your service, contact us within 24 hours and we will send a top professional to re-clean free of charge.</p>
+              <p className="font-extrabold text-slate-900 text-sm">{isAr ? "ضمان الرضا بنسبة 100%" : "100% Satisfaction Guarantee"}</p>
+              <p>{isAr ? "إذا لم تكن راضيًا عن الخدمة المقدمة، تواصل معنا خلال 24 ساعة وسنرسل محترفًا لإعادة تقديم الخدمة مجانًا." : "If you are not satisfied with your service, contact us within 24 hours and we will send a top professional to re-clean free of charge."}</p>
             </div>
           </div>
 
@@ -1385,21 +1411,11 @@ function BookingWizard() {
               onClick={() => setPolicyOpen(false)}
               className="w-full bg-slate-900 text-white font-extrabold py-3 rounded-full text-xs"
             >
-              Got it
+              {isAr ? "فهمت ذلك" : "Got it"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
-
-      <LocationPicker
-        open={pickerOpen}
-        onOpenChange={setPickerOpen}
-        onSelect={(loc) => {
-          setManualAddress(loc.address);
-          saveLocation(loc);
-          setPickerOpen(false);
-        }}
-      />
     </div>
   );
 }

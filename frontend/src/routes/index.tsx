@@ -35,7 +35,11 @@ const homeQuery = queryOptions({
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(homeQuery);
+    try {
+      await context.queryClient.ensureQueryData(homeQuery);
+    } catch (err) {
+      console.warn("[Home Loader] Pre-fetch warning:", err);
+    }
   },
   head: () => ({
     meta: [

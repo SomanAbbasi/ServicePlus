@@ -1,5 +1,5 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001/api";
-const API_ORIGIN = API_BASE.replace(/\/api\/?$/, "") || "http://localhost:3001";
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:3001/api";
+const API_ORIGIN = API_BASE.replace(/\/api\/?$/, "") || "http://127.0.0.1:3001";
 
 const TOKEN_KEY = "sp_auth_token";
 const REFRESH_KEY = "sp_refresh_token";

@@ -64,7 +64,7 @@ function SearchPage() {
     const isGeneralB = b.slug.includes("general") || b.slug.includes("cleaning");
     if (isGeneralA && !isGeneralB) return -1;
     if (!isGeneralA && isGeneralB) return 1;
-    return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+    return ((a as any).sort_order ?? (a as any).sortOrder ?? 0) - ((b as any).sort_order ?? (b as any).sortOrder ?? 0);
   });
 
   const grouped = sortedCategories

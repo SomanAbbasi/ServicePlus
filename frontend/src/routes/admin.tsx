@@ -4,6 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Bell, Eye, EyeOff, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, Store } from "lucide-react";
 import { amIAdmin } from "@/frontend/lib/api-services";
 import { AdminSidebar, NAV_GROUPS } from "@/frontend/components/admin/AdminSidebar";
+import { getAdminNotifications } from "@/frontend/lib/api-services";
+import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
+import { toast } from "sonner";
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/frontend/components/ui/sheet";
@@ -41,6 +44,23 @@ function AdminLayout() {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
     return localStorage.getItem("serviceplus_admin_authenticated") === "true";
   });
+
+  const { data: notificationsData } = useAdminQuery("notifications", getAdminNotifications);
+  const notifications = (notificationsData ?? []) as any[];
+  const [prevNotifCount, setPrevNotifCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (notifications.length > 0) {
+      if (prevNotifCount !== null && notifications.length > prevNotifCount) {
+        const latest = notifications[0];
+        toast.success(`🎉 ${latest?.title || "New Order Alert"}`, {
+          description: latest?.body || "A new booking order was placed.",
+          duration: 8000,
+        });
+      }
+      setPrevNotifCount(notifications.length);
+    }
+  }, [notifications, prevNotifCount]);
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -253,9 +273,12 @@ function AdminLayout() {
           <Link
             to="/admin/notifications"
             aria-label="Notifications"
-            className="grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="relative grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <Bell className="size-4" />
+            {notifications.length > 0 && (
+              <span className="absolute top-1.5 end-1.5 size-2.5 rounded-full bg-cyan-500 ring-2 ring-white animate-pulse" />
+            )}
           </Link>
           <Link
             to="/"

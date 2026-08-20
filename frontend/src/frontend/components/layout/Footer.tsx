@@ -7,6 +7,9 @@ type AreaLink = { kind: "service" | "category"; slug: string };
 
 const CATEGORIES = [
   { slug: "home-cleaning", labelKey: "footer.homeCleaning" },
+  { slug: "laundry-dry-cleaning", labelKey: "area.laundry-dry-cleaning" },
+  { slug: "pest-control", labelKey: "area.pest-control-service" },
+  { slug: "handyman", labelKey: "footer.handyman" },
   { slug: "pcr-at-home", labelKey: "area.pcr-at-home" },
   { slug: "womens-salon", labelKey: "footer.salonSpa" },
   { slug: "womens-spa", labelKey: "area.womens-spa" },
@@ -14,8 +17,11 @@ const CATEGORIES = [
   { slug: "ac-cleaning", labelKey: "area.ac-cleaning" },
   { slug: "mens-grooming", labelKey: "area.premium-mens-grooming" },
   { slug: "lab-at-home", labelKey: "area.lab-at-home" },
-  { slug: "pest-control", labelKey: "area.pest-control-service" },
   { slug: "disinfection", labelKey: "area.disinfection-service" },
+  { slug: "deep-cleaning", labelKey: "area.deep-cleaning" },
+  { slug: "carpet-cleaning", labelKey: "area.carpet-cleaning" },
+  { slug: "sofa-cleaning", labelKey: "area.sofa-cleaning" },
+  { slug: "mattress-cleaning", labelKey: "area.mattress-cleaning" },
 ];
 
 const CITIES = ["Dubai", "Abu Dhabi", "Sharjah", "Ajman"];
@@ -33,16 +39,16 @@ export function Footer() {
   const { t } = useLocale();
 
   const companyLinks = [
-    { label: t("footer.about"), to: "/" as const },
-    { label: t("footer.careers"), to: "/" as const },
-    { label: t("footer.blog"), to: "/" as const },
-    { label: t("footer.contactUs"), to: "/" as const },
+    { label: t("footer.about"), to: "/about" as const },
+    { label: t("footer.careers"), to: "/careers" as const },
+    { label: t("footer.blog"), to: "/blog" as const },
+    { label: t("footer.contactUs"), to: "/contact" as const },
   ];
 
   const supportLinks = [
-    { label: t("footer.help"), to: "/" as const },
-    { label: t("footer.terms"), to: "/" as const },
-    { label: t("footer.privacy"), to: "/" as const },
+    { label: t("footer.help"), to: "/help" as const },
+    { label: t("footer.terms"), to: "/terms" as const },
+    { label: t("footer.privacy"), to: "/privacy" as const },
   ];
 
   return (

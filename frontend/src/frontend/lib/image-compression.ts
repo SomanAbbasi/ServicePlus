@@ -125,7 +125,7 @@ function readFileAsBase64(file: File): Promise<string> {
     reader.onload = () => {
       const result = String(reader.result ?? "");
       const base64 = result.includes(",") ? result.split(",")[1] : result;
-      resolve(base64);
+      resolve(base64 || "");
     };
     reader.onerror = () => reject(new Error("Could not read file"));
     reader.readAsDataURL(file);

@@ -59,18 +59,28 @@ export interface PlaceResult {
 
 /* ============================================================ CATALOG */
 
-export function getHomeCatalog() {
-  return get<{
-    categories: CategorySummary[];
-    services: ServiceSummary[];
-    listings: { category_id: string; service_id: string; sort_order: number }[];
-    featured_coupon: {
-      code: string;
-      description: string | null;
-      discount_type: string;
-      discount_value: number;
-    } | null;
-  }>("/services/home-catalog", { skipAuth: true });
+export async function getHomeCatalog() {
+  try {
+    return await get<{
+      categories: CategorySummary[];
+      services: ServiceSummary[];
+      listings: { category_id: string; service_id: string; sort_order: number }[];
+      featured_coupon: {
+        code: string;
+        description: string | null;
+        discount_type: string;
+        discount_value: number;
+      } | null;
+    }>("/services/home-catalog", { skipAuth: true });
+  } catch (err) {
+    console.warn("[getHomeCatalog] Catalog fetch warning:", err);
+    return {
+      categories: [],
+      services: [],
+      listings: [],
+      featured_coupon: null,
+    };
+  }
 }
 
 export function getServiceDetail(slug: string) {
