@@ -356,4 +356,188 @@ export class AdminController {
       body.professional_id,
     );
   }
+
+  @Get('users')
+  async getUsers() {
+    return this.adminService.getUsers();
+  }
+
+  @Post('user')
+  async createUser(@Body() body: any) {
+    return this.adminService.createUser(body);
+  }
+
+  @Post('user/update')
+  async updateUser(@Body() body: any) {
+    return this.adminService.updateUser(body.id, body);
+  }
+
+  @Post('user/delete')
+  async deleteUser(@Body() body: { id: string }) {
+    return this.adminService.deleteUser(body.id);
+  }
+
+  // Roles
+  @Get('roles')
+  async getRoles() {
+    return this.adminService.getRoles();
+  }
+
+  @Post('role')
+  async createRole(@Body() body: any) {
+    return this.adminService.createRole(body);
+  }
+
+  @Post('role/update')
+  async updateRole(@Body() body: any) {
+    return this.adminService.updateRole(body.id, body);
+  }
+
+  @Post('role/delete')
+  async deleteRole(@Body() body: { id: string }) {
+    return this.adminService.deleteRole(body.id);
+  }
+
+  // Staff
+  @Get('staff')
+  async getStaff() {
+    return this.adminService.getStaff();
+  }
+
+  @Post('staff')
+  async createStaff(@Body() body: any) {
+    return this.adminService.createStaff(body);
+  }
+
+  @Post('staff/update')
+  async updateStaff(@Body() body: any) {
+    return this.adminService.updateStaff(body.id, body);
+  }
+
+  @Post('staff/delete')
+  async deleteStaff(@Body() body: { id: string }) {
+    return this.adminService.deleteStaff(body.id);
+  }
+
+  // Companies
+  @Get('companies')
+  async getCompanies() {
+    return this.adminService.getCompanies();
+  }
+
+  @Post('company')
+  async createCompany(@Body() body: any) {
+    return this.adminService.createCompany(body);
+  }
+
+  @Post('company/update')
+  async updateCompany(@Body() body: any) {
+    return this.adminService.updateCompany(body.id, body);
+  }
+
+  @Post('company/delete')
+  async deleteCompany(@Body() body: { id: string }) {
+    return this.adminService.deleteCompany(body.id);
+  }
+
+  // Team Leads
+  @Get('team-leads')
+  async getTeamLeads() {
+    return this.adminService.getTeamLeads();
+  }
+
+  @Post('team-lead')
+  async createTeamLead(@Body() body: any) {
+    return this.adminService.createTeamLead(body);
+  }
+
+  @Post('team-lead/update')
+  async updateTeamLead(@Body() body: any) {
+    return this.adminService.updateTeamLead(body.id, body);
+  }
+
+  @Post('team-lead/delete')
+  async deleteTeamLead(@Body() body: { id: string }) {
+    return this.adminService.deleteTeamLead(body.id);
+  }
+
+  // Supervisors
+  @Get('supervisors')
+  async getSupervisors() {
+    return this.adminService.getSupervisors();
+  }
+
+  @Post('supervisor')
+  async createSupervisor(@Body() body: any) {
+    return this.adminService.createSupervisor(body);
+  }
+
+  @Post('supervisor/update')
+  async updateSupervisor(@Body() body: any) {
+    return this.adminService.updateSupervisor(body.id, body);
+  }
+
+  @Post('supervisor/delete')
+  async deleteSupervisor(@Body() body: { id: string }) {
+    return this.adminService.deleteSupervisor(body.id);
+  }
+
+  // Materials & Requests
+  @Get('materials')
+  async getMaterials() {
+    return this.adminService.getMaterials();
+  }
+
+  @Post('material')
+  async createMaterial(@Body() body: any) {
+    return this.adminService.createMaterial(body);
+  }
+
+  @Post('material/update')
+  async updateMaterial(@Body() body: any) {
+    return this.adminService.updateMaterial(body.id, body);
+  }
+
+  @Post('material/delete')
+  async deleteMaterial(@Body() body: { id: string }) {
+    return this.adminService.deleteMaterial(body.id);
+  }
+
+  @Get('material-requests')
+  async getMaterialRequests() {
+    return this.adminService.getMaterialRequests();
+  }
+
+  @Post('material-request')
+  async createMaterialRequest(@Body() body: any) {
+    return this.adminService.createMaterialRequest(body);
+  }
+
+  @Post('material-request/update')
+  async updateMaterialRequest(@Body() body: any) {
+    return this.adminService.updateMaterialRequest(body.id, body);
+  }
+
+  // Plans
+  @Get('plans')
+  async getPlans() {
+    return this.adminService.getPlans();
+  }
+
+  @Post('plan')
+  async createPlan(@Body() body: any) {
+    return this.adminService.createPlan(body);
+  }
+
+  @Post('plan/update')
+  async updatePlan(@Body() body: any) {
+    return this.adminService.updatePlan(body.id, body);
+  }
+
+  @Post('plan/delete')
+  async deletePlan(@Body() body: { id: string }) {
+    return this.adminService.deletePlan(body.id);
+  }
 }
+
+

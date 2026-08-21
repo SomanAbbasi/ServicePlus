@@ -1,0 +1,642 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useMemo } from "react";
+import { AdminUser } from "@/frontend/lib/admin-mock-data";
+import {
+  getAdminUsers,
+  updateAdminUser,
+  deleteAdminUser,
+} from "@/frontend/lib/api-services";
+import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { UserActionModals } from "@/frontend/components/admin/UserActionModal";
+import { Button } from "@/frontend/components/ui/button";
+import { Input } from "@/frontend/components/ui/input";
+import { Card } from "@/frontend/components/ui/card";
+import { Label } from "@/frontend/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
+import {
+  Calendar,
+  Check,
+  ChevronsUpDown,
+  Download,
+  Eye,
+  Filter,
+  Lock,
+  Plus,
+  RotateCcw,
+  Search,
+  Send,
+  Sliders,
+  Trash2,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
+import { downloadCsv } from "@/frontend/components/admin/shell";
+
+export const Route = createFileRoute("/admin/users/")({ component: AdminUsersPage });
+
+function AdminUsersPage() {
+  const queryClient = useQueryClient();
+  const { data, isPending } = useAdminQuery("users", getAdminUsers);
+  const users: AdminUser[] = (data as AdminUser[]) ?? [];
+
+  // Controls for Search & Filters Panel
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchName, setSearchName] = useState("");
+  const [searchEmail, setSearchEmail] = useState("");
+  const [searchPhone, setSearchPhone] = useState("");
+  const [searchStatus, setSearchStatus] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // Applied Filter State
+  const [appliedFilters, setAppliedFilters] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    status: "all",
+    startDate: "",
+    endDate: "",
+  });
+
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Sorting state
+  const [sortField, setSortField] = useState<string>("id");
+  const [sortAsc, setSortAsc] = useState<boolean>(true);
+
+  // Action modals state
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [activeAction, setActiveAction] = useState<
+    "edit" | "info" | "password" | "delete" | "send_credentials" | "toggle_status" | null
+  >(null);
+
+  const handleApplyFilter = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setAppliedFilters({
+      name: searchName.trim().toLowerCase(),
+      email: searchEmail.trim().toLowerCase(),
+      phone: searchPhone.trim().toLowerCase(),
+      status: searchStatus,
+      startDate: startDate,
+      endDate: endDate,
+    });
+    setCurrentPage(1);
+  };
+
+  const handleResetFilter = () => {
+    setSearchName("");
+    setSearchEmail("");
+    setSearchPhone("");
+    setSearchStatus("all");
+    setStartDate("");
+    setEndDate("");
+    setAppliedFilters({
+      name: "",
+      email: "",
+      phone: "",
+      status: "all",
+      startDate: "",
+      endDate: "",
+    });
+    setCurrentPage(1);
+  };
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortAsc(!sortAsc);
+    } else {
+      setSortField(field);
+      setSortAsc(true);
+    }
+  };
+
+  const filteredUsers = useMemo(() => {
+    const list = users.filter((u) => {
+      if (appliedFilters.name) {
+        const matchName = (u.fullName || "").toLowerCase().includes(appliedFilters.name);
+        if (!matchName) return false;
+      }
+      if (appliedFilters.email) {
+        const matchEmail = (u.email || "").toLowerCase().includes(appliedFilters.email);
+        if (!matchEmail) return false;
+      }
+      if (appliedFilters.phone) {
+        const matchPhone = (u.phone || "").toLowerCase().includes(appliedFilters.phone);
+        if (!matchPhone) return false;
+      }
+      if (appliedFilters.status !== "all") {
+        if (u.status !== appliedFilters.status) return false;
+      }
+      if (appliedFilters.startDate) {
+        const regDate = u.registeredOn || u.createdAt?.slice(0, 10) || "";
+        if (regDate && regDate < appliedFilters.startDate) return false;
+      }
+      if (appliedFilters.endDate) {
+        const regDate = u.registeredOn || u.createdAt?.slice(0, 10) || "";
+        if (regDate && regDate > appliedFilters.endDate) return false;
+      }
+      return true;
+    });
+
+    list.sort((a, b) => {
+      let valA: any = (a as any)[sortField] ?? "";
+      let valB: any = (b as any)[sortField] ?? "";
+      if (typeof valA === "string") valA = valA.toLowerCase();
+      if (typeof valB === "string") valB = valB.toLowerCase();
+      if (valA < valB) return sortAsc ? -1 : 1;
+      if (valA > valB) return sortAsc ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [users, appliedFilters, sortField, sortAsc]);
+
+  const totalPages = Math.ceil(filteredUsers.length / pageSize) || 1;
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredUsers.slice(start, start + pageSize);
+  }, [filteredUsers, currentPage, pageSize]);
+
+  const handleOpenAction = (
+    user: AdminUser,
+    action: "edit" | "info" | "password" | "delete" | "send_credentials" | "toggle_status",
+  ) => {
+    setSelectedUser(user);
+    if (action === "toggle_status") {
+      handleToggleUserStatus(user);
+      return;
+    }
+    setActiveAction(action);
+  };
+
+  const handleToggleUserStatus = async (userOrId: AdminUser | string) => {
+    const userId = typeof userOrId === "string" ? userOrId : userOrId.id;
+    const targetUser = users.find((u) => u.id === userId);
+    const nextStatus = targetUser?.status === "Activated" ? "Deactivated" : "Activated";
+    await updateAdminUser(userId, { status: nextStatus });
+    toast.success(`User ${targetUser?.fullName || targetUser?.email || "account"} is now ${nextStatus}`);
+    queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+  };
+
+  const handleDeleteUser = async (userOrId: AdminUser | string) => {
+    const userId = typeof userOrId === "string" ? userOrId : userOrId.id;
+    const targetUser = users.find((u) => u.id === userId);
+    await deleteAdminUser(userId);
+    toast.success(`User ${targetUser?.fullName || targetUser?.email || "account"} deleted successfully`);
+    setActiveAction(null);
+    queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+  };
+
+  const handleUpdateUser = async (userId: string, updatedData: Partial<AdminUser>) => {
+    await updateAdminUser(userId, updatedData);
+    toast.success("User profile updated successfully");
+    setActiveAction(null);
+    queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+  };
+
+  return (
+    <div className="space-y-5 text-slate-800">
+      {/* Breadcrumbs & Header Actions */}
+      <div>
+        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
+          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
+            Dashboard
+          </Link>
+          <span>/</span>
+          <span className="text-slate-600">Users</span>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">User Management</h1>
+          <div className="flex items-center gap-2.5">
+            <Button
+              type="button"
+              variant={isSearchOpen ? "default" : "outline"}
+              size="sm"
+              onClick={() => setIsSearchOpen((v) => !v)}
+              className={
+                isSearchOpen
+                  ? "bg-cyan-600 text-white hover:bg-cyan-700 font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
+                  : "border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
+              }
+            >
+              <Search className="size-3.5 me-1.5" /> Search
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                downloadCsv(
+                  "users-list.csv",
+                  filteredUsers.map((u, i) => ({
+                    "#": i + 1,
+                    Name: u.fullName || "",
+                    "E-mail": u.email || "",
+                    "Phone Number": u.phone || "",
+                    "Wallet Balance": (typeof u.walletBalance === "number" ? u.walletBalance : 0).toFixed(2),
+                    Status: u.status || "Activated",
+                    "Registered On": u.registeredOn || u.createdAt?.slice(0, 10) || "",
+                  })),
+                )
+              }
+              className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
+            >
+              <Download className="size-3.5 me-1.5 text-slate-500" /> Export CSV
+            </Button>
+            <Link to="/admin/users/create">
+              <Button
+                type="button"
+                size="sm"
+                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
+              >
+                <Plus className="size-3.5 me-1.5" /> Add New User
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Collapsible Search & Filter Card */}
+      {isSearchOpen && (
+        <Card className="p-5 bg-white border-slate-200/90 rounded-2xl shadow-xs animate-in fade-in slide-in-from-top-2 duration-200">
+          <form onSubmit={handleApplyFilter} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Search Name</Label>
+                <Input
+                  placeholder="Search Name"
+                  value={searchName}
+                  onChange={(e) => setSearchName(e.target.value)}
+                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Search Email</Label>
+                <Input
+                  placeholder="Search Email"
+                  value={searchEmail}
+                  onChange={(e) => setSearchEmail(e.target.value)}
+                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Search Phone Number</Label>
+                <Input
+                  placeholder="Search Phone Number"
+                  value={searchPhone}
+                  onChange={(e) => setSearchPhone(e.target.value)}
+                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Status</Label>
+                <Select value={searchStatus} onValueChange={setSearchStatus}>
+                  <SelectTrigger className="h-10 text-xs bg-white border-slate-200 rounded-lg">
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-xs font-semibold">Select Status (All)</SelectItem>
+                    <SelectItem value="Activated" className="text-xs text-emerald-600 font-bold">Activated</SelectItem>
+                    <SelectItem value="Deactivated" className="text-xs text-rose-600 font-bold">Deactivated</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Start Date</Label>
+                <div className="relative">
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="h-10 text-xs bg-white border-slate-200 rounded-lg pe-8"
+                  />
+                  <Calendar className="pointer-events-none absolute end-2.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">End Date</Label>
+                <div className="relative">
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="h-10 text-xs bg-white border-slate-200 rounded-lg pe-8"
+                  />
+                  <Calendar className="pointer-events-none absolute end-2.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleResetFilter}
+                className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
+              >
+                <RotateCcw className="size-3.5 me-1.5" /> Reset
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
+              >
+                <Filter className="size-3.5 me-1.5" /> Filter
+              </Button>
+            </div>
+          </form>
+        </Card>
+      )}
+
+      {/* Main Table Card */}
+      <Card className="p-5 bg-white border-slate-200/90 rounded-2xl shadow-xs">
+        {/* Table Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+            <span>Show</span>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(val) => {
+                setPageSize(Number(val));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="h-8 w-20 text-xs bg-slate-50 rounded-lg">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10" className="text-xs">10</SelectItem>
+                <SelectItem value="25" className="text-xs">25</SelectItem>
+                <SelectItem value="50" className="text-xs">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span>entries</span>
+          </div>
+
+          <div className="text-xs text-slate-400 font-medium">
+            Total {filteredUsers.length} user{filteredUsers.length === 1 ? "" : "s"}
+          </div>
+        </div>
+
+        {/* Data Table */}
+        <div className="overflow-x-auto mt-2">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead className="text-slate-500 font-semibold border-b border-slate-200">
+              <tr>
+                <th className="px-3 py-3 w-10 text-center">#</th>
+                <th
+                  className="px-3 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  onClick={() => handleSort("fullName")}
+                >
+                  <div className="flex items-center gap-1">
+                    Name <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th
+                  className="px-3 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  onClick={() => handleSort("email")}
+                >
+                  <div className="flex items-center gap-1">
+                    E-mail <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th
+                  className="px-3 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  onClick={() => handleSort("phone")}
+                >
+                  <div className="flex items-center gap-1">
+                    Phone Number <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th
+                  className="px-3 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  onClick={() => handleSort("walletBalance")}
+                >
+                  <div className="flex items-center gap-1">
+                    <div>
+                      <div>Wallet</div>
+                      <div className="text-[11px] font-normal text-slate-400">Balance</div>
+                    </div>
+                    <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0 ms-1" />
+                  </div>
+                </th>
+                <th
+                  className="px-3 py-3 text-center cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  onClick={() => handleSort("status")}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    Status <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th
+                  className="px-3 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  onClick={() => handleSort("registeredOn")}
+                >
+                  <div className="flex items-center gap-1">
+                    <div>
+                      <div>Registered</div>
+                      <div className="text-[11px] font-normal text-slate-400">On</div>
+                    </div>
+                    <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0 ms-1" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center w-16">
+                  <div className="flex items-center justify-center gap-1 text-slate-600 font-bold">
+                    Action <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+              {isPending ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    Loading users directory...
+                  </td>
+                </tr>
+              ) : paginatedUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    No users found matching your search or filter criteria.
+                  </td>
+                </tr>
+              ) : (
+                paginatedUsers.map((user, idx) => {
+                  const globalIdx = (currentPage - 1) * pageSize + idx + 1;
+                  const isActivated = user.status === "Activated";
+                  const displayName = user.fullName || user.email?.split("@")[0] || user.phone || "User";
+                  const registeredDate = user.registeredOn || user.createdAt?.slice(0, 10) || "—";
+                  const registeredTime = user.createdAt ? new Date(user.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "3:53 PM";
+
+                  return (
+                    <tr key={user.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-3 py-3.5 text-center font-medium text-slate-500">{globalIdx}</td>
+                      <td className="px-3 py-3.5 font-medium text-slate-800 truncate max-w-[150px]">
+                        {displayName}
+                      </td>
+                      <td className="px-3 py-3.5 text-slate-600 truncate max-w-[180px]">
+                        {user.email || "—"}
+                      </td>
+                      <td className="px-3 py-3.5 text-slate-600 whitespace-nowrap">
+                        {user.phone || "—"}
+                      </td>
+                      <td className="px-3 py-3.5 font-medium text-slate-800 whitespace-nowrap">
+                        <div className="text-[11px] text-slate-500 font-semibold">AED</div>
+                        <div className="font-bold text-slate-900">
+                          {(typeof user.walletBalance === "number" ? user.walletBalance : 0).toFixed(2)}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3.5 text-center whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                            isActivated
+                              ? "bg-emerald-100/70 text-emerald-600"
+                              : "bg-rose-100/70 text-rose-600"
+                          }`}
+                        >
+                          {user.status || "Activated"}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3.5 text-slate-700 text-xs whitespace-nowrap">
+                        <div>{registeredDate}</div>
+                        <div className="text-[11px] text-slate-400 font-normal">{registeredTime}</div>
+                      </td>
+
+                      {/* Reference 2-column Compact Action Grid */}
+                      <td className="px-2 py-3 text-center align-middle">
+                        <div className="inline-grid grid-cols-2 gap-x-2.5 gap-y-2 place-items-center">
+                          {/* Row 1 */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAction(user, "toggle_status")}
+                            title={isActivated ? "Deactivate User" : "Activate User"}
+                            className="text-rose-500 hover:scale-125 transition-transform"
+                          >
+                            {isActivated ? (
+                              <X className="size-4 text-rose-500 stroke-[2.5]" />
+                            ) : (
+                              <Check className="size-4 text-emerald-500 stroke-[2.5]" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAction(user, "edit")}
+                            title="Edit User"
+                            className="text-blue-600 hover:scale-125 transition-transform"
+                          >
+                            <Sliders className="size-4 text-blue-600 stroke-[2.5]" />
+                          </button>
+
+                          {/* Row 2 */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAction(user, "info")}
+                            title="User Information & History"
+                            className="text-blue-500 hover:scale-125 transition-transform"
+                          >
+                            <Eye className="size-4 text-blue-500 stroke-[2.5]" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAction(user, "password")}
+                            title="Reset Password"
+                            className="text-teal-500 hover:scale-125 transition-transform"
+                          >
+                            <Lock className="size-4 text-teal-500 stroke-[2.5]" />
+                          </button>
+
+                          {/* Row 3 */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAction(user, "delete")}
+                            title="Delete User"
+                            className="text-rose-500 hover:scale-125 transition-transform"
+                          >
+                            <Trash2 className="size-4 text-rose-500 stroke-[2.5]" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAction(user, "send_credentials")}
+                            title="Send Credentials via Email/SMS"
+                            className="text-slate-900 hover:scale-125 transition-transform"
+                          >
+                            <Send className="size-4 text-slate-900 stroke-[2.5]" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100 text-xs text-slate-500 font-medium">
+          <div>
+            Showing {filteredUsers.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} to{" "}
+            {Math.min(currentPage * pageSize, filteredUsers.length)} of {filteredUsers.length} entries
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+              className="h-8 px-2 text-xs rounded-lg"
+            >
+              ‹
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Button
+                key={p}
+                type="button"
+                variant={p === currentPage ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCurrentPage(p)}
+                className={`h-8 w-8 p-0 text-xs font-bold rounded-lg ${
+                  p === currentPage ? "bg-cyan-600 text-white hover:bg-cyan-700" : "text-slate-600"
+                }`}
+              >
+                {p}
+              </Button>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+              className="h-8 px-2 text-xs rounded-lg"
+            >
+              ›
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Action Modals */}
+      <UserActionModals
+        user={selectedUser}
+        activeAction={activeAction}
+        onClose={() => {
+          setActiveAction(null);
+          setSelectedUser(null);
+        }}
+        onSaveEdit={handleUpdateUser}
+        onDelete={handleDeleteUser}
+        onToggleStatus={handleToggleUserStatus}
+      />
+    </div>
+  );
+}

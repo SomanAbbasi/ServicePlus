@@ -11,7 +11,22 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CalendarCheck, Star, Users, Wallet } from "lucide-react";
+import {
+  Building2,
+  CalendarCheck,
+  ChevronRight,
+  Clock,
+  DollarSign,
+  FileWarning,
+  Package,
+  Star,
+  TrendingDown,
+  TrendingUp,
+  Users,
+  Users2,
+  Wallet,
+  Wrench,
+} from "lucide-react";
 import { getAdminOverview } from "@/frontend/lib/api-services";
 import {
   EmptyState,
@@ -24,251 +39,329 @@ import {
 } from "@/frontend/components/admin/shell";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
 import { Button } from "@/frontend/components/ui/button";
+import { Card } from "@/frontend/components/ui/card";
 import { formatMoney, num } from "@/frontend/lib/money";
 import { cn } from "@/frontend/lib/utils";
 
 export const Route = createFileRoute("/admin/")({ component: AdminHome });
 
-const RANGES = [
-  { key: "7D", days: 7 },
-  { key: "30D", days: 30 },
-  { key: "3M", days: 90 },
-  { key: "1Y", days: 365 },
-];
-
-const DONUT_COLORS = ["#12B8E8", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#64748b"];
+// Donut colors matching reference screenshot:
+// Cancelled: Green #22c55e, Pending: Amber #f59e0b, In Progress: Cyan #06b6d4, Completed: Violet #8b5cf6
+const DONUT_COLORS_MAP: Record<string, string> = {
+  Cancelled: "#22c55e",
+  Pending: "#f59e0b",
+  "In Progress": "#06b6d4",
+  Completed: "#8b5cf6",
+};
 
 function AdminHome() {
   const { data, isPending, isError } = useAdminQuery("overview", getAdminOverview);
-  const [range, setRange] = useState(RANGES[1]!);
 
   if (isError) return <ErrorState />;
   if (isPending || !data) {
     return (
-      <>
-        <PageHeader title="Dashboard" />
+      <div className="space-y-6">
+        <PageHeader title="Dashboard" description="At-a-glance platform health" />
         <TableSkeleton rows={8} />
-      </>
+      </div>
     );
   }
 
-  const since = new Date(Date.now() - range.days * 864e5).toISOString().slice(0, 10);
-  const revenueSeries: any[] = (data as any)?.revenue_series ?? [];
-  const byStatus: Record<string, number> = (data as any)?.by_status ?? {};
   const kpis: any = (data as any)?.kpis ?? {};
+  const trends: any[] = (data as any)?.booking_trends_30_days ?? [];
+  const byStatus: Record<string, number> = (data as any)?.by_status ?? {};
 
-  const series = revenueSeries.filter((p) => (p?.date ?? "") >= since);
-  const donut = Object.entries(byStatus).map(([name, value]) => ({ name, value }));
+  const donutData = Object.entries(byStatus).map(([name, value]) => ({
+    name,
+    value,
+    color: DONUT_COLORS_MAP[name] || "#64748b",
+  }));
 
   return (
-    <>
-      <PageHeader title="Dashboard" description="Live view of bookings, revenue and your team." />
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatsCard
-          label="Today's bookings"
-          value={kpis.today_bookings ?? 12}
-          icon={CalendarCheck}
-          hint={`${kpis.total_bookings ?? 248} in the last year`}
-        />
-        <StatsCard
-          label="Revenue this month"
-          value={formatMoney(kpis.revenue_month ?? 14850)}
-          icon={Wallet}
-          hint={`${formatMoney(kpis.revenue_total ?? 89400)} total`}
-        />
-        <StatsCard
-          label="Active professionals"
-          value={kpis.active_professionals ?? 18}
-          icon={Users}
-          hint={`${kpis.professionals ?? 24} on the roster`}
-        />
-        <StatsCard
-          label="New customers"
-          value={kpis.new_customers ?? 38}
-          icon={Star}
-          hint={`${kpis.customers ?? 142} registered`}
-        />
+    <div className="space-y-6 text-slate-800">
+      {/* Header with Title & Reports Action */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Dashboard</h1>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">At-a-glance platform health</p>
+        </div>
+        <Button asChild className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs shadow-sm">
+          <Link to="/admin/reports">View All Reports →</Link>
+        </Button>
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatsCard label="Completed" value={data.kpis.completed} />
-        <StatsCard label="Pending" value={data.kpis.pending} />
-        <StatsCard label="Cancelled" value={data.kpis.cancelled} />
-        <StatsCard label="Average order value" value={formatMoney(data.kpis.aov)} />
+      {/* Top 8 Primary KPI Stat Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-4 gap-3.5">
+        <Card className="p-4 bg-white border-slate-200/80 shadow-xs hover:border-cyan-300 transition-colors">
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Customers</p>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-slate-900">{kpis.total_customers ?? 0}</span>
+            <Users className="size-4 text-cyan-600" />
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-white border-slate-200/80 shadow-xs hover:border-cyan-300 transition-colors">
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Companies</p>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-slate-900">{kpis.total_companies ?? 0}</span>
+            <Building2 className="size-4 text-cyan-600" />
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-white border-slate-200/80 shadow-xs hover:border-cyan-300 transition-colors">
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Professionals</p>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-slate-900">{kpis.total_professionals ?? 0}</span>
+            <Wrench className="size-4 text-cyan-600" />
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-white border-slate-200/80 shadow-xs hover:border-cyan-300 transition-colors">
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Bookings</p>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-slate-900">{kpis.total_bookings ?? 0}</span>
+            <CalendarCheck className="size-4 text-cyan-600" />
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-white border-slate-200/80 shadow-xs hover:border-cyan-300 transition-colors">
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Revenue</p>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-slate-900">
+              {typeof kpis.total_revenue === "number" ? kpis.total_revenue.toFixed(2) : "0.00"}{" "}
+              <span className="text-xs font-bold text-slate-500">AED</span>
+            </span>
+            <Wallet className="size-4 text-emerald-600" />
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-white border-slate-200/80 shadow-xs hover:border-cyan-300 transition-colors">
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Average Rating</p>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-slate-900">
+              {kpis.average_rating ? Number(kpis.average_rating).toFixed(2) : "0.00"}
+            </span>
+            <Star className="size-4 fill-amber-400 text-amber-400" />
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-white border-slate-200/80 shadow-xs hover:border-cyan-300 transition-colors">
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Pending Material Requests</p>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-slate-900">{kpis.pending_material_requests ?? 0}</span>
+            <Package className="size-4 text-amber-500" />
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-white border-slate-200/80 shadow-xs hover:border-cyan-300 transition-colors">
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Documents Expiring (30 days)</p>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-2xl font-black text-slate-900">{kpis.documents_expiring_30_days ?? 0}</span>
+            <FileWarning className="size-4 text-rose-500" />
+          </div>
+        </Card>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
-        <SectionCard
-          title="Revenue"
-          className="lg:col-span-2"
-          action={
-            <div className="flex gap-1">
-              {RANGES.map((r) => (
-                <button
-                  key={r.key}
-                  type="button"
-                  onClick={() => setRange(r)}
-                  className={cn(
-                    "rounded-md px-2 py-1 text-xs font-medium",
-                    r.key === range.key
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted",
-                  )}
-                >
-                  {r.key}
-                </button>
-              ))}
+      {/* Comparison Trend Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="p-5 bg-white border-slate-200/80 shadow-xs">
+          <p className="text-xs font-bold text-slate-500">Today vs Yesterday Bookings</p>
+          <div className="mt-3 flex items-center justify-between">
+            <div>
+              <span className="text-3xl font-black text-slate-900">{kpis.today_bookings ?? 0}</span>
+              <p className="text-xs text-slate-400 font-medium mt-1">Previous: {kpis.yesterday_bookings ?? 0}</p>
             </div>
-          }
-        >
-          {series.length ? (
-            <div className="h-64">
+            <div className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border text-xs font-black ${
+              (kpis.today_vs_yesterday_pct ?? 0) >= 0
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                : "bg-rose-50 border-rose-200 text-rose-700"
+            }`}>
+              {(kpis.today_vs_yesterday_pct ?? 0) >= 0 ? <TrendingUp className="size-4" /> : <TrendingDown className="size-4" />}
+              <span>{kpis.today_vs_yesterday_pct ?? 0}%</span>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-5 bg-white border-slate-200/80 shadow-xs">
+          <p className="text-xs font-bold text-slate-500">This Month vs Last Month Bookings</p>
+          <div className="mt-3 flex items-center justify-between">
+            <div>
+              <span className="text-3xl font-black text-slate-900">{kpis.month_bookings ?? 0}</span>
+              <p className="text-xs text-slate-400 font-medium mt-1">Previous: {kpis.last_month_bookings ?? 0}</p>
+            </div>
+            <div className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border text-xs font-black ${
+              (kpis.month_vs_last_month_pct ?? 0) >= 0
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                : "bg-rose-50 border-rose-200 text-rose-700"
+            }`}>
+              {(kpis.month_vs_last_month_pct ?? 0) >= 0 ? <TrendingUp className="size-4" /> : <TrendingDown className="size-4" />}
+              <span>{kpis.month_vs_last_month_pct ?? 0}%</span>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Booking Trend - Last 30 Days Chart */}
+        <Card className="lg:col-span-2 p-5 bg-white border-slate-200/80 shadow-xs flex flex-col">
+          <div className="mb-4">
+            <h2 className="text-sm font-bold text-slate-900">Booking Trend — Last 30 Days</h2>
+            <p className="text-xs text-slate-400">Daily bookings volume across all service categories</p>
+          </div>
+
+          <div className="h-72 w-full mt-2">
+            {trends.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs">
+                <CalendarCheck className="size-8 text-slate-300 mb-2" />
+                <p>No bookings data recorded in the last 30 days.</p>
+              </div>
+            ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={series}>
+                <AreaChart data={trends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#12B8E8" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#12B8E8" stopOpacity={0} />
+                    <linearGradient id="bookingTrendGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
-                  <YAxis tickLine={false} axisLine={false} fontSize={11} width={50} />
-                  <Tooltip formatter={(v: number) => formatMoney(v)} />
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={10}
+                    tickMargin={8}
+                    interval={3}
+                    stroke="#94a3b8"
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={10}
+                    stroke="#94a3b8"
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length && payload[0]?.payload) {
+                        const d = payload[0].payload;
+                        return (
+                          <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-lg text-xs">
+                            <p className="font-bold text-slate-800">{d.date}</p>
+                            <p className="text-indigo-600 font-semibold mt-1">Bookings: {d.bookings}</p>
+                            <p className="text-emerald-600 font-medium">Revenue: AED {d.revenue}</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                   <Area
                     type="monotone"
-                    dataKey="value"
-                    stroke="#12B8E8"
-                    fill="url(#rev)"
-                    strokeWidth={2}
+                    dataKey="bookings"
+                    stroke="#6366f1"
+                    strokeWidth={2.5}
+                    fill="url(#bookingTrendGradient)"
                   />
                 </AreaChart>
               </ResponsiveContainer>
-            </div>
-          ) : (
-            <EmptyState title="No revenue in this period" />
-          )}
-        </SectionCard>
+            )}
+          </div>
+        </Card>
 
-        <SectionCard title="Bookings by status">
-          {donut.length ? (
-            <div className="h-64">
+        {/* Booking Status Donut Chart */}
+        <Card className="p-5 bg-white border-slate-200/80 shadow-xs flex flex-col">
+          <div className="mb-2">
+            <h2 className="text-sm font-bold text-slate-900">Booking Status</h2>
+            <p className="text-xs text-slate-400">Current active and finalized distribution</p>
+          </div>
+
+          <div className="h-56 relative flex items-center justify-center">
+            {donutData.length === 0 ? (
+              <div className="text-center text-slate-400 text-xs">
+                <CalendarCheck className="size-8 text-slate-300 mx-auto mb-2" />
+                <p>No bookings available.</p>
+              </div>
+            ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={donut}
+                    data={donutData}
                     dataKey="value"
                     nameKey="name"
                     innerRadius={55}
                     outerRadius={85}
-                    paddingAngle={2}
+                    paddingAngle={3}
+                    stroke="none"
                   >
-                    {donut.map((_, i) => (
-                      <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />
+                    {donutData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip
+                    formatter={(val: number) => [`${val}%`, "Share"]}
+                    contentStyle={{ borderRadius: "0.75rem", fontSize: "12px", border: "1px solid #e2e8f0" }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
-          ) : (
-            <EmptyState title="No bookings yet" />
-          )}
-        </SectionCard>
+            )}
+          </div>
+
+          {/* Legend */}
+          <div className="grid grid-cols-2 gap-2 mt-auto pt-3 border-t border-slate-100 text-xs font-semibold">
+            {donutData.length === 0 ? (
+              <p className="col-span-2 text-center text-slate-400 text-[11px]">0 active bookings</p>
+            ) : (
+              donutData.map((item) => (
+                <div key={item.name} className="flex items-center gap-2">
+                  <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                  <span className="text-slate-600 truncate">{item.name}</span>
+                  <span className="ms-auto text-slate-900 font-bold">{item.value}%</span>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <SectionCard
-          title="Upcoming bookings"
-          action={
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/admin/bookings">View all</Link>
+      {/* Quick Access Operational Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+        <Card className="p-4 bg-white border-slate-200/80 shadow-xs">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Staff & Teams</h3>
+            <Button asChild variant="ghost" size="sm" className="text-xs text-cyan-600 hover:text-cyan-700 h-7 px-2">
+              <Link to="/admin/professionals">View All</Link>
             </Button>
-          }
-        >
-          <Rows
-            rows={(data as any)?.upcoming ?? []}
-            empty="Nothing scheduled"
-            render={(b) => (
-              <>
-                <span className="truncate font-medium">{b.service?.name ?? "Service"}</span>
-                <span className="text-xs text-muted-foreground">
-                  {b.scheduled_date} {String(b.scheduled_start ?? "").slice(0, 5)}
-                </span>
-                <StatusBadge status={b.status} />
-                <span className="text-sm font-medium">{formatMoney(num(b.total))}</span>
-              </>
-            )}
-          />
-        </SectionCard>
+          </div>
+          <p className="text-xs text-slate-500">
+            {kpis.total_professionals ?? 0} Professionals registered in the platform.
+          </p>
+        </Card>
 
-        <SectionCard title="Recent bookings">
-          <Rows
-            rows={(data as any)?.recent_bookings ?? []}
-            empty="No bookings yet"
-            render={(b) => (
-              <>
-                <span className="truncate font-medium">{b.booking_number}</span>
-                <span className="truncate text-xs text-muted-foreground">{b.service?.name}</span>
-                <StatusBadge status={b.status} />
-                <span className="text-sm font-medium">{formatMoney(num(b.total))}</span>
-              </>
-            )}
-          />
-        </SectionCard>
+        <Card className="p-4 bg-white border-slate-200/80 shadow-xs">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Document Compliance</h3>
+            <Button asChild variant="ghost" size="sm" className="text-xs text-cyan-600 hover:text-cyan-700 h-7 px-2">
+              <Link to="/admin/expired-documents">Audit Hub</Link>
+            </Button>
+          </div>
+          <p className="text-xs text-slate-500">
+            {kpis.documents_expiring_30_days ?? 0} compliance documents expiring within 30 days.
+          </p>
+        </Card>
 
-        <SectionCard title="Recent customers">
-          <Rows
-            rows={(data as any)?.recent_customers ?? []}
-            empty="No customers yet"
-            render={(c) => (
-              <>
-                <span className="truncate font-medium">{c.full_name ?? "Guest"}</span>
-                <span className="truncate text-xs text-muted-foreground">{c.phone ?? c.email}</span>
-                <span className="text-xs text-muted-foreground">
-                  {String(c.created_at).slice(0, 10)}
-                </span>
-              </>
-            )}
-          />
-        </SectionCard>
-
-        <SectionCard title="Recent reviews">
-          <Rows
-            rows={(data as any)?.recent_reviews ?? []}
-            empty="No reviews yet"
-            render={(r) => (
-              <>
-                <span className="font-medium">{"★".repeat(r.rating ?? 5)}</span>
-                <span className="truncate text-xs text-muted-foreground">{r.comment ?? "—"}</span>
-                <span className="truncate text-xs text-muted-foreground">{r.service?.name}</span>
-              </>
-            )}
-          />
-        </SectionCard>
+        <Card className="p-4 bg-white border-slate-200/80 shadow-xs">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Material Inventory</h3>
+            <Button asChild variant="ghost" size="sm" className="text-xs text-cyan-600 hover:text-cyan-700 h-7 px-2">
+              <Link to="/admin/materials">Stock Level</Link>
+            </Button>
+          </div>
+          <p className="text-xs text-slate-500">
+            {kpis.pending_material_requests ?? 0} pending material replenishment requests.
+          </p>
+        </Card>
       </div>
-    </>
-  );
-}
-
-function Rows<T extends { id: string }>({
-  rows,
-  render,
-  empty,
-}: {
-  rows: T[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  render: (row: any) => React.ReactNode;
-  empty: string;
-}) {
-  if (!rows?.length) return <EmptyState title={empty} />;
-  return (
-    <ul className="divide-y divide-border">
-      {rows.map((row) => (
-        <li key={row.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-          {render(row)}
-        </li>
-      ))}
-    </ul>
+    </div>
   );
 }

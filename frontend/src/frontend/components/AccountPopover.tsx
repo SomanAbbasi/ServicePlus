@@ -92,6 +92,7 @@ export function AccountPopover({
         </Link>
         <Link
           to="/search"
+          search={{ q: "" }}
           onClick={onClosePopover}
           className="flex items-center gap-2.5 rounded-xl px-2 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
         >

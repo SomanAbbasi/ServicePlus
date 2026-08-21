@@ -1,0 +1,454 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useMemo } from "react";
+import { AdminStaff } from "@/frontend/lib/admin-mock-data";
+import {
+  getAdminStaff,
+  updateAdminStaff,
+  deleteAdminStaff,
+  getAdminRoles,
+} from "@/frontend/lib/api-services";
+import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/frontend/components/ui/button";
+import { Input } from "@/frontend/components/ui/input";
+import { Card } from "@/frontend/components/ui/card";
+import { Label } from "@/frontend/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
+import {
+  Check,
+  Download,
+  Filter,
+  Plus,
+  RotateCcw,
+  Search,
+  Send,
+  Trash2,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
+import { downloadCsv } from "@/frontend/components/admin/shell";
+
+export const Route = createFileRoute("/admin/staff/")({ component: AdminStaffPage });
+
+function AdminStaffPage() {
+  const queryClient = useQueryClient();
+  const { data: staffData, isPending } = useAdminQuery("staff", getAdminStaff);
+  const { data: rolesData } = useAdminQuery("roles", getAdminRoles);
+  const staffList: AdminStaff[] = (staffData as AdminStaff[]) ?? [];
+  const rolesList = (rolesData as any[]) ?? [];
+
+  // Search & Filter Panel state
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchName, setSearchName] = useState("");
+  const [searchEmail, setSearchEmail] = useState("");
+  const [searchPhone, setSearchPhone] = useState("");
+  const [searchStatus, setSearchStatus] = useState("all");
+  const [searchRoleId, setSearchRoleId] = useState("all");
+
+  const [appliedFilters, setAppliedFilters] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    status: "all",
+    roleId: "all",
+  });
+
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const handleApplyFilter = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setAppliedFilters({
+      name: searchName.trim().toLowerCase(),
+      email: searchEmail.trim().toLowerCase(),
+      phone: searchPhone.trim().toLowerCase(),
+      status: searchStatus,
+      roleId: searchRoleId,
+    });
+    setCurrentPage(1);
+  };
+
+  const handleResetFilter = () => {
+    setSearchName("");
+    setSearchEmail("");
+    setSearchPhone("");
+    setSearchStatus("all");
+    setSearchRoleId("all");
+    setAppliedFilters({
+      name: "",
+      email: "",
+      phone: "",
+      status: "all",
+      roleId: "all",
+    });
+    setCurrentPage(1);
+  };
+
+  const filteredStaff = useMemo(() => {
+    return staffList.filter((s) => {
+      if (appliedFilters.name && !(s.name || "").toLowerCase().includes(appliedFilters.name)) return false;
+      if (appliedFilters.email && !(s.email || "").toLowerCase().includes(appliedFilters.email)) return false;
+      if (appliedFilters.phone && !(s.phone || "").toLowerCase().includes(appliedFilters.phone)) return false;
+      if (appliedFilters.status !== "all" && s.status !== appliedFilters.status) return false;
+      if (appliedFilters.roleId !== "all" && s.roleId !== appliedFilters.roleId) return false;
+      return true;
+    });
+  }, [staffList, appliedFilters]);
+
+  const totalPages = Math.ceil(filteredStaff.length / pageSize) || 1;
+  const paginatedStaff = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredStaff.slice(start, start + pageSize);
+  }, [filteredStaff, currentPage, pageSize]);
+
+  const handleToggleStatus = async (staff: AdminStaff) => {
+    const nextStatus = staff.status === "Activated" ? "Deactivated" : "Activated";
+    await updateAdminStaff(staff.id, { status: nextStatus });
+    toast.success(`Staff status changed to ${nextStatus}`);
+    queryClient.invalidateQueries({ queryKey: ["admin", "staff"] });
+  };
+
+  const handleDeleteStaff = async (id: string) => {
+    if (confirm("Are you sure you want to remove this staff member?")) {
+      await deleteAdminStaff(id);
+      toast.success("Staff member deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin", "staff"] });
+    }
+  };
+
+  const handleSendCredentials = (staff: AdminStaff) => {
+    toast.success(`Credentials dispatched to ${staff.email} via Email & SMS.`);
+  };
+
+  return (
+    <div className="space-y-5 text-slate-800">
+      {/* Breadcrumbs & Header */}
+      <div>
+        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
+          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
+            Dashboard
+          </Link>
+          <span>/</span>
+          <span className="text-slate-600">Staff Management</span>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Staff Management</h1>
+          <div className="flex items-center gap-2.5">
+            <Button
+              type="button"
+              variant={isSearchOpen ? "default" : "outline"}
+              size="sm"
+              onClick={() => setIsSearchOpen((v) => !v)}
+              className={
+                isSearchOpen
+                  ? "bg-cyan-600 text-white hover:bg-cyan-700 font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
+                  : "border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
+              }
+            >
+              <Search className="size-3.5 me-1.5" /> Search
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                downloadCsv(
+                  "staff-list.csv",
+                  filteredStaff.map((s, i) => ({
+                    "#": i + 1,
+                    Name: s.name || "",
+                    Email: s.email || "",
+                    Phone: s.phone || "",
+                    Role: s.roleName || "",
+                    Status: s.status || "Activated",
+                    Registered: s.registeredOn || "",
+                  })),
+                )
+              }
+              className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
+            >
+              <Download className="size-3.5 me-1.5 text-slate-500" /> Export CSV
+            </Button>
+            <Link to="/admin/staff/create">
+              <Button
+                type="button"
+                size="sm"
+                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
+              >
+                <Plus className="size-3.5 me-1.5" /> Add Staff Member
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Collapsible Search & Filter Card */}
+      {isSearchOpen && (
+        <Card className="p-5 bg-white border-slate-200/90 rounded-2xl shadow-xs animate-in fade-in slide-in-from-top-2 duration-200">
+          <form onSubmit={handleApplyFilter} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Search Name</Label>
+                <Input
+                  placeholder="Search Name"
+                  value={searchName}
+                  onChange={(e) => setSearchName(e.target.value)}
+                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Search Email</Label>
+                <Input
+                  placeholder="Search Email"
+                  value={searchEmail}
+                  onChange={(e) => setSearchEmail(e.target.value)}
+                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Search Phone Number</Label>
+                <Input
+                  placeholder="Search Phone Number"
+                  value={searchPhone}
+                  onChange={(e) => setSearchPhone(e.target.value)}
+                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Role / Designation</Label>
+                <Select value={searchRoleId} onValueChange={setSearchRoleId}>
+                  <SelectTrigger className="h-10 text-xs bg-white border-slate-200 rounded-lg">
+                    <SelectValue placeholder="All Roles" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-xs">All Roles</SelectItem>
+                    {rolesList.map((r) => (
+                      <SelectItem key={r.id} value={r.id} className="text-xs font-semibold">
+                        {r.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Status</Label>
+                <Select value={searchStatus} onValueChange={setSearchStatus}>
+                  <SelectTrigger className="h-10 text-xs bg-white border-slate-200 rounded-lg">
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-xs font-semibold">Select Status (All)</SelectItem>
+                    <SelectItem value="Activated" className="text-xs text-emerald-600 font-bold">Activated</SelectItem>
+                    <SelectItem value="Deactivated" className="text-xs text-rose-600 font-bold">Deactivated</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleResetFilter}
+                className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
+              >
+                <RotateCcw className="size-3.5 me-1.5" /> Reset
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
+              >
+                <Filter className="size-3.5 me-1.5" /> Filter
+              </Button>
+            </div>
+          </form>
+        </Card>
+      )}
+
+      {/* Main Table Card */}
+      <Card className="p-5 bg-white border-slate-200/90 rounded-2xl shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+            <span>Show</span>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(val) => {
+                setPageSize(Number(val));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="h-8 w-20 text-xs bg-slate-50 rounded-lg">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10" className="text-xs">10</SelectItem>
+                <SelectItem value="25" className="text-xs">25</SelectItem>
+                <SelectItem value="50" className="text-xs">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span>entries</span>
+          </div>
+
+          <div className="text-xs text-slate-400 font-medium">
+            Total {filteredStaff.length} staff member{filteredStaff.length === 1 ? "" : "s"}
+          </div>
+        </div>
+
+        <div className="overflow-x-auto mt-3">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead className="bg-slate-50/80 text-slate-600 font-bold border-b border-slate-200">
+              <tr>
+                <th className="px-3 py-3 w-10 text-center text-slate-400">#</th>
+                <th className="px-4 py-3 font-bold text-slate-700">Name</th>
+                <th className="px-4 py-3 font-bold text-slate-700">E-mail</th>
+                <th className="px-4 py-3 font-bold text-slate-700">Phone Number</th>
+                <th className="px-4 py-3 font-bold text-slate-700">Role / Designation</th>
+                <th className="px-3 py-3 font-bold text-slate-700 text-center">Status</th>
+                <th className="px-4 py-3 font-bold text-slate-700">Registered On</th>
+                <th className="px-4 py-3 font-bold text-slate-700 text-center w-40">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+              {isPending ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    Loading staff directory...
+                  </td>
+                </tr>
+              ) : paginatedStaff.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    No staff records found matching criteria.
+                  </td>
+                </tr>
+              ) : (
+                paginatedStaff.map((staff: any, idx) => {
+                  const globalIdx = (currentPage - 1) * pageSize + idx + 1;
+                  const isActivated = staff.status === "Activated";
+                  const roleDisplayName = typeof staff.role === "object" && staff.role !== null ? staff.role.name : (staff.roleName || "Staff Member");
+                  const staffDisplayName = staff.fullName || staff.name || staff.email || "Staff Member";
+                  const initial = ((staffDisplayName || "S").charAt(0) || "S").toUpperCase();
+
+                  return (
+                    <tr key={staff.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-3 py-3.5 text-center font-bold text-slate-400">{globalIdx}</td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="grid size-7 place-items-center rounded-full bg-cyan-100 text-cyan-800 font-bold text-[11px] shrink-0">
+                            {initial}
+                          </div>
+                          <span className="font-bold text-slate-900 truncate max-w-[180px]">
+                            {staffDisplayName}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 text-slate-600">{staff.email || "—"}</td>
+                      <td className="px-4 py-3.5 font-mono text-slate-600">{staff.phone || "—"}</td>
+                      <td className="px-4 py-3.5">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 text-[11px] font-bold">
+                          {roleDisplayName}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3.5 text-center">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                            isActivated
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-rose-50 text-rose-700 border border-rose-200"
+                          }`}
+                        >
+                          {staff.status || "Activated"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 text-slate-500 text-[11px]">
+                        {staff.registeredOn || staff.createdAt?.slice(0, 10) || "—"}
+                      </td>
+                      <td className="px-2 py-3 text-center align-middle">
+                        <div className="inline-grid grid-cols-2 gap-x-2.5 gap-y-1.5 place-items-center">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(staff)}
+                            title={isActivated ? "Deactivate Staff" : "Activate Staff"}
+                            className="text-rose-500 hover:scale-125 transition-transform"
+                          >
+                            {isActivated ? <X className="size-4 text-rose-500 stroke-[2.5]" /> : <Check className="size-4 text-emerald-500 stroke-[2.5]" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSendCredentials(staff)}
+                            title="Send Login Credentials"
+                            className="text-slate-900 hover:scale-125 transition-transform"
+                          >
+                            <Send className="size-4 text-slate-900 stroke-[2.5]" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteStaff(staff.id)}
+                            title="Delete Staff"
+                            className="text-rose-500 hover:scale-125 transition-transform col-span-2"
+                          >
+                            <Trash2 className="size-4 text-rose-500 stroke-[2.5]" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Footer */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100 text-xs text-slate-500 font-medium">
+          <div>
+            Showing {filteredStaff.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} to{" "}
+            {Math.min(currentPage * pageSize, filteredStaff.length)} of {filteredStaff.length} entries
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+              className="h-8 px-2 text-xs rounded-lg"
+            >
+              ‹
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Button
+                key={p}
+                type="button"
+                variant={p === currentPage ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCurrentPage(p)}
+                className={`h-8 w-8 p-0 text-xs font-bold rounded-lg ${
+                  p === currentPage ? "bg-cyan-600 text-white hover:bg-cyan-700" : "text-slate-600"
+                }`}
+              >
+                {p}
+              </Button>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+              className="h-8 px-2 text-xs rounded-lg"
+            >
+              ›
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}

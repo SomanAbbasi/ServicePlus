@@ -10,7 +10,7 @@ import {
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { Label } from "@/frontend/components/ui/label";
-import { Lock, Mail, Clock, ShieldCheck } from "lucide-react";
+import { Lock, Mail, Clock, ShieldCheck, Eye, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/admin/settings")({ component: AdminSettings });
 
@@ -19,7 +19,7 @@ function AdminSettings() {
   
   // Local Settings States
   const [adminEmail, setAdminEmail] = useState(() => {
-    return localStorage.getItem("serviceplus_admin_email") || "somanabbasi305@gmail.com";
+    return localStorage.getItem("serviceplus_admin_email") || "admin@serviceplus.ae";
   });
   
   const [operatingHours, setOperatingHours] = useState(() => {
@@ -33,6 +33,9 @@ function AdminSettings() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSaveEmail = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +66,7 @@ function AdminSettings() {
     }
 
     localStorage.setItem("serviceplus_admin_password", newPassword);
-    toast.success("Admin Password reset successfully!");
+    toast.success("Admin password changed successfully!");
     setOldPassword("");
     setNewPassword("");
     setConfirmPassword("");
@@ -72,29 +75,19 @@ function AdminSettings() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Admin Settings & Configuration"
-        description="Manage operating hours, notification email, and security settings"
+        title="Admin Settings & Configurations"
+        description="Manage operating business rules, platform notification recipients, and administrative security."
       />
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Operating Hours Settings */}
-        <SectionCard title="Operating Hours & Timezone">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Working Hours Settings */}
+        <SectionCard title="Operating Hours & Service Timezone">
           <form onSubmit={handleSaveHours} className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold flex items-center gap-1.5">
-                <Clock className="size-3.5 text-cyan-600" /> Timezone
-              </Label>
-              <Input
-                value={operatingHours.timezone}
-                onChange={(e) => setOperatingHours({ ...operatingHours, timezone: e.target.value })}
-                placeholder="Asia/Dubai"
-                className="text-xs font-mono"
-              />
-            </div>
-
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label className="text-xs font-semibold">Start Time</Label>
+                <Label className="text-xs font-semibold flex items-center gap-1.5">
+                  <Clock className="size-3.5 text-cyan-600" /> Start Time (Morning)
+                </Label>
                 <Input
                   type="time"
                   value={operatingHours.start}
@@ -104,7 +97,9 @@ function AdminSettings() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-semibold">End Time</Label>
+                <Label className="text-xs font-semibold flex items-center gap-1.5">
+                  <Clock className="size-3.5 text-cyan-600" /> End Time (Night)
+                </Label>
                 <Input
                   type="time"
                   value={operatingHours.end}
@@ -114,8 +109,18 @@ function AdminSettings() {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Service Coverage Region Timezone</Label>
+              <Input
+                type="text"
+                disabled
+                value={operatingHours.timezone + " (UTC+04:00 United Arab Emirates)"}
+                className="text-xs bg-slate-50 text-muted-foreground"
+              />
+            </div>
+
             <Button type="submit" size="sm" className="bg-cyan-600 text-white hover:bg-cyan-700 font-semibold">
-              Save Operating Hours
+              Save Working Hours
             </Button>
           </form>
         </SectionCard>
@@ -131,7 +136,7 @@ function AdminSettings() {
                 type="email"
                 value={adminEmail}
                 onChange={(e) => setAdminEmail(e.target.value)}
-                placeholder="somanabbasi305@gmail.com"
+                placeholder="name@example.com"
                 className="text-xs"
               />
               <p className="text-[11px] text-muted-foreground">
@@ -152,36 +157,69 @@ function AdminSettings() {
               <Label className="text-xs font-semibold flex items-center gap-1.5">
                 <Lock className="size-3.5 text-cyan-600" /> Current Password
               </Label>
-              <Input
-                type="password"
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                placeholder="Enter current password"
-                className="text-xs"
-              />
+              <div className="relative">
+                <Input
+                  type={showOldPassword ? "text" : "password"}
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  placeholder="Enter current password"
+                  className="text-xs pe-9"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowOldPassword(!showOldPassword)}
+                  className="absolute end-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showOldPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">New Password</Label>
-                <Input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="New password"
-                  className="text-xs"
-                />
+                <div className="relative">
+                  <Input
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="New password (min. 6 chars)"
+                    className="text-xs pe-9"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute end-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">Confirm New Password</Label>
-                <Input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm password"
-                  className="text-xs"
-                />
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm password"
+                    className="text-xs pe-9"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute end-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
               </div>
             </div>
 

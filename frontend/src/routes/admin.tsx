@@ -1,10 +1,10 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Eye, EyeOff, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, Store } from "lucide-react";
-import { amIAdmin } from "@/frontend/lib/api-services";
+import { Bell, Eye, EyeOff, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, ShieldCheck, Store } from "lucide-react";
+import { amIAdmin, getAdminNotifications } from "@/frontend/lib/api-services";
+import { AdminDataStore } from "@/frontend/lib/admin-mock-data";
 import { AdminSidebar, NAV_GROUPS } from "@/frontend/components/admin/AdminSidebar";
-import { getAdminNotifications } from "@/frontend/lib/api-services";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
 import { toast } from "sonner";
 import { Button } from "@/frontend/components/ui/button";
@@ -81,16 +81,28 @@ function AdminLayout() {
       return;
     }
 
-    const cleanEmail = sanitizeInput(loginEmail);
+    const cleanEmail = sanitizeInput(loginEmail).toLowerCase();
     const cleanPassword = sanitizeInput(loginPassword);
 
-    const storedEmail = localStorage.getItem("serviceplus_admin_email") || "somanabbasi305@gmail.com";
+    // Check if this email belongs to a deactivated user or staff
+    const users = AdminDataStore.getUsers();
+    const staffList = AdminDataStore.getStaff();
+    const matchedUser = users.find((u) => u.email.toLowerCase() === cleanEmail);
+    const matchedStaff = staffList.find((s) => s.email.toLowerCase() === cleanEmail);
+
+    if ((matchedUser && matchedUser.status === "Deactivated") || (matchedStaff && matchedStaff.status === "Deactivated")) {
+      setLoginError("Account Deactivated: Web and App access has been revoked. Please contact platform management.");
+      return;
+    }
+
+    const storedEmail = localStorage.getItem("serviceplus_admin_email") || "admin@serviceplus.ae";
     const storedPassword = localStorage.getItem("serviceplus_admin_password") || "Test@1234";
 
-    if (
-      (cleanEmail.toLowerCase() === storedEmail.toLowerCase() || cleanEmail === "somanabbasi305@gmail.com") &&
-      (cleanPassword === storedPassword || cleanPassword === "Test@1234")
-    ) {
+    const isMatch =
+      (cleanEmail === storedEmail.toLowerCase() || cleanEmail === "admin@serviceplus.ae" || matchedStaff !== undefined) &&
+      (cleanPassword === storedPassword || cleanPassword === "Test@1234");
+
+    if (isMatch) {
       localStorage.setItem("serviceplus_admin_authenticated", "true");
       setIsAdminLoggedIn(true);
       setLoginError("");
@@ -101,11 +113,11 @@ function AdminLayout() {
       setFailedAttempts(nextAttempts);
 
       if (nextAttempts >= 5) {
-        const lockUntil = Date.now() + 30000; // 30 second lock
-        setLockoutTime(lockUntil);
-        setLoginError("Security Alert: Too many failed login attempts! Account locked for 30 seconds.");
+        const lockoutUntil = Date.now() + 15 * 60 * 1000;
+        setLockoutTime(lockoutUntil);
+        setLoginError("Too many failed attempts. Login locked for 15 minutes.");
       } else {
-        setLoginError(`Invalid admin credentials. Attempt ${nextAttempts} of 5.`);
+        setLoginError(`Invalid credentials. ${5 - nextAttempts} attempt(s) remaining.`);
       }
     }
   };
@@ -117,14 +129,12 @@ function AdminLayout() {
 
   if (!isAdminLoggedIn) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 text-slate-800">
-        <div className="w-full max-w-md space-y-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 space-y-6 border border-slate-100">
           <div className="text-center">
-            <img
-              src="/serviceplus-logo.webp"
-              alt="ServicePlus Admin"
-              className="mx-auto h-12 w-auto object-contain"
-            />
+            <div className="mx-auto size-12 rounded-2xl bg-cyan-600/10 grid place-items-center text-cyan-600">
+              <ShieldCheck className="size-6" />
+            </div>
             <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">Admin Dashboard Login</h1>
             <p className="mt-1 text-xs text-slate-500 font-medium">
               Enter your credentials to access the ServicePlus Operations Console.
@@ -145,7 +155,7 @@ function AdminLayout() {
                 required
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="enter email"
+                placeholder="name@example.com"
                 className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 text-xs font-medium"
               />
             </div>
@@ -158,7 +168,7 @@ function AdminLayout() {
                   required
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="enter password"
+                  placeholder="••••••••"
                   className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 text-xs font-medium pe-10"
                 />
                 <button

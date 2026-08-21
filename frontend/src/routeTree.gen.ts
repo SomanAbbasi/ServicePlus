@@ -30,22 +30,63 @@ import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
 import { Route as AdminBundlesRouteImport } from './routes/admin.bundles'
 import { Route as AdminCalendarRouteImport } from './routes/admin.calendar'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
+import { Route as AdminCompaniesRouteImport } from './routes/admin.companies'
 import { Route as AdminCouponsRouteImport } from './routes/admin.coupons'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
+import { Route as AdminExpiredDocumentsRouteImport } from './routes/admin.expired-documents'
 import { Route as AdminLocationsRouteImport } from './routes/admin.locations'
+import { Route as AdminMaterialRequestsRouteImport } from './routes/admin.material-requests'
+import { Route as AdminMaterialsRouteImport } from './routes/admin.materials'
 import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
+import { Route as AdminPlansRouteImport } from './routes/admin.plans'
 import { Route as AdminPricingRouteImport } from './routes/admin.pricing'
 import { Route as AdminProfessionalsRouteImport } from './routes/admin.professionals'
 import { Route as AdminRefundsRouteImport } from './routes/admin.refunds'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminReviewsRouteImport } from './routes/admin.reviews'
+import { Route as AdminRolesRouteImport } from './routes/admin.roles'
+import { Route as AdminServiceGroupingRouteImport } from './routes/admin.service-grouping'
 import { Route as AdminServicesRouteImport } from './routes/admin.services'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminStaffRouteImport } from './routes/admin.staff'
+import { Route as AdminSupervisorsRouteImport } from './routes/admin.supervisors'
 import { Route as AdminSupportRouteImport } from './routes/admin.support'
+import { Route as AdminTeamLeadsRouteImport } from './routes/admin.team-leads'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as BookingSlugRouteImport } from './routes/booking.$slug'
 import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
 import { Route as ServicesSlugRouteImport } from './routes/services.$slug'
+import { Route as AdminAddonsIndexRouteImport } from './routes/admin.addons.index'
+import { Route as AdminAddonsCreateRouteImport } from './routes/admin.addons.create'
+import { Route as AdminCategoriesIndexRouteImport } from './routes/admin.categories.index'
+import { Route as AdminCategoriesCreateRouteImport } from './routes/admin.categories.create'
+import { Route as AdminCompaniesIndexRouteImport } from './routes/admin.companies.index'
+import { Route as AdminCompaniesCreateRouteImport } from './routes/admin.companies.create'
+import { Route as AdminCouponsIndexRouteImport } from './routes/admin.coupons.index'
+import { Route as AdminCouponsCreateRouteImport } from './routes/admin.coupons.create'
+import { Route as AdminMaterialRequestsIndexRouteImport } from './routes/admin.material-requests.index'
+import { Route as AdminMaterialRequestsCreateRouteImport } from './routes/admin.material-requests.create'
+import { Route as AdminMaterialsIndexRouteImport } from './routes/admin.materials.index'
+import { Route as AdminMaterialsCreateRouteImport } from './routes/admin.materials.create'
+import { Route as AdminPlansIndexRouteImport } from './routes/admin.plans.index'
+import { Route as AdminPlansCreateRouteImport } from './routes/admin.plans.create'
+import { Route as AdminProfessionalsIndexRouteImport } from './routes/admin.professionals.index'
+import { Route as AdminProfessionalsCreateRouteImport } from './routes/admin.professionals.create'
+import { Route as AdminRolesIndexRouteImport } from './routes/admin.roles.index'
+import { Route as AdminRolesCreateRouteImport } from './routes/admin.roles.create'
+import { Route as AdminServiceGroupingIndexRouteImport } from './routes/admin.service-grouping.index'
+import { Route as AdminServiceGroupingCreateRouteImport } from './routes/admin.service-grouping.create'
+import { Route as AdminServicesIndexRouteImport } from './routes/admin.services.index'
+import { Route as AdminServicesCreateRouteImport } from './routes/admin.services.create'
+import { Route as AdminStaffIndexRouteImport } from './routes/admin.staff.index'
+import { Route as AdminStaffCreateRouteImport } from './routes/admin.staff.create'
+import { Route as AdminSupervisorsIndexRouteImport } from './routes/admin.supervisors.index'
+import { Route as AdminSupervisorsCreateRouteImport } from './routes/admin.supervisors.create'
+import { Route as AdminTeamLeadsIndexRouteImport } from './routes/admin.team-leads.index'
+import { Route as AdminTeamLeadsCreateRouteImport } from './routes/admin.team-leads.create'
+import { Route as AdminUsersIndexRouteImport } from './routes/admin.users.index'
+import { Route as AdminUsersCreateRouteImport } from './routes/admin.users.create'
 import { Route as ApiPublicMediaSplatRouteImport } from './routes/api/public/media.$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -153,6 +194,11 @@ const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCompaniesRoute = AdminCompaniesRouteImport.update({
+  id: '/companies',
+  path: '/companies',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCouponsRoute = AdminCouponsRouteImport.update({
   id: '/coupons',
   path: '/coupons',
@@ -163,9 +209,24 @@ const AdminCustomersRoute = AdminCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminExpiredDocumentsRoute = AdminExpiredDocumentsRouteImport.update({
+  id: '/expired-documents',
+  path: '/expired-documents',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLocationsRoute = AdminLocationsRouteImport.update({
   id: '/locations',
   path: '/locations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMaterialRequestsRoute = AdminMaterialRequestsRouteImport.update({
+  id: '/material-requests',
+  path: '/material-requests',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMaterialsRoute = AdminMaterialsRouteImport.update({
+  id: '/materials',
+  path: '/materials',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
@@ -176,6 +237,11 @@ const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
 const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPlansRoute = AdminPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminPricingRoute = AdminPricingRouteImport.update({
@@ -203,6 +269,16 @@ const AdminReviewsRoute = AdminReviewsRouteImport.update({
   path: '/reviews',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminRolesRoute = AdminRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminServiceGroupingRoute = AdminServiceGroupingRouteImport.update({
+  id: '/service-grouping',
+  path: '/service-grouping',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminServicesRoute = AdminServicesRouteImport.update({
   id: '/services',
   path: '/services',
@@ -213,9 +289,29 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminStaffRoute = AdminStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSupervisorsRoute = AdminSupervisorsRouteImport.update({
+  id: '/supervisors',
+  path: '/supervisors',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSupportRoute = AdminSupportRouteImport.update({
   id: '/support',
   path: '/support',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTeamLeadsRoute = AdminTeamLeadsRouteImport.update({
+  id: '/team-leads',
+  path: '/team-leads',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
 const BookingSlugRoute = BookingSlugRouteImport.update({
@@ -232,6 +328,161 @@ const ServicesSlugRoute = ServicesSlugRouteImport.update({
   id: '/services/$slug',
   path: '/services/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAddonsIndexRoute = AdminAddonsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminAddonsRoute,
+} as any)
+const AdminAddonsCreateRoute = AdminAddonsCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminAddonsRoute,
+} as any)
+const AdminCategoriesIndexRoute = AdminCategoriesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminCategoriesRoute,
+} as any)
+const AdminCategoriesCreateRoute = AdminCategoriesCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminCategoriesRoute,
+} as any)
+const AdminCompaniesIndexRoute = AdminCompaniesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminCompaniesRoute,
+} as any)
+const AdminCompaniesCreateRoute = AdminCompaniesCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminCompaniesRoute,
+} as any)
+const AdminCouponsIndexRoute = AdminCouponsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminCouponsRoute,
+} as any)
+const AdminCouponsCreateRoute = AdminCouponsCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminCouponsRoute,
+} as any)
+const AdminMaterialRequestsIndexRoute =
+  AdminMaterialRequestsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminMaterialRequestsRoute,
+  } as any)
+const AdminMaterialRequestsCreateRoute =
+  AdminMaterialRequestsCreateRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => AdminMaterialRequestsRoute,
+  } as any)
+const AdminMaterialsIndexRoute = AdminMaterialsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminMaterialsRoute,
+} as any)
+const AdminMaterialsCreateRoute = AdminMaterialsCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminMaterialsRoute,
+} as any)
+const AdminPlansIndexRoute = AdminPlansIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminPlansRoute,
+} as any)
+const AdminPlansCreateRoute = AdminPlansCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminPlansRoute,
+} as any)
+const AdminProfessionalsIndexRoute = AdminProfessionalsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminProfessionalsRoute,
+} as any)
+const AdminProfessionalsCreateRoute =
+  AdminProfessionalsCreateRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => AdminProfessionalsRoute,
+  } as any)
+const AdminRolesIndexRoute = AdminRolesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRolesRoute,
+} as any)
+const AdminRolesCreateRoute = AdminRolesCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminRolesRoute,
+} as any)
+const AdminServiceGroupingIndexRoute =
+  AdminServiceGroupingIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminServiceGroupingRoute,
+  } as any)
+const AdminServiceGroupingCreateRoute =
+  AdminServiceGroupingCreateRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => AdminServiceGroupingRoute,
+  } as any)
+const AdminServicesIndexRoute = AdminServicesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminServicesRoute,
+} as any)
+const AdminServicesCreateRoute = AdminServicesCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminServicesRoute,
+} as any)
+const AdminStaffIndexRoute = AdminStaffIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminStaffRoute,
+} as any)
+const AdminStaffCreateRoute = AdminStaffCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminStaffRoute,
+} as any)
+const AdminSupervisorsIndexRoute = AdminSupervisorsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminSupervisorsRoute,
+} as any)
+const AdminSupervisorsCreateRoute = AdminSupervisorsCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminSupervisorsRoute,
+} as any)
+const AdminTeamLeadsIndexRoute = AdminTeamLeadsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminTeamLeadsRoute,
+} as any)
+const AdminTeamLeadsCreateRoute = AdminTeamLeadsCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminTeamLeadsRoute,
+} as any)
+const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminUsersRoute,
+} as any)
+const AdminUsersCreateRoute = AdminUsersCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminUsersRoute,
 } as any)
 const ApiPublicMediaSplatRoute = ApiPublicMediaSplatRouteImport.update({
   id: '/api/public/media/$',
@@ -253,30 +504,71 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/terms': typeof TermsRoute
-  '/admin/addons': typeof AdminAddonsRoute
+  '/admin/addons': typeof AdminAddonsRouteWithChildren
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/availability': typeof AdminAvailabilityRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/calendar': typeof AdminCalendarRoute
-  '/admin/categories': typeof AdminCategoriesRoute
-  '/admin/coupons': typeof AdminCouponsRoute
+  '/admin/categories': typeof AdminCategoriesRouteWithChildren
+  '/admin/companies': typeof AdminCompaniesRouteWithChildren
+  '/admin/coupons': typeof AdminCouponsRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/expired-documents': typeof AdminExpiredDocumentsRoute
   '/admin/locations': typeof AdminLocationsRoute
+  '/admin/material-requests': typeof AdminMaterialRequestsRouteWithChildren
+  '/admin/materials': typeof AdminMaterialsRouteWithChildren
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/plans': typeof AdminPlansRouteWithChildren
   '/admin/pricing': typeof AdminPricingRoute
-  '/admin/professionals': typeof AdminProfessionalsRoute
+  '/admin/professionals': typeof AdminProfessionalsRouteWithChildren
   '/admin/refunds': typeof AdminRefundsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/reviews': typeof AdminReviewsRoute
-  '/admin/services': typeof AdminServicesRoute
+  '/admin/roles': typeof AdminRolesRouteWithChildren
+  '/admin/service-grouping': typeof AdminServiceGroupingRouteWithChildren
+  '/admin/services': typeof AdminServicesRouteWithChildren
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/staff': typeof AdminStaffRouteWithChildren
+  '/admin/supervisors': typeof AdminSupervisorsRouteWithChildren
   '/admin/support': typeof AdminSupportRoute
+  '/admin/team-leads': typeof AdminTeamLeadsRouteWithChildren
+  '/admin/users': typeof AdminUsersRouteWithChildren
   '/booking/$slug': typeof BookingSlugRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/services/$slug': typeof ServicesSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/addons/create': typeof AdminAddonsCreateRoute
+  '/admin/categories/create': typeof AdminCategoriesCreateRoute
+  '/admin/companies/create': typeof AdminCompaniesCreateRoute
+  '/admin/coupons/create': typeof AdminCouponsCreateRoute
+  '/admin/material-requests/create': typeof AdminMaterialRequestsCreateRoute
+  '/admin/materials/create': typeof AdminMaterialsCreateRoute
+  '/admin/plans/create': typeof AdminPlansCreateRoute
+  '/admin/professionals/create': typeof AdminProfessionalsCreateRoute
+  '/admin/roles/create': typeof AdminRolesCreateRoute
+  '/admin/service-grouping/create': typeof AdminServiceGroupingCreateRoute
+  '/admin/services/create': typeof AdminServicesCreateRoute
+  '/admin/staff/create': typeof AdminStaffCreateRoute
+  '/admin/supervisors/create': typeof AdminSupervisorsCreateRoute
+  '/admin/team-leads/create': typeof AdminTeamLeadsCreateRoute
+  '/admin/users/create': typeof AdminUsersCreateRoute
+  '/admin/addons/': typeof AdminAddonsIndexRoute
+  '/admin/categories/': typeof AdminCategoriesIndexRoute
+  '/admin/companies/': typeof AdminCompaniesIndexRoute
+  '/admin/coupons/': typeof AdminCouponsIndexRoute
+  '/admin/material-requests/': typeof AdminMaterialRequestsIndexRoute
+  '/admin/materials/': typeof AdminMaterialsIndexRoute
+  '/admin/plans/': typeof AdminPlansIndexRoute
+  '/admin/professionals/': typeof AdminProfessionalsIndexRoute
+  '/admin/roles/': typeof AdminRolesIndexRoute
+  '/admin/service-grouping/': typeof AdminServiceGroupingIndexRoute
+  '/admin/services/': typeof AdminServicesIndexRoute
+  '/admin/staff/': typeof AdminStaffIndexRoute
+  '/admin/supervisors/': typeof AdminSupervisorsIndexRoute
+  '/admin/team-leads/': typeof AdminTeamLeadsIndexRoute
+  '/admin/users/': typeof AdminUsersIndexRoute
   '/api/public/media/$': typeof ApiPublicMediaSplatRoute
 }
 export interface FileRoutesByTo {
@@ -292,30 +584,56 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/terms': typeof TermsRoute
-  '/admin/addons': typeof AdminAddonsRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/availability': typeof AdminAvailabilityRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/calendar': typeof AdminCalendarRoute
-  '/admin/categories': typeof AdminCategoriesRoute
-  '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/expired-documents': typeof AdminExpiredDocumentsRoute
   '/admin/locations': typeof AdminLocationsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/pricing': typeof AdminPricingRoute
-  '/admin/professionals': typeof AdminProfessionalsRoute
   '/admin/refunds': typeof AdminRefundsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/reviews': typeof AdminReviewsRoute
-  '/admin/services': typeof AdminServicesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/support': typeof AdminSupportRoute
   '/booking/$slug': typeof BookingSlugRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/services/$slug': typeof ServicesSlugRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/addons/create': typeof AdminAddonsCreateRoute
+  '/admin/categories/create': typeof AdminCategoriesCreateRoute
+  '/admin/companies/create': typeof AdminCompaniesCreateRoute
+  '/admin/coupons/create': typeof AdminCouponsCreateRoute
+  '/admin/material-requests/create': typeof AdminMaterialRequestsCreateRoute
+  '/admin/materials/create': typeof AdminMaterialsCreateRoute
+  '/admin/plans/create': typeof AdminPlansCreateRoute
+  '/admin/professionals/create': typeof AdminProfessionalsCreateRoute
+  '/admin/roles/create': typeof AdminRolesCreateRoute
+  '/admin/service-grouping/create': typeof AdminServiceGroupingCreateRoute
+  '/admin/services/create': typeof AdminServicesCreateRoute
+  '/admin/staff/create': typeof AdminStaffCreateRoute
+  '/admin/supervisors/create': typeof AdminSupervisorsCreateRoute
+  '/admin/team-leads/create': typeof AdminTeamLeadsCreateRoute
+  '/admin/users/create': typeof AdminUsersCreateRoute
+  '/admin/addons': typeof AdminAddonsIndexRoute
+  '/admin/categories': typeof AdminCategoriesIndexRoute
+  '/admin/companies': typeof AdminCompaniesIndexRoute
+  '/admin/coupons': typeof AdminCouponsIndexRoute
+  '/admin/material-requests': typeof AdminMaterialRequestsIndexRoute
+  '/admin/materials': typeof AdminMaterialsIndexRoute
+  '/admin/plans': typeof AdminPlansIndexRoute
+  '/admin/professionals': typeof AdminProfessionalsIndexRoute
+  '/admin/roles': typeof AdminRolesIndexRoute
+  '/admin/service-grouping': typeof AdminServiceGroupingIndexRoute
+  '/admin/services': typeof AdminServicesIndexRoute
+  '/admin/staff': typeof AdminStaffIndexRoute
+  '/admin/supervisors': typeof AdminSupervisorsIndexRoute
+  '/admin/team-leads': typeof AdminTeamLeadsIndexRoute
+  '/admin/users': typeof AdminUsersIndexRoute
   '/api/public/media/$': typeof ApiPublicMediaSplatRoute
 }
 export interface FileRoutesById {
@@ -333,30 +651,71 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/terms': typeof TermsRoute
-  '/admin/addons': typeof AdminAddonsRoute
+  '/admin/addons': typeof AdminAddonsRouteWithChildren
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/availability': typeof AdminAvailabilityRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/bundles': typeof AdminBundlesRoute
   '/admin/calendar': typeof AdminCalendarRoute
-  '/admin/categories': typeof AdminCategoriesRoute
-  '/admin/coupons': typeof AdminCouponsRoute
+  '/admin/categories': typeof AdminCategoriesRouteWithChildren
+  '/admin/companies': typeof AdminCompaniesRouteWithChildren
+  '/admin/coupons': typeof AdminCouponsRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/expired-documents': typeof AdminExpiredDocumentsRoute
   '/admin/locations': typeof AdminLocationsRoute
+  '/admin/material-requests': typeof AdminMaterialRequestsRouteWithChildren
+  '/admin/materials': typeof AdminMaterialsRouteWithChildren
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/plans': typeof AdminPlansRouteWithChildren
   '/admin/pricing': typeof AdminPricingRoute
-  '/admin/professionals': typeof AdminProfessionalsRoute
+  '/admin/professionals': typeof AdminProfessionalsRouteWithChildren
   '/admin/refunds': typeof AdminRefundsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/reviews': typeof AdminReviewsRoute
-  '/admin/services': typeof AdminServicesRoute
+  '/admin/roles': typeof AdminRolesRouteWithChildren
+  '/admin/service-grouping': typeof AdminServiceGroupingRouteWithChildren
+  '/admin/services': typeof AdminServicesRouteWithChildren
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/staff': typeof AdminStaffRouteWithChildren
+  '/admin/supervisors': typeof AdminSupervisorsRouteWithChildren
   '/admin/support': typeof AdminSupportRoute
+  '/admin/team-leads': typeof AdminTeamLeadsRouteWithChildren
+  '/admin/users': typeof AdminUsersRouteWithChildren
   '/booking/$slug': typeof BookingSlugRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/services/$slug': typeof ServicesSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/addons/create': typeof AdminAddonsCreateRoute
+  '/admin/categories/create': typeof AdminCategoriesCreateRoute
+  '/admin/companies/create': typeof AdminCompaniesCreateRoute
+  '/admin/coupons/create': typeof AdminCouponsCreateRoute
+  '/admin/material-requests/create': typeof AdminMaterialRequestsCreateRoute
+  '/admin/materials/create': typeof AdminMaterialsCreateRoute
+  '/admin/plans/create': typeof AdminPlansCreateRoute
+  '/admin/professionals/create': typeof AdminProfessionalsCreateRoute
+  '/admin/roles/create': typeof AdminRolesCreateRoute
+  '/admin/service-grouping/create': typeof AdminServiceGroupingCreateRoute
+  '/admin/services/create': typeof AdminServicesCreateRoute
+  '/admin/staff/create': typeof AdminStaffCreateRoute
+  '/admin/supervisors/create': typeof AdminSupervisorsCreateRoute
+  '/admin/team-leads/create': typeof AdminTeamLeadsCreateRoute
+  '/admin/users/create': typeof AdminUsersCreateRoute
+  '/admin/addons/': typeof AdminAddonsIndexRoute
+  '/admin/categories/': typeof AdminCategoriesIndexRoute
+  '/admin/companies/': typeof AdminCompaniesIndexRoute
+  '/admin/coupons/': typeof AdminCouponsIndexRoute
+  '/admin/material-requests/': typeof AdminMaterialRequestsIndexRoute
+  '/admin/materials/': typeof AdminMaterialsIndexRoute
+  '/admin/plans/': typeof AdminPlansIndexRoute
+  '/admin/professionals/': typeof AdminProfessionalsIndexRoute
+  '/admin/roles/': typeof AdminRolesIndexRoute
+  '/admin/service-grouping/': typeof AdminServiceGroupingIndexRoute
+  '/admin/services/': typeof AdminServicesIndexRoute
+  '/admin/staff/': typeof AdminStaffIndexRoute
+  '/admin/supervisors/': typeof AdminSupervisorsIndexRoute
+  '/admin/team-leads/': typeof AdminTeamLeadsIndexRoute
+  '/admin/users/': typeof AdminUsersIndexRoute
   '/api/public/media/$': typeof ApiPublicMediaSplatRoute
 }
 export interface FileRouteTypes {
@@ -382,23 +741,64 @@ export interface FileRouteTypes {
     | '/admin/bundles'
     | '/admin/calendar'
     | '/admin/categories'
+    | '/admin/companies'
     | '/admin/coupons'
     | '/admin/customers'
+    | '/admin/expired-documents'
     | '/admin/locations'
+    | '/admin/material-requests'
+    | '/admin/materials'
     | '/admin/notifications'
     | '/admin/payments'
+    | '/admin/plans'
     | '/admin/pricing'
     | '/admin/professionals'
     | '/admin/refunds'
     | '/admin/reports'
     | '/admin/reviews'
+    | '/admin/roles'
+    | '/admin/service-grouping'
     | '/admin/services'
     | '/admin/settings'
+    | '/admin/staff'
+    | '/admin/supervisors'
     | '/admin/support'
+    | '/admin/team-leads'
+    | '/admin/users'
     | '/booking/$slug'
     | '/categories/$slug'
     | '/services/$slug'
     | '/admin/'
+    | '/admin/addons/create'
+    | '/admin/categories/create'
+    | '/admin/companies/create'
+    | '/admin/coupons/create'
+    | '/admin/material-requests/create'
+    | '/admin/materials/create'
+    | '/admin/plans/create'
+    | '/admin/professionals/create'
+    | '/admin/roles/create'
+    | '/admin/service-grouping/create'
+    | '/admin/services/create'
+    | '/admin/staff/create'
+    | '/admin/supervisors/create'
+    | '/admin/team-leads/create'
+    | '/admin/users/create'
+    | '/admin/addons/'
+    | '/admin/categories/'
+    | '/admin/companies/'
+    | '/admin/coupons/'
+    | '/admin/material-requests/'
+    | '/admin/materials/'
+    | '/admin/plans/'
+    | '/admin/professionals/'
+    | '/admin/roles/'
+    | '/admin/service-grouping/'
+    | '/admin/services/'
+    | '/admin/staff/'
+    | '/admin/supervisors/'
+    | '/admin/team-leads/'
+    | '/admin/users/'
     | '/api/public/media/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -414,30 +814,56 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/search'
     | '/terms'
-    | '/admin/addons'
     | '/admin/audit-logs'
     | '/admin/availability'
     | '/admin/bookings'
     | '/admin/bundles'
     | '/admin/calendar'
-    | '/admin/categories'
-    | '/admin/coupons'
     | '/admin/customers'
+    | '/admin/expired-documents'
     | '/admin/locations'
     | '/admin/notifications'
     | '/admin/payments'
     | '/admin/pricing'
-    | '/admin/professionals'
     | '/admin/refunds'
     | '/admin/reports'
     | '/admin/reviews'
-    | '/admin/services'
     | '/admin/settings'
     | '/admin/support'
     | '/booking/$slug'
     | '/categories/$slug'
     | '/services/$slug'
     | '/admin'
+    | '/admin/addons/create'
+    | '/admin/categories/create'
+    | '/admin/companies/create'
+    | '/admin/coupons/create'
+    | '/admin/material-requests/create'
+    | '/admin/materials/create'
+    | '/admin/plans/create'
+    | '/admin/professionals/create'
+    | '/admin/roles/create'
+    | '/admin/service-grouping/create'
+    | '/admin/services/create'
+    | '/admin/staff/create'
+    | '/admin/supervisors/create'
+    | '/admin/team-leads/create'
+    | '/admin/users/create'
+    | '/admin/addons'
+    | '/admin/categories'
+    | '/admin/companies'
+    | '/admin/coupons'
+    | '/admin/material-requests'
+    | '/admin/materials'
+    | '/admin/plans'
+    | '/admin/professionals'
+    | '/admin/roles'
+    | '/admin/service-grouping'
+    | '/admin/services'
+    | '/admin/staff'
+    | '/admin/supervisors'
+    | '/admin/team-leads'
+    | '/admin/users'
     | '/api/public/media/$'
   id:
     | '__root__'
@@ -461,23 +887,64 @@ export interface FileRouteTypes {
     | '/admin/bundles'
     | '/admin/calendar'
     | '/admin/categories'
+    | '/admin/companies'
     | '/admin/coupons'
     | '/admin/customers'
+    | '/admin/expired-documents'
     | '/admin/locations'
+    | '/admin/material-requests'
+    | '/admin/materials'
     | '/admin/notifications'
     | '/admin/payments'
+    | '/admin/plans'
     | '/admin/pricing'
     | '/admin/professionals'
     | '/admin/refunds'
     | '/admin/reports'
     | '/admin/reviews'
+    | '/admin/roles'
+    | '/admin/service-grouping'
     | '/admin/services'
     | '/admin/settings'
+    | '/admin/staff'
+    | '/admin/supervisors'
     | '/admin/support'
+    | '/admin/team-leads'
+    | '/admin/users'
     | '/booking/$slug'
     | '/categories/$slug'
     | '/services/$slug'
     | '/admin/'
+    | '/admin/addons/create'
+    | '/admin/categories/create'
+    | '/admin/companies/create'
+    | '/admin/coupons/create'
+    | '/admin/material-requests/create'
+    | '/admin/materials/create'
+    | '/admin/plans/create'
+    | '/admin/professionals/create'
+    | '/admin/roles/create'
+    | '/admin/service-grouping/create'
+    | '/admin/services/create'
+    | '/admin/staff/create'
+    | '/admin/supervisors/create'
+    | '/admin/team-leads/create'
+    | '/admin/users/create'
+    | '/admin/addons/'
+    | '/admin/categories/'
+    | '/admin/companies/'
+    | '/admin/coupons/'
+    | '/admin/material-requests/'
+    | '/admin/materials/'
+    | '/admin/plans/'
+    | '/admin/professionals/'
+    | '/admin/roles/'
+    | '/admin/service-grouping/'
+    | '/admin/services/'
+    | '/admin/staff/'
+    | '/admin/supervisors/'
+    | '/admin/team-leads/'
+    | '/admin/users/'
     | '/api/public/media/$'
   fileRoutesById: FileRoutesById
 }
@@ -650,6 +1117,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCategoriesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/companies': {
+      id: '/admin/companies'
+      path: '/companies'
+      fullPath: '/admin/companies'
+      preLoaderRoute: typeof AdminCompaniesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/coupons': {
       id: '/admin/coupons'
       path: '/coupons'
@@ -664,11 +1138,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCustomersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/expired-documents': {
+      id: '/admin/expired-documents'
+      path: '/expired-documents'
+      fullPath: '/admin/expired-documents'
+      preLoaderRoute: typeof AdminExpiredDocumentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/locations': {
       id: '/admin/locations'
       path: '/locations'
       fullPath: '/admin/locations'
       preLoaderRoute: typeof AdminLocationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/material-requests': {
+      id: '/admin/material-requests'
+      path: '/material-requests'
+      fullPath: '/admin/material-requests'
+      preLoaderRoute: typeof AdminMaterialRequestsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/materials': {
+      id: '/admin/materials'
+      path: '/materials'
+      fullPath: '/admin/materials'
+      preLoaderRoute: typeof AdminMaterialsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/notifications': {
@@ -683,6 +1178,13 @@ declare module '@tanstack/react-router' {
       path: '/payments'
       fullPath: '/admin/payments'
       preLoaderRoute: typeof AdminPaymentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/plans': {
+      id: '/admin/plans'
+      path: '/plans'
+      fullPath: '/admin/plans'
+      preLoaderRoute: typeof AdminPlansRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/pricing': {
@@ -720,6 +1222,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReviewsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/roles': {
+      id: '/admin/roles'
+      path: '/roles'
+      fullPath: '/admin/roles'
+      preLoaderRoute: typeof AdminRolesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/service-grouping': {
+      id: '/admin/service-grouping'
+      path: '/service-grouping'
+      fullPath: '/admin/service-grouping'
+      preLoaderRoute: typeof AdminServiceGroupingRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/services': {
       id: '/admin/services'
       path: '/services'
@@ -734,11 +1250,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/staff': {
+      id: '/admin/staff'
+      path: '/staff'
+      fullPath: '/admin/staff'
+      preLoaderRoute: typeof AdminStaffRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/supervisors': {
+      id: '/admin/supervisors'
+      path: '/supervisors'
+      fullPath: '/admin/supervisors'
+      preLoaderRoute: typeof AdminSupervisorsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/support': {
       id: '/admin/support'
       path: '/support'
       fullPath: '/admin/support'
       preLoaderRoute: typeof AdminSupportRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/team-leads': {
+      id: '/admin/team-leads'
+      path: '/team-leads'
+      fullPath: '/admin/team-leads'
+      preLoaderRoute: typeof AdminTeamLeadsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
     '/booking/$slug': {
@@ -762,6 +1306,216 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/addons/': {
+      id: '/admin/addons/'
+      path: '/'
+      fullPath: '/admin/addons/'
+      preLoaderRoute: typeof AdminAddonsIndexRouteImport
+      parentRoute: typeof AdminAddonsRoute
+    }
+    '/admin/addons/create': {
+      id: '/admin/addons/create'
+      path: '/create'
+      fullPath: '/admin/addons/create'
+      preLoaderRoute: typeof AdminAddonsCreateRouteImport
+      parentRoute: typeof AdminAddonsRoute
+    }
+    '/admin/categories/': {
+      id: '/admin/categories/'
+      path: '/'
+      fullPath: '/admin/categories/'
+      preLoaderRoute: typeof AdminCategoriesIndexRouteImport
+      parentRoute: typeof AdminCategoriesRoute
+    }
+    '/admin/categories/create': {
+      id: '/admin/categories/create'
+      path: '/create'
+      fullPath: '/admin/categories/create'
+      preLoaderRoute: typeof AdminCategoriesCreateRouteImport
+      parentRoute: typeof AdminCategoriesRoute
+    }
+    '/admin/companies/': {
+      id: '/admin/companies/'
+      path: '/'
+      fullPath: '/admin/companies/'
+      preLoaderRoute: typeof AdminCompaniesIndexRouteImport
+      parentRoute: typeof AdminCompaniesRoute
+    }
+    '/admin/companies/create': {
+      id: '/admin/companies/create'
+      path: '/create'
+      fullPath: '/admin/companies/create'
+      preLoaderRoute: typeof AdminCompaniesCreateRouteImport
+      parentRoute: typeof AdminCompaniesRoute
+    }
+    '/admin/coupons/': {
+      id: '/admin/coupons/'
+      path: '/'
+      fullPath: '/admin/coupons/'
+      preLoaderRoute: typeof AdminCouponsIndexRouteImport
+      parentRoute: typeof AdminCouponsRoute
+    }
+    '/admin/coupons/create': {
+      id: '/admin/coupons/create'
+      path: '/create'
+      fullPath: '/admin/coupons/create'
+      preLoaderRoute: typeof AdminCouponsCreateRouteImport
+      parentRoute: typeof AdminCouponsRoute
+    }
+    '/admin/material-requests/': {
+      id: '/admin/material-requests/'
+      path: '/'
+      fullPath: '/admin/material-requests/'
+      preLoaderRoute: typeof AdminMaterialRequestsIndexRouteImport
+      parentRoute: typeof AdminMaterialRequestsRoute
+    }
+    '/admin/material-requests/create': {
+      id: '/admin/material-requests/create'
+      path: '/create'
+      fullPath: '/admin/material-requests/create'
+      preLoaderRoute: typeof AdminMaterialRequestsCreateRouteImport
+      parentRoute: typeof AdminMaterialRequestsRoute
+    }
+    '/admin/materials/': {
+      id: '/admin/materials/'
+      path: '/'
+      fullPath: '/admin/materials/'
+      preLoaderRoute: typeof AdminMaterialsIndexRouteImport
+      parentRoute: typeof AdminMaterialsRoute
+    }
+    '/admin/materials/create': {
+      id: '/admin/materials/create'
+      path: '/create'
+      fullPath: '/admin/materials/create'
+      preLoaderRoute: typeof AdminMaterialsCreateRouteImport
+      parentRoute: typeof AdminMaterialsRoute
+    }
+    '/admin/plans/': {
+      id: '/admin/plans/'
+      path: '/'
+      fullPath: '/admin/plans/'
+      preLoaderRoute: typeof AdminPlansIndexRouteImport
+      parentRoute: typeof AdminPlansRoute
+    }
+    '/admin/plans/create': {
+      id: '/admin/plans/create'
+      path: '/create'
+      fullPath: '/admin/plans/create'
+      preLoaderRoute: typeof AdminPlansCreateRouteImport
+      parentRoute: typeof AdminPlansRoute
+    }
+    '/admin/professionals/': {
+      id: '/admin/professionals/'
+      path: '/'
+      fullPath: '/admin/professionals/'
+      preLoaderRoute: typeof AdminProfessionalsIndexRouteImport
+      parentRoute: typeof AdminProfessionalsRoute
+    }
+    '/admin/professionals/create': {
+      id: '/admin/professionals/create'
+      path: '/create'
+      fullPath: '/admin/professionals/create'
+      preLoaderRoute: typeof AdminProfessionalsCreateRouteImport
+      parentRoute: typeof AdminProfessionalsRoute
+    }
+    '/admin/roles/': {
+      id: '/admin/roles/'
+      path: '/'
+      fullPath: '/admin/roles/'
+      preLoaderRoute: typeof AdminRolesIndexRouteImport
+      parentRoute: typeof AdminRolesRoute
+    }
+    '/admin/roles/create': {
+      id: '/admin/roles/create'
+      path: '/create'
+      fullPath: '/admin/roles/create'
+      preLoaderRoute: typeof AdminRolesCreateRouteImport
+      parentRoute: typeof AdminRolesRoute
+    }
+    '/admin/service-grouping/': {
+      id: '/admin/service-grouping/'
+      path: '/'
+      fullPath: '/admin/service-grouping/'
+      preLoaderRoute: typeof AdminServiceGroupingIndexRouteImport
+      parentRoute: typeof AdminServiceGroupingRoute
+    }
+    '/admin/service-grouping/create': {
+      id: '/admin/service-grouping/create'
+      path: '/create'
+      fullPath: '/admin/service-grouping/create'
+      preLoaderRoute: typeof AdminServiceGroupingCreateRouteImport
+      parentRoute: typeof AdminServiceGroupingRoute
+    }
+    '/admin/services/': {
+      id: '/admin/services/'
+      path: '/'
+      fullPath: '/admin/services/'
+      preLoaderRoute: typeof AdminServicesIndexRouteImport
+      parentRoute: typeof AdminServicesRoute
+    }
+    '/admin/services/create': {
+      id: '/admin/services/create'
+      path: '/create'
+      fullPath: '/admin/services/create'
+      preLoaderRoute: typeof AdminServicesCreateRouteImport
+      parentRoute: typeof AdminServicesRoute
+    }
+    '/admin/staff/': {
+      id: '/admin/staff/'
+      path: '/'
+      fullPath: '/admin/staff/'
+      preLoaderRoute: typeof AdminStaffIndexRouteImport
+      parentRoute: typeof AdminStaffRoute
+    }
+    '/admin/staff/create': {
+      id: '/admin/staff/create'
+      path: '/create'
+      fullPath: '/admin/staff/create'
+      preLoaderRoute: typeof AdminStaffCreateRouteImport
+      parentRoute: typeof AdminStaffRoute
+    }
+    '/admin/supervisors/': {
+      id: '/admin/supervisors/'
+      path: '/'
+      fullPath: '/admin/supervisors/'
+      preLoaderRoute: typeof AdminSupervisorsIndexRouteImport
+      parentRoute: typeof AdminSupervisorsRoute
+    }
+    '/admin/supervisors/create': {
+      id: '/admin/supervisors/create'
+      path: '/create'
+      fullPath: '/admin/supervisors/create'
+      preLoaderRoute: typeof AdminSupervisorsCreateRouteImport
+      parentRoute: typeof AdminSupervisorsRoute
+    }
+    '/admin/team-leads/': {
+      id: '/admin/team-leads/'
+      path: '/'
+      fullPath: '/admin/team-leads/'
+      preLoaderRoute: typeof AdminTeamLeadsIndexRouteImport
+      parentRoute: typeof AdminTeamLeadsRoute
+    }
+    '/admin/team-leads/create': {
+      id: '/admin/team-leads/create'
+      path: '/create'
+      fullPath: '/admin/team-leads/create'
+      preLoaderRoute: typeof AdminTeamLeadsCreateRouteImport
+      parentRoute: typeof AdminTeamLeadsRoute
+    }
+    '/admin/users/': {
+      id: '/admin/users/'
+      path: '/'
+      fullPath: '/admin/users/'
+      preLoaderRoute: typeof AdminUsersIndexRouteImport
+      parentRoute: typeof AdminUsersRoute
+    }
+    '/admin/users/create': {
+      id: '/admin/users/create'
+      path: '/create'
+      fullPath: '/admin/users/create'
+      preLoaderRoute: typeof AdminUsersCreateRouteImport
+      parentRoute: typeof AdminUsersRoute
+    }
     '/api/public/media/$': {
       id: '/api/public/media/$'
       path: '/api/public/media/$'
@@ -772,51 +1526,281 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminAddonsRouteChildren {
+  AdminAddonsCreateRoute: typeof AdminAddonsCreateRoute
+  AdminAddonsIndexRoute: typeof AdminAddonsIndexRoute
+}
+
+const AdminAddonsRouteChildren: AdminAddonsRouteChildren = {
+  AdminAddonsCreateRoute: AdminAddonsCreateRoute,
+  AdminAddonsIndexRoute: AdminAddonsIndexRoute,
+}
+
+const AdminAddonsRouteWithChildren = AdminAddonsRoute._addFileChildren(
+  AdminAddonsRouteChildren,
+)
+
+interface AdminCategoriesRouteChildren {
+  AdminCategoriesCreateRoute: typeof AdminCategoriesCreateRoute
+  AdminCategoriesIndexRoute: typeof AdminCategoriesIndexRoute
+}
+
+const AdminCategoriesRouteChildren: AdminCategoriesRouteChildren = {
+  AdminCategoriesCreateRoute: AdminCategoriesCreateRoute,
+  AdminCategoriesIndexRoute: AdminCategoriesIndexRoute,
+}
+
+const AdminCategoriesRouteWithChildren = AdminCategoriesRoute._addFileChildren(
+  AdminCategoriesRouteChildren,
+)
+
+interface AdminCompaniesRouteChildren {
+  AdminCompaniesCreateRoute: typeof AdminCompaniesCreateRoute
+  AdminCompaniesIndexRoute: typeof AdminCompaniesIndexRoute
+}
+
+const AdminCompaniesRouteChildren: AdminCompaniesRouteChildren = {
+  AdminCompaniesCreateRoute: AdminCompaniesCreateRoute,
+  AdminCompaniesIndexRoute: AdminCompaniesIndexRoute,
+}
+
+const AdminCompaniesRouteWithChildren = AdminCompaniesRoute._addFileChildren(
+  AdminCompaniesRouteChildren,
+)
+
+interface AdminCouponsRouteChildren {
+  AdminCouponsCreateRoute: typeof AdminCouponsCreateRoute
+  AdminCouponsIndexRoute: typeof AdminCouponsIndexRoute
+}
+
+const AdminCouponsRouteChildren: AdminCouponsRouteChildren = {
+  AdminCouponsCreateRoute: AdminCouponsCreateRoute,
+  AdminCouponsIndexRoute: AdminCouponsIndexRoute,
+}
+
+const AdminCouponsRouteWithChildren = AdminCouponsRoute._addFileChildren(
+  AdminCouponsRouteChildren,
+)
+
+interface AdminMaterialRequestsRouteChildren {
+  AdminMaterialRequestsCreateRoute: typeof AdminMaterialRequestsCreateRoute
+  AdminMaterialRequestsIndexRoute: typeof AdminMaterialRequestsIndexRoute
+}
+
+const AdminMaterialRequestsRouteChildren: AdminMaterialRequestsRouteChildren = {
+  AdminMaterialRequestsCreateRoute: AdminMaterialRequestsCreateRoute,
+  AdminMaterialRequestsIndexRoute: AdminMaterialRequestsIndexRoute,
+}
+
+const AdminMaterialRequestsRouteWithChildren =
+  AdminMaterialRequestsRoute._addFileChildren(
+    AdminMaterialRequestsRouteChildren,
+  )
+
+interface AdminMaterialsRouteChildren {
+  AdminMaterialsCreateRoute: typeof AdminMaterialsCreateRoute
+  AdminMaterialsIndexRoute: typeof AdminMaterialsIndexRoute
+}
+
+const AdminMaterialsRouteChildren: AdminMaterialsRouteChildren = {
+  AdminMaterialsCreateRoute: AdminMaterialsCreateRoute,
+  AdminMaterialsIndexRoute: AdminMaterialsIndexRoute,
+}
+
+const AdminMaterialsRouteWithChildren = AdminMaterialsRoute._addFileChildren(
+  AdminMaterialsRouteChildren,
+)
+
+interface AdminPlansRouteChildren {
+  AdminPlansCreateRoute: typeof AdminPlansCreateRoute
+  AdminPlansIndexRoute: typeof AdminPlansIndexRoute
+}
+
+const AdminPlansRouteChildren: AdminPlansRouteChildren = {
+  AdminPlansCreateRoute: AdminPlansCreateRoute,
+  AdminPlansIndexRoute: AdminPlansIndexRoute,
+}
+
+const AdminPlansRouteWithChildren = AdminPlansRoute._addFileChildren(
+  AdminPlansRouteChildren,
+)
+
+interface AdminProfessionalsRouteChildren {
+  AdminProfessionalsCreateRoute: typeof AdminProfessionalsCreateRoute
+  AdminProfessionalsIndexRoute: typeof AdminProfessionalsIndexRoute
+}
+
+const AdminProfessionalsRouteChildren: AdminProfessionalsRouteChildren = {
+  AdminProfessionalsCreateRoute: AdminProfessionalsCreateRoute,
+  AdminProfessionalsIndexRoute: AdminProfessionalsIndexRoute,
+}
+
+const AdminProfessionalsRouteWithChildren =
+  AdminProfessionalsRoute._addFileChildren(AdminProfessionalsRouteChildren)
+
+interface AdminRolesRouteChildren {
+  AdminRolesCreateRoute: typeof AdminRolesCreateRoute
+  AdminRolesIndexRoute: typeof AdminRolesIndexRoute
+}
+
+const AdminRolesRouteChildren: AdminRolesRouteChildren = {
+  AdminRolesCreateRoute: AdminRolesCreateRoute,
+  AdminRolesIndexRoute: AdminRolesIndexRoute,
+}
+
+const AdminRolesRouteWithChildren = AdminRolesRoute._addFileChildren(
+  AdminRolesRouteChildren,
+)
+
+interface AdminServiceGroupingRouteChildren {
+  AdminServiceGroupingCreateRoute: typeof AdminServiceGroupingCreateRoute
+  AdminServiceGroupingIndexRoute: typeof AdminServiceGroupingIndexRoute
+}
+
+const AdminServiceGroupingRouteChildren: AdminServiceGroupingRouteChildren = {
+  AdminServiceGroupingCreateRoute: AdminServiceGroupingCreateRoute,
+  AdminServiceGroupingIndexRoute: AdminServiceGroupingIndexRoute,
+}
+
+const AdminServiceGroupingRouteWithChildren =
+  AdminServiceGroupingRoute._addFileChildren(AdminServiceGroupingRouteChildren)
+
+interface AdminServicesRouteChildren {
+  AdminServicesCreateRoute: typeof AdminServicesCreateRoute
+  AdminServicesIndexRoute: typeof AdminServicesIndexRoute
+}
+
+const AdminServicesRouteChildren: AdminServicesRouteChildren = {
+  AdminServicesCreateRoute: AdminServicesCreateRoute,
+  AdminServicesIndexRoute: AdminServicesIndexRoute,
+}
+
+const AdminServicesRouteWithChildren = AdminServicesRoute._addFileChildren(
+  AdminServicesRouteChildren,
+)
+
+interface AdminStaffRouteChildren {
+  AdminStaffCreateRoute: typeof AdminStaffCreateRoute
+  AdminStaffIndexRoute: typeof AdminStaffIndexRoute
+}
+
+const AdminStaffRouteChildren: AdminStaffRouteChildren = {
+  AdminStaffCreateRoute: AdminStaffCreateRoute,
+  AdminStaffIndexRoute: AdminStaffIndexRoute,
+}
+
+const AdminStaffRouteWithChildren = AdminStaffRoute._addFileChildren(
+  AdminStaffRouteChildren,
+)
+
+interface AdminSupervisorsRouteChildren {
+  AdminSupervisorsCreateRoute: typeof AdminSupervisorsCreateRoute
+  AdminSupervisorsIndexRoute: typeof AdminSupervisorsIndexRoute
+}
+
+const AdminSupervisorsRouteChildren: AdminSupervisorsRouteChildren = {
+  AdminSupervisorsCreateRoute: AdminSupervisorsCreateRoute,
+  AdminSupervisorsIndexRoute: AdminSupervisorsIndexRoute,
+}
+
+const AdminSupervisorsRouteWithChildren =
+  AdminSupervisorsRoute._addFileChildren(AdminSupervisorsRouteChildren)
+
+interface AdminTeamLeadsRouteChildren {
+  AdminTeamLeadsCreateRoute: typeof AdminTeamLeadsCreateRoute
+  AdminTeamLeadsIndexRoute: typeof AdminTeamLeadsIndexRoute
+}
+
+const AdminTeamLeadsRouteChildren: AdminTeamLeadsRouteChildren = {
+  AdminTeamLeadsCreateRoute: AdminTeamLeadsCreateRoute,
+  AdminTeamLeadsIndexRoute: AdminTeamLeadsIndexRoute,
+}
+
+const AdminTeamLeadsRouteWithChildren = AdminTeamLeadsRoute._addFileChildren(
+  AdminTeamLeadsRouteChildren,
+)
+
+interface AdminUsersRouteChildren {
+  AdminUsersCreateRoute: typeof AdminUsersCreateRoute
+  AdminUsersIndexRoute: typeof AdminUsersIndexRoute
+}
+
+const AdminUsersRouteChildren: AdminUsersRouteChildren = {
+  AdminUsersCreateRoute: AdminUsersCreateRoute,
+  AdminUsersIndexRoute: AdminUsersIndexRoute,
+}
+
+const AdminUsersRouteWithChildren = AdminUsersRoute._addFileChildren(
+  AdminUsersRouteChildren,
+)
+
 interface AdminRouteChildren {
-  AdminAddonsRoute: typeof AdminAddonsRoute
+  AdminAddonsRoute: typeof AdminAddonsRouteWithChildren
   AdminAuditLogsRoute: typeof AdminAuditLogsRoute
   AdminAvailabilityRoute: typeof AdminAvailabilityRoute
   AdminBookingsRoute: typeof AdminBookingsRoute
   AdminBundlesRoute: typeof AdminBundlesRoute
   AdminCalendarRoute: typeof AdminCalendarRoute
-  AdminCategoriesRoute: typeof AdminCategoriesRoute
-  AdminCouponsRoute: typeof AdminCouponsRoute
+  AdminCategoriesRoute: typeof AdminCategoriesRouteWithChildren
+  AdminCompaniesRoute: typeof AdminCompaniesRouteWithChildren
+  AdminCouponsRoute: typeof AdminCouponsRouteWithChildren
   AdminCustomersRoute: typeof AdminCustomersRoute
+  AdminExpiredDocumentsRoute: typeof AdminExpiredDocumentsRoute
   AdminLocationsRoute: typeof AdminLocationsRoute
+  AdminMaterialRequestsRoute: typeof AdminMaterialRequestsRouteWithChildren
+  AdminMaterialsRoute: typeof AdminMaterialsRouteWithChildren
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
+  AdminPlansRoute: typeof AdminPlansRouteWithChildren
   AdminPricingRoute: typeof AdminPricingRoute
-  AdminProfessionalsRoute: typeof AdminProfessionalsRoute
+  AdminProfessionalsRoute: typeof AdminProfessionalsRouteWithChildren
   AdminRefundsRoute: typeof AdminRefundsRoute
   AdminReportsRoute: typeof AdminReportsRoute
   AdminReviewsRoute: typeof AdminReviewsRoute
-  AdminServicesRoute: typeof AdminServicesRoute
+  AdminRolesRoute: typeof AdminRolesRouteWithChildren
+  AdminServiceGroupingRoute: typeof AdminServiceGroupingRouteWithChildren
+  AdminServicesRoute: typeof AdminServicesRouteWithChildren
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminStaffRoute: typeof AdminStaffRouteWithChildren
+  AdminSupervisorsRoute: typeof AdminSupervisorsRouteWithChildren
   AdminSupportRoute: typeof AdminSupportRoute
+  AdminTeamLeadsRoute: typeof AdminTeamLeadsRouteWithChildren
+  AdminUsersRoute: typeof AdminUsersRouteWithChildren
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
-  AdminAddonsRoute: AdminAddonsRoute,
+  AdminAddonsRoute: AdminAddonsRouteWithChildren,
   AdminAuditLogsRoute: AdminAuditLogsRoute,
   AdminAvailabilityRoute: AdminAvailabilityRoute,
   AdminBookingsRoute: AdminBookingsRoute,
   AdminBundlesRoute: AdminBundlesRoute,
   AdminCalendarRoute: AdminCalendarRoute,
-  AdminCategoriesRoute: AdminCategoriesRoute,
-  AdminCouponsRoute: AdminCouponsRoute,
+  AdminCategoriesRoute: AdminCategoriesRouteWithChildren,
+  AdminCompaniesRoute: AdminCompaniesRouteWithChildren,
+  AdminCouponsRoute: AdminCouponsRouteWithChildren,
   AdminCustomersRoute: AdminCustomersRoute,
+  AdminExpiredDocumentsRoute: AdminExpiredDocumentsRoute,
   AdminLocationsRoute: AdminLocationsRoute,
+  AdminMaterialRequestsRoute: AdminMaterialRequestsRouteWithChildren,
+  AdminMaterialsRoute: AdminMaterialsRouteWithChildren,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
+  AdminPlansRoute: AdminPlansRouteWithChildren,
   AdminPricingRoute: AdminPricingRoute,
-  AdminProfessionalsRoute: AdminProfessionalsRoute,
+  AdminProfessionalsRoute: AdminProfessionalsRouteWithChildren,
   AdminRefundsRoute: AdminRefundsRoute,
   AdminReportsRoute: AdminReportsRoute,
   AdminReviewsRoute: AdminReviewsRoute,
-  AdminServicesRoute: AdminServicesRoute,
+  AdminRolesRoute: AdminRolesRouteWithChildren,
+  AdminServiceGroupingRoute: AdminServiceGroupingRouteWithChildren,
+  AdminServicesRoute: AdminServicesRouteWithChildren,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminStaffRoute: AdminStaffRouteWithChildren,
+  AdminSupervisorsRoute: AdminSupervisorsRouteWithChildren,
   AdminSupportRoute: AdminSupportRoute,
+  AdminTeamLeadsRoute: AdminTeamLeadsRouteWithChildren,
+  AdminUsersRoute: AdminUsersRouteWithChildren,
   AdminIndexRoute: AdminIndexRoute,
 }
 

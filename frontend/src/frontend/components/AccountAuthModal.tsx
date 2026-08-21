@@ -53,7 +53,7 @@ export function AccountAuthModal({
   const [step, setStep] = useState<"phone" | "otp" | "address" | "personal">("phone");
 
   // Step 1: Phone
-  const [selectedCountry, setSelectedCountry] = useState<CountryCode>(COUNTRIES[0]);
+  const [selectedCountry, setSelectedCountry] = useState<CountryCode>(COUNTRIES[0]!);
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState("");
   const [phone, setPhone] = useState("");
@@ -201,9 +201,9 @@ export function AccountAuthModal({
     setLoading(true);
     try {
       const res = await verifyOtp(fullPhone, otpCode.trim());
-      const p = res.profile || {};
-      const userFullName = p.fullName || p.full_name || null;
-      const userEmail = p.email || null;
+      const p = (res.profile || {}) as Record<string, any>;
+      const userFullName = typeof p.fullName === "string" ? p.fullName : typeof p.full_name === "string" ? p.full_name : null;
+      const userEmail = typeof p.email === "string" ? p.email : null;
 
       setAuth(res.access_token, res.refresh_token, {
         id: res.user_id,

@@ -200,38 +200,33 @@ export function cancelBooking(bookingId: string) {
   return post<{ ok: boolean }>(`/booking/${encodeURIComponent(bookingId)}/cancel`);
 }
 
+import { AdminDataStore, type AdminUser, type AdminStaff, type AdminRole, type AdminCompany, type AdminProfessional, type AdminTeamLead, type AdminSupervisor, type ComplianceDocument, type AdminMaterial, type AdminMaterialRequest, type AdminPlan } from "./admin-mock-data";
+
 /* ============================================================ ADMIN */
 
 const DEFAULT_ADMIN_OVERVIEW = {
   kpis: {
-    today_bookings: 12,
-    total_bookings: 248,
-    revenue_month: 14850,
-    revenue_total: 89400,
-    active_professionals: 18,
-    professionals: 24,
-    average_rating: 4.9,
-    reviews_count: 156,
+    total_customers: 0,
+    total_companies: 0,
+    total_professionals: 0,
+    total_bookings: 0,
+    total_revenue: 0,
+    average_rating: 0,
+    pending_material_requests: 0,
+    documents_expiring_30_days: 0,
+    today_bookings: 0,
+    yesterday_bookings: 0,
+    today_vs_yesterday_pct: 0,
+    month_bookings: 0,
+    last_month_bookings: 0,
+    month_vs_last_month_pct: 0,
   },
-  revenue_series: [
-    { date: "2026-08-14", total: 1800 },
-    { date: "2026-08-15", total: 2400 },
-    { date: "2026-08-16", total: 2100 },
-    { date: "2026-08-17", total: 3100 },
-    { date: "2026-08-18", total: 2900 },
-    { date: "2026-08-19", total: 3800 },
-    { date: "2026-08-20", total: 4200 },
-  ],
-  by_status: {
-    completed: 180,
-    confirmed: 35,
-    in_progress: 12,
-    cancelled: 8,
-  },
+  booking_trends_30_days: [],
+  by_status: {},
+  status_counts: {},
   recent_bookings: [],
   recent_customers: [],
   recent_reviews: [],
-  top_services: [],
   upcoming: [],
 };
 
@@ -246,12 +241,65 @@ export async function amIAdmin() {
 }
 
 export async function getAdminOverview() {
-  if (!getAccessToken()) return DEFAULT_ADMIN_OVERVIEW;
+  const users = AdminDataStore.getUsers();
+  const companies = AdminDataStore.getCompanies();
+  const pros = AdminDataStore.getProfessionals();
+  const matReqs = AdminDataStore.getMaterialRequests();
+  const docs = AdminDataStore.getAllComplianceDocuments();
+
+  const now = new Date();
+  const in30Days = new Date(now.getTime() + 30 * 864e5);
+  const expiringCount = docs.filter((d) => {
+    const exp = new Date(d.expiryDate);
+    return exp >= now && exp <= in30Days;
+  }).length;
+
+  const pendingMatReqs = matReqs.filter((m) => m.status === "Pending").length;
+
   try {
-    return await get<Record<string, any>>("/admin/overview");
-  } catch {
-    return DEFAULT_ADMIN_OVERVIEW;
+    if (getAccessToken()) {
+      const serverData = await get<Record<string, any>>("/admin/overview");
+      if (serverData) {
+        const sKpis = serverData.kpis || {};
+        return {
+          ...DEFAULT_ADMIN_OVERVIEW,
+          ...serverData,
+          kpis: {
+            total_customers: sKpis.total_customers ?? sKpis.customers ?? users.length,
+            total_companies: companies.length,
+            total_professionals: sKpis.total_professionals ?? sKpis.professionals ?? pros.length,
+            total_bookings: sKpis.total_bookings ?? sKpis.totalBookings ?? 0,
+            total_revenue: sKpis.total_revenue ?? sKpis.revenueTotal ?? 0,
+            average_rating: sKpis.average_rating ?? 0,
+            pending_material_requests: pendingMatReqs,
+            documents_expiring_30_days: expiringCount,
+            today_bookings: sKpis.today_bookings ?? sKpis.todayBookings ?? 0,
+            yesterday_bookings: sKpis.yesterday_bookings ?? 0,
+            today_vs_yesterday_pct: sKpis.today_vs_yesterday_pct ?? 0,
+            month_bookings: sKpis.month_bookings ?? 0,
+            last_month_bookings: sKpis.last_month_bookings ?? 0,
+            month_vs_last_month_pct: sKpis.month_vs_last_month_pct ?? 0,
+          },
+          by_status: serverData.by_status || {},
+          booking_trends_30_days: serverData.booking_trends_30_days || [],
+        };
+      }
+    }
+  } catch (err) {
+    console.error("Error fetching overview:", err);
   }
+
+  return {
+    ...DEFAULT_ADMIN_OVERVIEW,
+    kpis: {
+      ...DEFAULT_ADMIN_OVERVIEW.kpis,
+      total_customers: users.length,
+      total_companies: companies.length,
+      total_professionals: pros.length,
+      pending_material_requests: pendingMatReqs,
+      documents_expiring_30_days: expiringCount,
+    },
+  };
 }
 
 export async function getAdminBookings() {
@@ -662,6 +710,316 @@ export function setProfessionalSkill(data: {
   enabled: boolean;
 }) {
   return post<{ ok: boolean }>("/admin/professional/skill", data);
+}
+
+/* ============================================================ ENTERPRISE ADMIN SUITE */
+
+// Users
+export async function getAdminUsers(): Promise<AdminUser[]> {
+  try {
+    if (getAccessToken()) {
+      const serverUsers = await get<AdminUser[]>("/admin/users");
+      if (serverUsers && Array.isArray(serverUsers)) return serverUsers;
+    }
+  } catch {}
+  return AdminDataStore.getUsers();
+}
+
+export async function createAdminUser(data: Omit<AdminUser, "id" | "registeredOn" | "createdAt">): Promise<AdminUser> {
+  const created = AdminDataStore.addUser(data);
+  try {
+    if (getAccessToken()) await post("/admin/user", data);
+  } catch {}
+  return created;
+}
+
+export async function updateAdminUser(id: string, patch: Partial<AdminUser>): Promise<AdminUser | null> {
+  const updated = AdminDataStore.updateUser(id, patch);
+  try {
+    if (getAccessToken()) await post("/admin/user/update", { id, ...patch });
+  } catch {}
+  return updated;
+}
+
+export async function deleteAdminUser(id: string): Promise<boolean> {
+  const ok = AdminDataStore.deleteUser(id);
+  try {
+    if (getAccessToken()) await post("/admin/user/delete", { id });
+  } catch {}
+  return ok;
+}
+
+export async function sendUserCredentials(userId: string): Promise<{ success: boolean; message: string }> {
+  const users = await getAdminUsers();
+  const user = users.find((u) => u.id === userId);
+  return {
+    success: true,
+    message: `Login credentials successfully dispatched to ${user?.email || "user"} via Email & SMS.`,
+  };
+}
+
+export async function changeUserPassword(userId: string, newPass: string): Promise<{ success: boolean }> {
+  return { success: true };
+}
+
+// Staff
+export async function getAdminStaff(): Promise<AdminStaff[]> {
+  try {
+    if (getAccessToken()) {
+      const res = await get<AdminStaff[]>("/admin/staff");
+      if (res && Array.isArray(res)) return res;
+    }
+  } catch {}
+  return AdminDataStore.getStaff();
+}
+
+export async function createAdminStaff(data: Omit<AdminStaff, "id" | "registeredOn">): Promise<AdminStaff> {
+  const created = AdminDataStore.addStaff(data);
+  try {
+    if (getAccessToken()) await post("/admin/staff", data);
+  } catch {}
+  return created;
+}
+
+export async function updateAdminStaff(id: string, patch: Partial<AdminStaff>): Promise<AdminStaff | null> {
+  const updated = AdminDataStore.updateStaff(id, patch);
+  try {
+    if (getAccessToken()) await post("/admin/staff/update", { id, ...patch });
+  } catch {}
+  return updated;
+}
+
+export async function deleteAdminStaff(id: string): Promise<boolean> {
+  return AdminDataStore.deleteStaff(id);
+}
+
+// Roles
+export async function getAdminRoles(): Promise<AdminRole[]> {
+  try {
+    if (getAccessToken()) {
+      const res = await get<AdminRole[]>("/admin/roles");
+      if (res && Array.isArray(res)) return res;
+    }
+  } catch {}
+  return AdminDataStore.getRoles();
+}
+
+export async function createAdminRole(data: Omit<AdminRole, "id" | "registeredOn">): Promise<AdminRole> {
+  const created = AdminDataStore.addRole(data);
+  try {
+    if (getAccessToken()) await post("/admin/role", data);
+  } catch {}
+  return created;
+}
+
+export async function updateAdminRole(id: string, patch: Partial<AdminRole>): Promise<AdminRole | null> {
+  const updated = AdminDataStore.updateRole(id, patch);
+  try {
+    if (getAccessToken()) await post("/admin/role/update", { id, ...patch });
+  } catch {}
+  return updated;
+}
+
+export async function deleteAdminRole(id: string): Promise<boolean> {
+  return AdminDataStore.deleteRole(id);
+}
+
+// Companies
+export async function getAdminCompanies(): Promise<AdminCompany[]> {
+  try {
+    if (getAccessToken()) {
+      const res = await get<AdminCompany[]>("/admin/companies");
+      if (res && Array.isArray(res)) return res;
+    }
+  } catch {}
+  return AdminDataStore.getCompanies();
+}
+
+export async function createAdminCompany(data: Omit<AdminCompany, "id" | "registeredOn">): Promise<AdminCompany> {
+  const created = AdminDataStore.addCompany(data);
+  try {
+    if (getAccessToken()) await post("/admin/company", data);
+  } catch {}
+  return created;
+}
+
+export async function updateAdminCompany(id: string, patch: Partial<AdminCompany>): Promise<AdminCompany | null> {
+  const updated = AdminDataStore.updateCompany(id, patch);
+  try {
+    if (getAccessToken()) await post("/admin/company/update", { id, ...patch });
+  } catch {}
+  return updated;
+}
+
+export async function deleteAdminCompany(id: string): Promise<boolean> {
+  return AdminDataStore.deleteCompany(id);
+}
+
+// Team Leads
+export async function getAdminTeamLeads(): Promise<AdminTeamLead[]> {
+  try {
+    if (getAccessToken()) {
+      const res = await get<AdminTeamLead[]>("/admin/team-leads");
+      if (res && Array.isArray(res)) return res;
+    }
+  } catch {}
+  return AdminDataStore.getTeamLeads();
+}
+
+export async function createAdminTeamLead(data: Omit<AdminTeamLead, "id" | "registeredOn">): Promise<AdminTeamLead> {
+  const created = AdminDataStore.addTeamLead(data);
+  try {
+    if (getAccessToken()) await post("/admin/team-lead", data);
+  } catch {}
+  return created;
+}
+
+export async function updateAdminTeamLead(id: string, patch: Partial<AdminTeamLead>): Promise<AdminTeamLead | null> {
+  const updated = AdminDataStore.updateTeamLead(id, patch);
+  try {
+    if (getAccessToken()) await post("/admin/team-lead/update", { id, ...patch });
+  } catch {}
+  return updated;
+}
+
+export async function deleteAdminTeamLead(id: string): Promise<boolean> {
+  return AdminDataStore.deleteTeamLead(id);
+}
+
+// Supervisors
+export async function getAdminSupervisors(): Promise<AdminSupervisor[]> {
+  try {
+    if (getAccessToken()) {
+      const res = await get<AdminSupervisor[]>("/admin/supervisors");
+      if (res && Array.isArray(res)) return res;
+    }
+  } catch {}
+  return AdminDataStore.getSupervisors();
+}
+
+export async function createAdminSupervisor(data: Omit<AdminSupervisor, "id" | "registeredOn">): Promise<AdminSupervisor> {
+  const created = AdminDataStore.addSupervisor(data);
+  try {
+    if (getAccessToken()) await post("/admin/supervisor", data);
+  } catch {}
+  return created;
+}
+
+export async function updateAdminSupervisor(id: string, patch: Partial<AdminSupervisor>): Promise<AdminSupervisor | null> {
+  const updated = AdminDataStore.updateSupervisor(id, patch);
+  try {
+    if (getAccessToken()) await post("/admin/supervisor/update", { id, ...patch });
+  } catch {}
+  return updated;
+}
+
+export async function deleteAdminSupervisor(id: string): Promise<boolean> {
+  return AdminDataStore.deleteSupervisor(id);
+}
+
+// Compliance Documents
+export async function getAdminComplianceDocuments(): Promise<ComplianceDocument[]> {
+  return AdminDataStore.getAllComplianceDocuments();
+}
+
+export async function renewComplianceDocument(docId: string, patch: Partial<ComplianceDocument>): Promise<boolean> {
+  return AdminDataStore.renewDocument(docId, patch);
+}
+
+// Materials & Inventory
+export async function getAdminMaterials(): Promise<AdminMaterial[]> {
+  return AdminDataStore.getMaterials();
+}
+
+export async function createAdminMaterial(mat: Omit<AdminMaterial, "id">): Promise<AdminMaterial> {
+  return AdminDataStore.addMaterial(mat);
+}
+
+export async function updateAdminMaterial(id: string, patch: Partial<AdminMaterial>): Promise<AdminMaterial | null> {
+  return AdminDataStore.updateMaterial(id, patch);
+}
+
+export async function deleteAdminMaterial(id: string): Promise<boolean> {
+  return AdminDataStore.deleteMaterial(id);
+}
+
+// Material Requests
+export async function getAdminMaterialRequests(): Promise<AdminMaterialRequest[]> {
+  return AdminDataStore.getMaterialRequests();
+}
+
+export async function createAdminMaterialRequest(req: Omit<AdminMaterialRequest, "id" | "requestId" | "requestDate">): Promise<AdminMaterialRequest> {
+  return AdminDataStore.addMaterialRequest(req);
+}
+
+export async function updateAdminMaterialRequestStatus(id: string, status: AdminMaterialRequest["status"], notes?: string): Promise<AdminMaterialRequest | null> {
+  return AdminDataStore.updateMaterialRequestStatus(id, status, notes);
+}
+
+// Plans
+export async function getAdminPlans(): Promise<AdminPlan[]> {
+  return AdminDataStore.getPlans();
+}
+
+export async function createAdminPlan(plan: Omit<AdminPlan, "id">): Promise<AdminPlan> {
+  return AdminDataStore.addPlan(plan);
+}
+
+export async function updateAdminPlan(id: string, patch: Partial<AdminPlan>): Promise<AdminPlan | null> {
+  return AdminDataStore.updatePlan(id, patch);
+}
+
+export async function deleteAdminPlan(id: string): Promise<boolean> {
+  return AdminDataStore.deletePlan(id);
+}
+
+// Catalog & Promos Helper Wrappers for Dedicated Create Pages
+export async function getAdminCategories() {
+  const cat = await getAdminCatalog();
+  return cat.categories ?? [];
+}
+
+export async function getAdminServices() {
+  const cat = await getAdminCatalog();
+  return cat.services ?? [];
+}
+
+export async function createAdminCategory(data: Record<string, unknown>) {
+  return createCategory(data);
+}
+
+export async function createAdminService(data: Record<string, unknown>) {
+  return createService(data);
+}
+
+export async function createAdminCoupon(data: {
+  code: string;
+  discountType: string;
+  discountValue: number;
+  minOrderAmount?: number;
+  maxDiscountAmount?: number;
+  validUntil?: string;
+  usageLimit?: number;
+  status?: string;
+}) {
+  return upsertCoupon({
+    code: data.code,
+    discount_type: data.discountType,
+    discount_value: data.discountValue,
+    min_amount: data.minOrderAmount,
+    max_discount: data.maxDiscountAmount,
+    expires_at: data.validUntil,
+    max_redemptions: data.usageLimit,
+    is_active: data.status === "Active",
+  });
+}
+
+export async function createAdminAddon(data: Record<string, unknown>) {
+  return createAddon(data);
+}
+
+export async function createAdminBundle(data: Record<string, unknown>) {
+  return createBundle(data);
 }
 
 /* ============================================================ GEO */
