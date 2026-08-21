@@ -298,6 +298,7 @@ model Addon {
   nameAr          String?  @map("name_ar")
   slug            String
   description     String?
+  descriptionAr   String?  @map("description_ar")
   imageUrl        String?  @map("image_url")
   price           Float
   originalPrice   Float?   @map("original_price")
