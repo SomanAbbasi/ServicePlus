@@ -7,7 +7,7 @@ export class ServicesService {
 
   async getAllServices() {
     return this.prisma.service.findMany({
-      where: { isActive: true },
+      where: { isActive: true, category: { isActive: true } },
       orderBy: { sortOrder: 'asc' },
       select: {
         id: true,
@@ -31,7 +31,7 @@ export class ServicesService {
 
   async getServiceBySlug(slug: string) {
     const service = await this.prisma.service.findFirst({
-      where: { slug, isActive: true },
+      where: { slug, isActive: true, category: { isActive: true } },
       include: {
         category: {
           select: {
@@ -105,7 +105,7 @@ export class ServicesService {
     const relatedIds = relations.map((r) => r.relatedServiceId);
     const related = relatedIds.length
       ? this.prisma.service.findMany({
-          where: { id: { in: relatedIds }, isActive: true },
+          where: { id: { in: relatedIds }, isActive: true, category: { isActive: true } },
           select: {
             id: true,
             slug: true,
@@ -155,7 +155,7 @@ export class ServicesService {
         },
       }),
       this.prisma.service.findMany({
-        where: { isActive: true },
+        where: { isActive: true, category: { isActive: true } },
         orderBy: { sortOrder: 'asc' },
         select: {
           id: true,
@@ -202,6 +202,7 @@ export class ServicesService {
       this.prisma.service.findMany({
         where: {
           isActive: true,
+          category: { isActive: true },
           OR: [
             { name: { contains: term, mode: 'insensitive' } },
             { nameAr: { contains: term, mode: 'insensitive' } },
@@ -249,7 +250,7 @@ export class ServicesService {
 
   async getCategoryBySlug(slug: string) {
     const category = await this.prisma.serviceCategory.findFirst({
-      where: { slug },
+      where: { slug, isActive: true },
       select: {
         id: true,
         slug: true,

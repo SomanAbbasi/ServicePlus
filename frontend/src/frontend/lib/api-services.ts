@@ -324,14 +324,14 @@ export function setProfessionalStatus(id: string, status: string, is_active?: bo
 }
 
 export async function getAdminCatalog() {
-  if (!getAccessToken()) return { services: [], categories: [], listings: [] };
   try {
     return await get<{
       services: Record<string, unknown>[];
       categories: Record<string, unknown>[];
       listings: Record<string, unknown>[];
     }>("/admin/catalog");
-  } catch {
+  } catch (err) {
+    console.warn("[getAdminCatalog] Fetch failed:", err);
     return { services: [], categories: [], listings: [] };
   }
 }

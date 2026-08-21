@@ -51,7 +51,7 @@ export class BookingService {
     frequency?: string | null;
   }) {
     const service = await this.prisma.service.findFirst({
-      where: { slug: input.serviceSlug, isActive: true },
+      where: { slug: input.serviceSlug, isActive: true, category: { isActive: true } },
       select: {
         id: true,
         name: true,
@@ -527,7 +527,7 @@ Total Amount: AED ${quote.breakdown.total.toFixed(2)}
 
   private async getServiceId(slug: string) {
     const s = await this.prisma.service.findFirst({
-      where: { slug, isActive: true },
+      where: { slug, isActive: true, category: { isActive: true } },
       select: { id: true },
     });
     if (!s) throw new BadRequestException('Service not found.');

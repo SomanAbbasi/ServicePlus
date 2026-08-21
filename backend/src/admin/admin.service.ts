@@ -216,6 +216,24 @@ export class AdminService {
   async updateService(id: string, data: Record<string, any>) {
     const patch = sanitizeInput(data);
     if (data.slug) patch.slug = slugify(data.slug);
+    if (patch.isActive === true) {
+      const existing = await this.prisma.service.findUnique({
+        where: { id },
+        select: { categoryId: true },
+      });
+      const targetCatId = patch.categoryId || existing?.categoryId;
+      if (targetCatId) {
+        const cat = await this.prisma.serviceCategory.findUnique({
+          where: { id: targetCatId },
+          select: { isActive: true },
+        });
+        if (cat && !cat.isActive) {
+          throw new BadRequestException(
+            'Cannot activate service because its category is disabled.',
+          );
+        }
+      }
+    }
     return this.prisma.service.update({ where: { id }, data: patch });
   }
 
@@ -225,6 +243,15 @@ export class AdminService {
       throw new BadRequestException('Category is required');
     const payload = sanitizeInput(data);
     payload.slug = slugify(data.slug || data.name);
+    if (payload.isActive && payload.categoryId) {
+      const cat = await this.prisma.serviceCategory.findUnique({
+        where: { id: payload.categoryId },
+        select: { isActive: true },
+      });
+      if (cat && !cat.isActive) {
+        payload.isActive = false;
+      }
+    }
     return this.prisma.service.create({ data: payload as any, select: { id: true } });
   }
 
@@ -262,10 +289,17 @@ export class AdminService {
   async updateCategory(id: string, data: Record<string, any>) {
     const patch = sanitizeInput(data);
     if (data.slug) patch.slug = slugify(data.slug);
-    return this.prisma.serviceCategory.update({
+    const result = await this.prisma.serviceCategory.update({
       where: { id },
       data: patch,
     });
+    if (typeof patch.isActive === 'boolean') {
+      await this.prisma.service.updateMany({
+        where: { categoryId: id },
+        data: { isActive: patch.isActive },
+      });
+    }
+    return result;
   }
 
   async createCategory(data: Record<string, any>) {
