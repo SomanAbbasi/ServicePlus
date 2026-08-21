@@ -26,14 +26,14 @@ export function ServiceCard({
     service.short_description ??
     (isAr ? "خدمة منزلية احترافية وموثوقة." : "Professional home service.");
   const imageUrl = resolveImageUrl(service.image_url) || FALLBACK_IMAGE;
-  const price = num(service.base_price);
   const rating = service.rating ?? 4.8;
+  const durationText = (service as any).duration_minutes ? `⚡ ${(service as any).duration_minutes} mins` : "⚡ 30 mins";
 
   return (
     <div
-      className={`group flex flex-col overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-cyan-500/40 ${className}`}
+      className={`group flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-cyan-500/40 ${className}`}
     >
-      {/* Image Container with Badges */}
+      {/* Image Container with Badges (Matching Image 2 Reference UI) */}
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
         <img
           src={imageUrl}
@@ -42,39 +42,45 @@ export function ServiceCard({
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
-        {/* Top-Left Category Badge */}
-        {categoryName ? (
-          <span className="absolute top-3 start-3 rounded-md bg-white/95 px-2.5 py-1 text-[11px] font-bold text-slate-800 shadow-2xs backdrop-blur-xs">
-            {categoryName}
-          </span>
-        ) : null}
+        {/* Top-Left Duration Badge (⚡ 30 mins) */}
+        <span className="absolute top-2 start-2 sm:top-3 sm:start-3 rounded-md bg-amber-400/95 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-[11px] font-extrabold text-slate-900 shadow-2xs backdrop-blur-xs">
+          {durationText}
+        </span>
 
         {/* Bottom-Right Star Rating Badge */}
-        <div className="absolute bottom-3 end-3 flex items-center gap-1 rounded-full bg-slate-900/85 px-2.5 py-1 text-[11px] font-extrabold text-white shadow-md">
-          <Star className="size-3.5 fill-amber-400 text-amber-400" />
+        <div className="absolute bottom-2 end-2 sm:bottom-3 sm:end-3 flex items-center gap-1 rounded-full bg-slate-900/85 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-[11px] font-extrabold text-white shadow-md">
+          <Star className="size-3 fill-amber-400 text-amber-400" />
           <span>{rating}</span>
         </div>
       </div>
 
       {/* Content & Action */}
-      <div className="flex flex-1 flex-col justify-between p-5">
-        <div className="space-y-1.5">
-          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-cyan-600 transition-colors line-clamp-1">
+      <div className="flex flex-1 flex-col justify-between p-3 sm:p-5">
+        <div className="space-y-1">
+          <h3 className="text-xs sm:text-base font-extrabold text-slate-900 group-hover:text-cyan-600 transition-colors line-clamp-1">
             {name}
           </h3>
-          <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+          <p className="hidden sm:block text-xs text-slate-500 leading-relaxed line-clamp-2">
             {description}
           </p>
         </div>
 
-        <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-end">
+        <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-slate-100 flex items-center justify-between gap-1.5">
+          {service.base_price && Number(service.base_price) > 0 ? (
+            <span className="text-xs sm:text-sm font-extrabold text-slate-900">
+              AED {Number(service.base_price).toFixed(0)}
+            </span>
+          ) : (
+            <span className="text-[10px] sm:text-xs font-bold text-cyan-700">Best Price</span>
+          )}
+
           <Link
             to="/booking/$slug"
             params={{ slug: service.slug }}
-            className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-cyan-500 px-4 py-2.5 text-xs font-extrabold text-white transition-all hover:bg-cyan-600 shadow-sm active:scale-95"
+            className="inline-flex items-center justify-center gap-1 rounded-full bg-cyan-500 px-2.5 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-extrabold text-white transition-all hover:bg-cyan-600 shadow-xs active:scale-95 shrink-0"
           >
-            {t("bookNow")}
-            {isAr ? <ArrowLeft className="size-3.5" /> : <ArrowRight className="size-3.5" />}
+            <span>{t("bookNow")}</span>
+            {isAr ? <ArrowLeft className="size-3" /> : <ArrowRight className="size-3" />}
           </Link>
         </div>
       </div>

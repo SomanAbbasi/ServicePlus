@@ -3,6 +3,11 @@ import { useEffect, useState } from "react";
 import { Menu, UserCircle, Globe, MapPin, Search } from "lucide-react";
 import { Button } from "@/frontend/components/ui/button";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/frontend/components/ui/popover";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -15,8 +20,11 @@ import { LocationPicker } from "@/frontend/components/LocationPicker";
 import { SearchSuggest } from "@/frontend/components/SearchSuggest";
 import { useLocale } from "@/frontend/lib/locale";
 import { useSavedLocation } from "@/frontend/lib/location";
-const logoUrl = "/serviceplus-logo.webp";
 import { useSession } from "@/frontend/lib/use-session";
+import { AccountPopover } from "@/frontend/components/AccountPopover";
+import { AccountAuthModal } from "@/frontend/components/AccountAuthModal";
+
+const logoUrl = "/serviceplus-logo.webp";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
@@ -54,22 +62,15 @@ function UaeFlag() {
   );
 }
 
-function AccountLink() {
-  return (
-    <Button asChild variant="ghost" size="icon" aria-label="Account">
-      <Link to="/dashboard">
-        <UserCircle className="size-5" />
-      </Link>
-    </Button>
-  );
-}
-
 export function Navbar() {
   const { locale, setLocale, t } = useLocale();
   const { location, save } = useSavedLocation();
   const [open, setOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [mobileSearch, setMobileSearch] = useState(false);
+  const [accountPopoverOpen, setAccountPopoverOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
   const { session } = useSession();
   const { data: gate } = useQuery({
     queryKey: ["am-i-admin"],
@@ -138,54 +139,44 @@ export function Navbar() {
           {/* Language toggle text */}
           <button
             type="button"
-            className="hidden text-xs font-bold text-slate-700 hover:text-cyan-600 transition-colors sm:inline-block px-1"
+            className="text-xs font-bold text-slate-700 hover:text-cyan-600 transition-colors inline-block px-1"
             onClick={() => setLocale(locale === "en" ? "ar" : "en")}
           >
             {locale === "en" ? "العربية" : "English"}
           </button>
 
-          <UaeFlag />
+          <span
+            aria-label="United Arab Emirates"
+            title="United Arab Emirates"
+            className="overflow-hidden rounded-full border border-border inline-flex"
+          >
+            <svg viewBox="0 0 6 4" className="size-5" role="img" aria-hidden>
+              <rect width="6" height="4" fill="#fff" />
+              <rect width="6" height="1.333" fill="#00732f" />
+              <rect y="2.667" width="6" height="1.333" fill="#000" />
+              <rect width="1.5" height="4" fill="#ff0000" />
+            </svg>
+          </span>
 
-          {/* Account & Menu Combined Pill Button */}
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
+          {/* Unified Account & Menu Pill Button (Matching Image 3) */}
+          <Popover open={accountPopoverOpen} onOpenChange={setAccountPopoverOpen}>
+            <PopoverTrigger asChild>
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700 shadow-2xs transition-all hover:bg-slate-50 hover:border-slate-300"
-                aria-label="User account and menu"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700 shadow-2xs transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-98"
+                aria-label="Account options menu"
               >
-                <UserCircle className="size-4 text-slate-600" />
-                <Menu className="size-4 text-slate-600" />
+                <UserCircle className="size-4 text-slate-700" />
+                <Menu className="size-4 text-slate-700" />
               </button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-72 p-0">
-              <SheetHeader className="border-b border-border/50 px-5 py-4">
-                <SheetTitle className="text-base">{t("nav.menu")}</SheetTitle>
-              </SheetHeader>
-              <nav className="flex flex-col gap-0.5 p-3">
-                {links.map((item) => (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => setOpen(false)}
-                    className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
-              <div className="border-t border-border/50 px-5 py-3">
-                <button
-                  type="button"
-                  onClick={() => setLocale(locale === "en" ? "ar" : "en")}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                >
-                  <Globe className="size-4" aria-hidden />
-                  {locale === "en" ? "العربية" : "English"}
-                </button>
-              </div>
-            </SheetContent>
-          </Sheet>
+            </PopoverTrigger>
+            <PopoverContent align="end" sideOffset={8} className="p-0 border-none bg-transparent shadow-none w-auto">
+              <AccountPopover
+                onOpenAuthModal={() => setAuthModalOpen(true)}
+                onClosePopover={() => setAccountPopoverOpen(false)}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -196,6 +187,7 @@ export function Navbar() {
         </div>
       )}
 
+      {/* Location Picker */}
       <LocationPicker
         open={pickerOpen}
         onOpenChange={setPickerOpen}
@@ -203,6 +195,12 @@ export function Navbar() {
           save(loc);
           setPickerOpen(false);
         }}
+      />
+
+      {/* Account Authentication & Onboarding Modal */}
+      <AccountAuthModal
+        open={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
       />
     </header>
   );

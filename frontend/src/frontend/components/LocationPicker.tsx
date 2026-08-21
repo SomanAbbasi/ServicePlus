@@ -71,7 +71,6 @@ export function LocationPicker({ open, onOpenChange, onSelect }: Props) {
           style: "mapbox://styles/mapbox/streets-v12",
           center: [coords.lng, coords.lat],
           zoom: 14,
-          maxBounds: DUBAI_MAP_BOUNDS,
         });
 
         const marker = new mapboxgl.Marker({ draggable: true, color: "#00b4d8" })
@@ -158,7 +157,7 @@ export function LocationPicker({ open, onOpenChange, onSelect }: Props) {
 
   async function runSearch(value: string) {
     setQuery(value);
-    if (value.trim().length < 3) {
+    if (value.trim().length < 2) {
       setResults([]);
       return;
     }
@@ -190,39 +189,33 @@ export function LocationPicker({ open, onOpenChange, onSelect }: Props) {
               className="ps-9"
               aria-label={t("loc.searchLabel")}
             />
-          </div>
 
-          {results.length ? (
-            <ul className="max-h-40 divide-y divide-border overflow-y-auto rounded-lg border border-border">
-              {results.map((r) => (
-                <li key={r.id}>
-                  <button
-                    type="button"
-                    className="flex w-full items-start gap-2 px-3 py-2 text-start text-sm hover:bg-muted"
-                    onClick={() => {
-                      if (!isInDubai(r.address || r.name, r.lat, r.lng)) {
+            {results.length ? (
+              <ul className="absolute start-0 end-0 top-11 z-50 max-h-48 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-2xl">
+                {results.map((r) => (
+                  <li key={r.id}>
+                    <button
+                      type="button"
+                      className="flex w-full items-start gap-2.5 rounded-lg px-3 py-2 text-start text-xs transition-colors hover:bg-cyan-50/60"
+                      onClick={() => {
+                        setAreaError(null);
+                        setAddress(r.address || r.name);
+                        moveMarker(r.lat, r.lng);
                         setResults([]);
                         setQuery("");
-                        rejectOutsideDubai();
-                        return;
-                      }
-                      setAreaError(null);
-                      setAddress(r.address || r.name);
-                      moveMarker(r.lat, r.lng);
-                      setResults([]);
-                      setQuery("");
-                    }}
-                  >
-                    <MapPin className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-                    <span>
-                      <span className="block font-medium">{r.name}</span>
-                      <span className="block text-xs text-muted-foreground">{r.address}</span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
+                      }}
+                    >
+                      <MapPin className="mt-0.5 size-3.5 shrink-0 text-cyan-600" aria-hidden />
+                      <div>
+                        <span className="block font-bold text-slate-900">{r.name}</span>
+                        <span className="block text-[11px] text-slate-500">{r.address}</span>
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
 
           <div className="overflow-hidden rounded-xl border border-border bg-muted">
             {mapError ? (

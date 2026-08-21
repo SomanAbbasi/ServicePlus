@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { GeoService } from './geo.service';
-import { IsNumber, IsString, Min, Max } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Min, Max } from 'class-validator';
 
 class ReverseGeocodeDto {
   @IsNumber()
@@ -15,8 +15,13 @@ class ReverseGeocodeDto {
 }
 
 class SearchPlacesDto {
+  @IsOptional()
   @IsString()
-  query: string;
+  query?: string;
+
+  @IsOptional()
+  @IsString()
+  q?: string;
 }
 
 @Controller('geo')
@@ -33,7 +38,8 @@ export class GeoController {
   }
 
   @Get('search')
-  async search(@Query() query: SearchPlacesDto) {
-    return this.geoService.searchPlaces(query.query);
+  async search(@Query() dto: SearchPlacesDto) {
+    const text = dto.query || dto.q || '';
+    return this.geoService.searchPlaces(text);
   }
 }

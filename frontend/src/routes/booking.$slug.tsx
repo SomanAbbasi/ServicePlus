@@ -29,6 +29,8 @@ import { resolveImageUrl } from "@/frontend/lib/api-client";
 import { isInDubai, SERVICE_AREA_MESSAGE } from "@/frontend/lib/service-area";
 import { LocationPicker } from "@/frontend/components/LocationPicker";
 import { useSavedLocation } from "@/frontend/lib/location";
+import { AccountAuthModal } from "@/frontend/components/AccountAuthModal";
+import { useAuth } from "@/frontend/lib/auth-context";
 import {
   getServiceDetail,
   getQuote,
@@ -36,6 +38,7 @@ import {
   getMyAddresses,
   createAddress,
   createBooking,
+  searchPlaces,
 } from "@/frontend/lib/api-services";
 import { upcomingDates } from "@/frontend/lib/availability";
 import { formatMoney } from "@/frontend/lib/money";
@@ -98,6 +101,11 @@ function BookingWizard() {
   const { t, locale } = useLocale();
   const isAr = locale === "ar";
   const { session } = useSession();
+  const { user, token } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [addrResults, setAddrResults] = useState<
+    Array<{ id: string; name: string; address: string; lat: number; lng: number }>
+  >([]);
 
   const [step, setStep] = useState(0);
   const [hours, setHours] = useState(2);
@@ -151,7 +159,10 @@ function BookingWizard() {
   const [otpSending, setOtpSending] = useState(false);
 
   // Payment Options
-  const [paymentMethod, setPaymentMethod] = useState("cash"); // cash | card
+  const [paymentMethod, setPaymentMethod] = useState("card"); // card
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExp, setCardExp] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
 
   const [idempotencyKey] = useState(() => `bk_${Math.random().toString(36).slice(2)}`);
   const [error, setError] = useState<string | null>(null);
@@ -470,10 +481,10 @@ function BookingWizard() {
                   </div>
                 ) : hasOptions ? (
                   /* Deep Cleaning / Multi-Group Sub-Category Selector */
-                  <div className="space-y-6">
-                    {/* Horizontal Group Selector Tabs */}
+                  <div className="space-y-5">
+                    {/* Horizontal Group Selector Chips (Matching Reference UI) */}
                     {optionGroups.length > 0 && (
-                      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                      <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none snap-x">
                         {optionGroups.map((g) => {
                           const isGroupSelected = selectedGroupId === g.id;
                           const groupImg = resolveImageUrl(g.imageUrl || g.image_url) || FALLBACK_IMAGE;
@@ -483,22 +494,14 @@ function BookingWizard() {
                               key={g.id}
                               type="button"
                               onClick={() => setActiveGroup(g.id)}
-                              className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all shrink-0 w-28 text-center ${
+                              className={`flex items-center gap-2 px-3 py-2 rounded-2xl border transition-all shrink-0 text-start snap-start ${
                                 isGroupSelected
-                                  ? "border-cyan-500 bg-cyan-50/60 ring-2 ring-cyan-500/20 shadow-xs"
-                                  : "border-slate-200 bg-white hover:border-slate-300"
+                                  ? "border-cyan-500 bg-cyan-50/80 ring-2 ring-cyan-500/20 shadow-2xs font-extrabold text-cyan-900"
+                                  : "border-slate-200 bg-white hover:border-slate-300 text-slate-700 font-bold"
                               }`}
                             >
-                              <div className="size-12 rounded-xl overflow-hidden bg-slate-100 mb-2">
-                                <img src={groupImg} alt={groupName} className="size-full object-cover" />
-                              </div>
-                              <span
-                                className={`text-[11px] font-bold leading-tight line-clamp-2 ${
-                                  isGroupSelected ? "text-cyan-900" : "text-slate-700"
-                                }`}
-                              >
-                                {groupName}
-                              </span>
+                              <img src={groupImg} alt={groupName} className="size-8 rounded-xl object-cover shrink-0" />
+                              <span className="text-xs max-w-[120px] sm:max-w-none truncate">{groupName}</span>
                             </button>
                           );
                         })}
@@ -506,7 +509,7 @@ function BookingWizard() {
                     )}
 
                     {/* Visible Package Options under Active Group */}
-                    <div className="space-y-4 pt-2">
+                    <div className="space-y-3 pt-1">
                       {visibleOptions.map((opt: any) => {
                         const qty = optionQty[opt.id] || 0;
                         const optImg = resolveImageUrl(opt.imageUrl || opt.image_url) || FALLBACK_IMAGE;
@@ -517,25 +520,25 @@ function BookingWizard() {
                         return (
                           <div
                             key={opt.id}
-                            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 transition-all shadow-2xs"
+                            className="flex flex-row items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 transition-all shadow-2xs"
                           >
-                            <div className="flex items-start gap-3.5 min-w-0">
-                              <div className="size-16 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className="size-12 sm:size-16 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100">
                                 <img src={optImg} alt={optName} className="size-full object-cover" />
                               </div>
-                              <div className="min-w-0 space-y-1">
-                                <h4 className="text-sm font-extrabold text-slate-900">{optName}</h4>
+                              <div className="min-w-0 space-y-0.5">
+                                <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 leading-snug">{optName}</h4>
                                 {optDesc && (
-                                  <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                                  <p className="text-[11px] sm:text-xs text-slate-500 leading-tight line-clamp-2">
                                     {optDesc}
                                   </p>
                                 )}
-                                <div className="flex items-center gap-2 pt-1">
-                                  <span className="text-sm font-extrabold text-slate-900">
+                                <div className="flex items-center gap-2 pt-0.5">
+                                  <span className="text-xs sm:text-sm font-extrabold text-slate-900">
                                     AED {Number(opt.price).toFixed(0)}
                                   </span>
                                   {optOriginal && (
-                                    <span className="text-xs text-slate-400 line-through font-semibold">
+                                    <span className="text-[10px] sm:text-xs text-slate-400 line-through font-semibold">
                                       AED {Number(optOriginal).toFixed(0)}
                                     </span>
                                   )}
@@ -543,21 +546,21 @@ function BookingWizard() {
                               </div>
                             </div>
 
-                            <div className="shrink-0 self-end sm:self-center">
+                            <div className="shrink-0">
                               {qty === 0 ? (
                                 <Button
                                   type="button"
                                   onClick={() => setQty(opt.id, 1)}
-                                  className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs px-5 py-2 rounded-full shadow-2xs"
+                                  className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs px-3.5 py-1.5 sm:px-5 sm:py-2 rounded-full shadow-2xs"
                                 >
                                   {isAr ? "إضافة +" : "Add +"}
                                 </Button>
                               ) : (
-                                <div className="flex items-center gap-2 rounded-full border border-cyan-500 bg-cyan-50 px-2 py-1">
+                                <div className="flex items-center gap-1.5 rounded-full border border-cyan-500 bg-cyan-50 px-1.5 py-1">
                                   <button
                                     type="button"
                                     onClick={() => setQty(opt.id, qty - 1)}
-                                    className="grid size-6 place-items-center rounded-full bg-white text-cyan-800 font-bold text-xs shadow-2xs"
+                                    className="grid size-5 sm:size-6 place-items-center rounded-full bg-white text-cyan-800 font-bold text-xs shadow-2xs"
                                   >
                                     -
                                   </button>
@@ -565,7 +568,7 @@ function BookingWizard() {
                                   <button
                                     type="button"
                                     onClick={() => setQty(opt.id, qty + 1)}
-                                    className="grid size-6 place-items-center rounded-full bg-cyan-600 text-white font-bold text-xs shadow-2xs"
+                                    className="grid size-5 sm:size-6 place-items-center rounded-full bg-cyan-600 text-white font-bold text-xs shadow-2xs"
                                   >
                                     +
                                   </button>
@@ -978,39 +981,101 @@ function BookingWizard() {
             {step === 3 && (
               <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">{t("booking.step.address")}</h2>
-                  <p className="mt-1 text-xs text-slate-500">{isAr ? "الخدمة متوفرة في إمارة دبي فقط" : "Service available in Dubai Emirate only"}</p>
+                  <h2 className="text-lg font-extrabold text-slate-900">{t("booking.step.address")}</h2>
+                  <p className="mt-1 text-xs text-slate-500">{isAr ? "الخدمة متوفرة في إمارة دبي والإمارات" : "Service available in Dubai & United Arab Emirates"}</p>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={manualAddress}
-                      onChange={(e) => setManualAddress(e.target.value)}
-                      placeholder={isAr ? "أدخل عنوان دبي (فيلا، شقة، منطقة)" : "Enter Dubai address (Villa, Apartment, Area)"}
-                      className="text-xs"
-                    />
+                <div className="space-y-4">
+                  {/* Address Search Input with Map Trigger */}
+                  <div className="relative">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={manualAddress}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setManualAddress(val);
+                          if (val.trim().length >= 2) {
+                            void searchPlaces(val).then((res) => setAddrResults(res)).catch(() => setAddrResults([]));
+                          } else {
+                            setAddrResults([]);
+                          }
+                        }}
+                        placeholder={isAr ? "أدخل العنوان (فيلا، شقة، منطقة)" : "Enter Dubai address (Villa, Apartment, Area)"}
+                        className="text-xs py-2.5 rounded-xl border-slate-200"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setPickerOpen(true)}
+                        className="shrink-0 text-xs font-bold rounded-xl border-slate-200 hover:border-cyan-500 hover:text-cyan-600 gap-1.5"
+                      >
+                        <MapPin className="size-4 text-cyan-600" />
+                        {isAr ? "الخريطة" : "Map"}
+                      </Button>
+                    </div>
+
+                    {/* Floating Search Suggestions Dropdown */}
+                    {addrResults.length > 0 && (
+                      <ul className="absolute start-0 end-24 top-12 z-50 max-h-48 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-2xl">
+                        {addrResults.map((r) => (
+                          <li key={r.id}>
+                            <button
+                              type="button"
+                              className="flex w-full items-start gap-2.5 rounded-lg px-3 py-2 text-start text-xs transition-colors hover:bg-cyan-50/60"
+                              onClick={() => {
+                                setManualAddress(r.address || r.name);
+                                saveLocation({ address: r.address || r.name, lat: r.lat, lng: r.lng });
+                                setAddrResults([]);
+                              }}
+                            >
+                              <MapPin className="mt-0.5 size-3.5 shrink-0 text-cyan-600" />
+                              <div>
+                                <span className="block font-bold text-slate-900">{r.name}</span>
+                                <span className="block text-[11px] text-slate-500">{r.address}</span>
+                              </div>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {/* Selected Address Display Card */}
+                  <div className="rounded-2xl border border-cyan-200 bg-cyan-50/70 p-4 flex items-center justify-between gap-3 shadow-2xs">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="grid size-9 place-items-center rounded-full bg-cyan-100 text-cyan-700 shrink-0">
+                        <MapPin className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block text-[10px] font-extrabold uppercase tracking-wider text-cyan-800">
+                          {isAr ? "العنوان المحدد للحجز" : "Selected Delivery Address"}
+                        </span>
+                        <span className="block text-xs font-bold text-slate-900 leading-relaxed truncate max-w-md">
+                          {displayAddress}
+                        </span>
+                      </div>
+                    </div>
                     <Button
                       type="button"
                       variant="outline"
+                      size="sm"
                       onClick={() => setPickerOpen(true)}
-                      className="shrink-0 text-xs font-bold hover:border-cyan-500 hover:text-cyan-600"
+                      className="rounded-full text-xs font-bold border-cyan-500 text-cyan-700 hover:bg-cyan-100 shrink-0"
                     >
-                      <MapPin className="size-3.5 me-1 text-cyan-600" />
-                      {isAr ? "الخريطة" : "Map"}
+                      {isAr ? "تغيير" : "Change"}
                     </Button>
                   </div>
                 </div>
 
                 <div className="pt-4 flex justify-between items-center">
-                  <Button type="button" variant="outline" onClick={goBack} className="text-xs font-bold">
+                  <Button type="button" variant="outline" onClick={goBack} className="text-xs font-bold rounded-full px-6">
                     {isAr ? "رجوع" : "Back"}
                   </Button>
                   <Button
                     type="button"
                     onClick={goNext}
                     disabled={!canContinue}
-                    className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-xs px-8 rounded-full shadow-md"
+                    className="bg-[#FFC836] hover:bg-[#f5be29] text-slate-900 font-extrabold text-xs px-8 rounded-full shadow-md transition-all active:scale-98"
                   >
                     {isAr ? "التالي" : "Next"}
                   </Button>
@@ -1018,150 +1083,155 @@ function BookingWizard() {
               </section>
             )}
 
-            {/* STEP 4: Verification & Payment */}
+            {/* STEP 4: Verification & Payment (Matching Image 3) */}
             {step === 4 && (
               <section className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">{t("booking.paymentVerification")}</h2>
-                  <p className="mt-1 text-xs text-slate-500">{t("booking.verifyPhoneSubtitle")}</p>
-                </div>
-
-                {/* Phone Verification */}
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-bold text-slate-800">{t("booking.phoneVerification")}</Label>
-                    {phoneVerified && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
-                        <CheckCircle2 className="size-3 text-emerald-600" />
-                        {t("booking.verified")}
-                      </span>
-                    )}
+                <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-slate-400 block mb-0.5">
+                      {isAr ? "الخطوة 4 من 4" : "Step 4 of 4"}
+                    </span>
+                    <h2 className="text-xl font-extrabold text-slate-900">
+                      {isAr ? "إتمام الحجز والدفع" : "Checkout"}
+                    </h2>
                   </div>
-
-                  {!phoneVerified ? (
-                    <div className="space-y-3">
-                      <div className="flex gap-2">
-                        <Input
-                          type="tel"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          placeholder={isAr ? "مثال: 0501234567" : "+971 50 123 4567"}
-                          className="text-xs bg-white"
-                        />
-                        <Button
-                          type="button"
-                          onClick={handleSendOtp}
-                          disabled={otpSending || otpSent}
-                          className="bg-cyan-600 font-bold text-white hover:bg-cyan-700 shrink-0 text-xs"
-                        >
-                          {otpSending ? <Loader2 className="size-3.5 animate-spin" /> : t("auth.sendCode")}
-                        </Button>
-                      </div>
-
-                      {otpSent && (
-                        <div className="space-y-2 pt-1">
-                          <div className="flex gap-2">
-                            <Input
-                              type="text"
-                              maxLength={6}
-                              value={otpCode}
-                              onChange={(e) => setOtpCode(e.target.value)}
-                              placeholder={isAr ? "أدخل رمز التحقق 6 أرقام (123456)" : "Enter 6-digit OTP (123456)"}
-                              className="text-xs bg-white font-mono tracking-widest"
-                            />
-                            <Button
-                              type="button"
-                              onClick={handleVerifyOtp}
-                              className="bg-slate-900 font-bold text-white hover:bg-slate-800 shrink-0 text-xs"
-                            >
-                              {t("auth.verify")}
-                            </Button>
-                          </div>
-                          <p className="text-[11px] text-slate-500 font-semibold italic">
-                            💡 {isAr ? "رمز التحقق التجريبي هو: " : "Demo verification code is: "}
-                            <span className="font-bold text-cyan-600">123456</span>
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200">
-                      <CheckCircle2 className="size-4 text-emerald-600" />
-                      <span>{phone}</span>
-                    </div>
-                  )}
                 </div>
+
+                {/* Phone & Account Verification Box (Only shown if user has no verified account) */}
+                {!token && (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 space-y-3 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-extrabold text-slate-900">
+                          {isAr ? "تسجيل الدخول أو إنشاء حساب" : "Sign Up Or Log In"}
+                        </h4>
+                        <p className="text-[11px] text-slate-600 font-semibold mt-0.5">
+                          {isAr
+                            ? "يرجى التحقق من رقم الهاتف وإنشاء الحساب لتأكيد طلبك."
+                            : "Please verify your phone number & create your account to place your order."}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAuthModalOpen(true)}
+                      className="w-full rounded-full bg-[#FFC836] hover:bg-[#f5be29] py-3 px-6 text-center text-xs font-extrabold text-slate-900 shadow-md transition-all active:scale-98"
+                    >
+                      {isAr ? "إنشاء حساب أو تسجيل الدخول" : "Sign Up Or Log In"}
+                    </button>
+                  </div>
+                )}
 
                 {/* Coupon Code */}
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
-                  <Label className="text-xs font-bold text-slate-800">{t("booking.applyCoupon")}</Label>
+                <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-2">
+                  <Label className="text-xs font-extrabold text-slate-800">{t("booking.applyCoupon")}</Label>
                   <div className="flex gap-2">
                     <Input
                       value={couponInput}
                       onChange={(e) => setCouponInput(e.target.value)}
-                      placeholder={t("booking.couponPlaceholder")}
-                      className="text-xs uppercase bg-white font-mono"
+                      placeholder={isAr ? "رمز الخصم (مثال: 50MOP)" : "E.G. 50MOP"}
+                      className="text-xs uppercase bg-white font-mono rounded-xl border-slate-200"
                     />
                     <Button
                       type="button"
                       onClick={handleApplyCoupon}
-                      className="bg-cyan-600 font-bold text-white hover:bg-cyan-700 shrink-0 text-xs"
+                      className="bg-cyan-600 font-bold text-white hover:bg-cyan-700 shrink-0 text-xs rounded-xl"
                     >
                       {t("booking.apply")}
                     </Button>
                   </div>
                 </div>
 
-                {/* Payment Selection */}
-                <div className="space-y-3">
-                  <Label className="text-xs font-bold text-slate-800">{t("booking.selectPaymentMethod")}</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("cash")}
-                      className={`flex items-center gap-3 rounded-xl border p-4 text-start transition-all ${
-                        paymentMethod === "cash"
-                          ? "border-cyan-600 bg-cyan-50/50 ring-2 ring-cyan-500/20"
-                          : "border-slate-200 bg-white hover:border-slate-300"
-                      }`}
-                    >
-                      <Wallet className="size-5 text-cyan-600 shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-900 truncate">{t("booking.pay.cashOnDelivery")}</p>
-                        <p className="text-[10px] text-slate-500 truncate">{t("booking.pay.cashSubtitle")}</p>
-                      </div>
-                    </button>
+                {/* Payment Method UI (Matching Image 3) */}
+                <div className="space-y-4 pt-1">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-extrabold text-slate-900">Payment Method</Label>
+                    <span className="text-xs font-bold text-cyan-600 cursor-pointer hover:underline">Change</span>
+                  </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("card")}
-                      className={`flex items-center gap-3 rounded-xl border p-4 text-start transition-all ${
-                        paymentMethod === "card"
-                          ? "border-cyan-600 bg-cyan-50/50 ring-2 ring-cyan-500/20"
-                          : "border-slate-200 bg-white hover:border-slate-300"
-                      }`}
-                    >
-                      <CardIcon className="size-5 text-cyan-600 shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-900 truncate">{t("booking.pay.creditCard")}</p>
-                        <p className="text-[10px] text-slate-500 truncate">{t("booking.pay.cardSubtitle")}</p>
+                  {/* Credit / Debit Card Selected Pill Header */}
+                  <div className="flex items-center justify-between rounded-xl border-2 border-cyan-500 bg-cyan-50/50 p-3.5 shadow-2xs">
+                    <div className="flex items-center gap-2.5">
+                      <CardIcon className="size-4 text-slate-900" />
+                      <span className="text-xs font-extrabold text-slate-900">Credit / Debit Card</span>
+                    </div>
+                    {/* Card Logos: VISA, MasterCard, Amex */}
+                    <div className="flex items-center gap-1">
+                      <span className="rounded-md bg-blue-700 px-1.5 py-0.5 text-[9px] font-black italic text-white">VISA</span>
+                      <span className="rounded-md bg-red-600 px-1.5 py-0.5 text-[9px] font-black text-white">MC</span>
+                      <span className="rounded-md bg-cyan-700 px-1.5 py-0.5 text-[9px] font-black text-white">AMEX</span>
+                    </div>
+                  </div>
+
+                  {/* Card Form Inputs */}
+                  <div className="space-y-3.5 pt-1">
+                    <div>
+                      <Label className="block text-xs font-semibold text-slate-400 mb-1">
+                        Card Number
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          type="text"
+                          name="cc-number"
+                          autoComplete="off"
+                          value={cardNumber}
+                          onChange={(e) => setCardNumber(e.target.value)}
+                          placeholder="1234 1234 1234 1234"
+                          className="text-xs rounded-xl border-slate-200 bg-white font-mono"
+                          maxLength={19}
+                        />
+                        <div className="absolute right-3 top-2.5 flex items-center gap-1">
+                          <span className="rounded bg-blue-700 px-1 py-0.5 text-[8px] font-black text-white">VISA</span>
+                          <span className="rounded bg-red-600 px-1 py-0.5 text-[8px] font-black text-white">MC</span>
+                        </div>
                       </div>
-                    </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="block text-xs font-semibold text-slate-400 mb-1">
+                          Exp. Date (MM/YY)
+                        </Label>
+                        <Input
+                          type="text"
+                          name="cc-exp"
+                          autoComplete="off"
+                          value={cardExp}
+                          onChange={(e) => setCardExp(e.target.value)}
+                          placeholder="MM/YY"
+                          className="text-xs rounded-xl border-slate-200 bg-white font-mono"
+                          maxLength={5}
+                        />
+                      </div>
+                      <div>
+                        <Label className="block text-xs font-semibold text-slate-400 mb-1">
+                          CVV Number
+                        </Label>
+                        <Input
+                          type="password"
+                          name="cc-csc"
+                          autoComplete="off"
+                          value={cardCvv}
+                          onChange={(e) => setCardCvv(e.target.value)}
+                          placeholder="CVV"
+                          className="text-xs rounded-xl border-slate-200 bg-white font-mono"
+                          maxLength={4}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="pt-4 flex justify-between items-center">
-                  <Button type="button" variant="outline" onClick={goBack} className="text-xs font-bold">
-                    {t("common.back")}
-                  </Button>
+                {/* Complete Order Gold Button (Image 3) */}
+                <div className="pt-2">
                   <Button
                     type="button"
                     disabled={confirm.isPending}
                     onClick={() => confirm.mutate()}
-                    className="bg-emerald-600 font-extrabold text-white hover:bg-emerald-700 text-xs px-8 rounded-full shadow-md"
+                    className="w-full rounded-full bg-[#FFC836] hover:bg-[#f5be29] py-3.5 px-6 text-center text-sm font-extrabold text-slate-900 shadow-md transition-all active:scale-98 disabled:opacity-50"
                   >
                     {confirm.isPending ? <Loader2 className="size-4 animate-spin me-2" /> : null}
-                    {t("booking.placeOrder")}
+                    {isAr ? "إتمام الحجز وتأكيد الطلب" : "Complete"}
                   </Button>
                 </div>
               </section>
@@ -1444,6 +1514,12 @@ function BookingWizard() {
         }}
       />
 
+      {/* ACCOUNT AUTHENTICATION & ONBOARDING MODAL */}
+      <AccountAuthModal
+        open={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
+
       {/* ORDER PLACED SUCCESSFUL CONFIRMATION MODAL */}
       <Dialog open={Boolean(orderSuccessModal?.open)} onOpenChange={() => setOrderSuccessModal(null)}>
         <DialogContent className="max-w-md p-6 rounded-3xl text-center">
@@ -1460,8 +1536,8 @@ function BookingWizard() {
           <div className="space-y-4 py-2 text-xs text-slate-600 leading-relaxed">
             <p className="font-medium text-slate-700">
               {isAr
-                ? "شكراً لك! تم إرسال طلبك بنجاح وحفظ تفاصيل الحجز مباشرة في النظام ولوحة التحكم الإدارية."
-                : "Thank you! Your order has been placed successfully and logged in the admin system."}
+                ? "شكراً لك! تم تأكيد طلبك بنجاح وحفظ تفاصيل الحجز مباشرة في حسابك."
+                : "Thank you! Your order has been placed successfully."}
             </p>
 
             <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 space-y-2 text-start">
@@ -1484,28 +1560,16 @@ function BookingWizard() {
             </div>
           </div>
 
-          <div className="pt-4 space-y-2">
+          <div className="pt-4">
             <Button
               type="button"
               onClick={() => {
                 setOrderSuccessModal(null);
                 navigate({ to: "/dashboard" });
               }}
-              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold py-3.5 rounded-full text-xs shadow-md"
+              className="w-full bg-[#0093A3] hover:bg-[#007b88] text-white font-extrabold py-3.5 rounded-full text-xs shadow-md"
             >
               {isAr ? "عرض حجوزاتي" : "View My Bookings"}
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setOrderSuccessModal(null);
-                navigate({ to: "/admin/bookings" as any });
-              }}
-              className="w-full border-slate-200 text-slate-700 font-bold py-2.5 rounded-full text-xs hover:bg-slate-50"
-            >
-              {isAr ? "عرض في لوحة الإدارة (Admin)" : "View in Admin Dashboard"}
             </Button>
           </div>
         </DialogContent>

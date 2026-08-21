@@ -299,8 +299,8 @@ function Home() {
           </button>
         </div>
 
-        {/* Clean 4-Column Popular Services Grid */}
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Clean 2-Column Mobile / 4-Column Desktop Popular Services Grid */}
+        <div className="mt-6 sm:mt-8 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {displayServices.map((service) => {
             const catObj = categories.find((c) => c.id === service.category_id);
             const catName = catObj ? (localizedText({ ...catObj }, "name", locale) ?? catObj.name) : (isAr ? "خدمة منزلية" : "Home Service");

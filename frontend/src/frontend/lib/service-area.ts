@@ -9,25 +9,17 @@ const DUBAI_BOUNDS = { minLat: 24.72, maxLat: 25.45, minLng: 54.8, maxLng: 55.75
 export function isInDubai(address?: string | null, lat?: number | null, lng?: number | null) {
   const text = (address ?? "").toLowerCase();
   if (
-    typeof lat === "number" &&
-    typeof lng === "number" &&
-    Number.isFinite(lat) &&
-    Number.isFinite(lng)
+    text.includes("united arab emirates") ||
+    text.includes("uae") ||
+    text.includes("dubai") ||
+    text.includes("abu dhabi") ||
+    text.includes("sharjah") ||
+    text.includes("ajman")
   ) {
-    const inBox =
-      lat >= DUBAI_BOUNDS.minLat &&
-      lat <= DUBAI_BOUNDS.maxLat &&
-      lng >= DUBAI_BOUNDS.minLng &&
-      lng <= DUBAI_BOUNDS.maxLng;
-    if (!inBox) return false;
-    // Coordinates inside the box but an address that names another emirate/country.
-    if (
-      text &&
-      !text.includes("dubai") &&
-      /sharjah|ajman|abu dhabi|ras al|fujairah|umm al/.test(text)
-    )
-      return false;
     return true;
   }
-  return text.includes("dubai");
+  if (typeof lat === "number" && typeof lng === "number" && Number.isFinite(lat) && Number.isFinite(lng)) {
+    return lat >= 22.0 && lat <= 26.5 && lng >= 51.0 && lng <= 56.5;
+  }
+  return true;
 }

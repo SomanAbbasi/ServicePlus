@@ -60,27 +60,22 @@ export interface PlaceResult {
 /* ============================================================ CATALOG */
 
 export async function getHomeCatalog() {
-  try {
-    return await get<{
-      categories: CategorySummary[];
-      services: ServiceSummary[];
-      listings: { category_id: string; service_id: string; sort_order: number }[];
-      featured_coupon: {
-        code: string;
-        description: string | null;
-        discount_type: string;
-        discount_value: number;
-      } | null;
-    }>("/services/home-catalog", { skipAuth: true });
-  } catch (err) {
-    console.warn("[getHomeCatalog] Catalog fetch warning:", err);
-    return {
-      categories: [],
-      services: [],
-      listings: [],
-      featured_coupon: null,
-    };
+  const res = await get<{
+    categories: CategorySummary[];
+    services: ServiceSummary[];
+    listings: { category_id: string; service_id: string; sort_order: number }[];
+    featured_coupon: {
+      code: string;
+      description: string | null;
+      discount_type: string;
+      discount_value: number;
+    } | null;
+  }>("/services/home-catalog", { skipAuth: true });
+
+  if (!res || !Array.isArray(res.categories) || res.categories.length === 0) {
+    throw new Error("Empty catalog returned from server");
   }
+  return res;
 }
 
 export function getServiceDetail(slug: string) {
@@ -132,6 +127,10 @@ export function verifyOtp(phone: string, code: string, name?: string) {
     user_id: string;
     profile: Record<string, unknown>;
   }>("/auth/verify-otp", { phone, code, name }, { skipAuth: true });
+}
+
+export function updateProfile(data: { fullName?: string; email?: string; gender?: string }) {
+  return post<{ id: string; fullName: string | null; email: string | null }>("/auth/update-profile", data);
 }
 
 /* ============================================================ BOOKING */
@@ -325,13 +324,56 @@ export function setProfessionalStatus(id: string, status: string, is_active?: bo
 
 export async function getAdminCatalog() {
   try {
-    return await get<{
+    const res = await get<{
       services: Record<string, unknown>[];
       categories: Record<string, unknown>[];
       listings: Record<string, unknown>[];
     }>("/admin/catalog");
+    if (res && Array.isArray(res.categories) && res.categories.length > 0) {
+      return {
+        services: (res.services ?? []).map((s: any) => ({
+          ...s,
+          category_id: s.category_id ?? s.categoryId,
+          is_active: s.is_active ?? s.isActive ?? true,
+          image_url: s.image_url ?? s.imageUrl,
+        })),
+        categories: (res.categories ?? []).map((c: any) => ({
+          ...c,
+          is_active: c.is_active ?? c.isActive ?? true,
+          image_url: c.image_url ?? c.imageUrl,
+        })),
+        listings: (res.listings ?? []).map((l: any) => ({
+          category_id: l.category_id ?? l.categoryId,
+          service_id: l.service_id ?? l.serviceId,
+          sort_order: l.sort_order ?? l.sortOrder ?? 0,
+        })),
+      };
+    }
   } catch (err) {
-    console.warn("[getAdminCatalog] Fetch failed:", err);
+    console.warn("[getAdminCatalog] Admin fetch warning, falling back to home catalog:", err);
+  }
+
+  try {
+    const homeData = await getHomeCatalog();
+    return {
+      services: (homeData.services ?? []).map((s: any) => ({
+        ...s,
+        category_id: s.category_id ?? s.categoryId,
+        is_active: s.is_active ?? s.isActive ?? true,
+        image_url: s.image_url ?? s.imageUrl,
+      })),
+      categories: (homeData.categories ?? []).map((c: any) => ({
+        ...c,
+        is_active: c.is_active ?? c.isActive ?? true,
+        image_url: c.image_url ?? c.imageUrl,
+      })),
+      listings: (homeData.listings ?? []).map((l: any) => ({
+        category_id: l.category_id ?? l.categoryId,
+        service_id: l.service_id ?? l.serviceId,
+        sort_order: l.sort_order ?? l.sortOrder ?? 0,
+      })),
+    };
+  } catch {
     return { services: [], categories: [], listings: [] };
   }
 }

@@ -449,9 +449,16 @@ Total Amount: AED ${quote.breakdown.total.toFixed(2)}
         scheduledDate: true,
         scheduledStart: true,
         scheduledEnd: true,
+        hours: true,
+        professionalsCount: true,
+        materials: true,
+        instructions: true,
+        paymentMethod: true,
+        createdAt: true,
         total: true,
+        address: { select: { street: true, building: true, label: true } },
         service: { select: { name: true, slug: true, imageUrl: true } },
-        items: { select: { label: true, quantity: true } },
+        items: { select: { label: true, quantity: true, unitPrice: true } },
       },
     });
   }

@@ -174,6 +174,17 @@ export class AuthService {
     return profile;
   }
 
+  async updateProfile(userId: string, data: { fullName?: string; email?: string; gender?: string }) {
+    if (!userId) throw new UnauthorizedException('User not authenticated');
+    return this.prisma.profile.update({
+      where: { id: userId },
+      data: {
+        ...(data.fullName !== undefined && { fullName: data.fullName }),
+        ...(data.email !== undefined && { email: data.email }),
+      },
+    });
+  }
+
   async checkIsAdmin(userId: string) {
     if (!userId) return { isAdmin: false };
     const profile = await this.prisma.profile.findUnique({

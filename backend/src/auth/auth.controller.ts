@@ -20,7 +20,16 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async me(@Req() req: any) {
-    return this.authService.getProfile(req.user.userId);
+    return this.authService.getProfile(req.user.userId || req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('update-profile')
+  async updateProfile(
+    @Req() req: any,
+    @Body() body: { fullName?: string; email?: string; gender?: string },
+  ) {
+    return this.authService.updateProfile(req.user.userId || req.user.id, body);
   }
 
   @UseGuards(JwtAuthGuard)

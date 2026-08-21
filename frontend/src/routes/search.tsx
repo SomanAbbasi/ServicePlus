@@ -120,15 +120,15 @@ function SearchPage() {
           </Link>
         </div>
 
-        {/* Rounded Category Chips with Circular Avatars & Scroll Arrows */}
+        {/* Rounded Category Chips with Circular Avatars */}
         {categories.length ? (
-          <div className="relative mt-6">
-            {/* Scroll Left Button */}
+          <div className="relative mt-4 sm:mt-6">
+            {/* Scroll Left Button (Hidden on Mobile for touch scroll) */}
             <button
               type="button"
               onClick={() => scroll("left")}
               aria-label="Scroll categories left"
-              className="absolute start-0 top-1/2 z-10 -translate-y-1/2 grid size-9 place-items-center rounded-full border border-slate-200 bg-white shadow-md text-slate-700 transition-all hover:bg-slate-50 hover:scale-105 active:scale-95"
+              className="hidden sm:grid absolute start-0 top-1/2 z-10 -translate-y-1/2 size-9 place-items-center rounded-full border border-slate-200 bg-white shadow-md text-slate-700 transition-all hover:bg-slate-50 hover:scale-105 active:scale-95"
             >
               {isAr ? <ChevronRight className="size-5" /> : <ChevronLeft className="size-5" />}
             </button>
@@ -136,7 +136,7 @@ function SearchPage() {
             {/* Category Pills Container */}
             <div
               ref={sliderRef}
-              className="flex items-center gap-3 overflow-x-auto px-10 py-2 scrollbar-none scroll-smooth"
+              className="flex items-center gap-2.5 overflow-x-auto sm:px-10 py-1.5 scrollbar-none scroll-smooth"
             >
               {categories.map((cat) => {
                 const Icon = iconByName(cat.icon);
@@ -145,18 +145,18 @@ function SearchPage() {
                     key={cat.id}
                     to="/categories/$slug"
                     params={{ slug: cat.slug }}
-                    className="group inline-flex shrink-0 items-center gap-2.5 rounded-full border border-slate-200 bg-white py-1.5 pe-4 ps-2 text-xs font-bold text-slate-800 shadow-2xs transition-all hover:border-cyan-500 hover:bg-slate-50 hover:shadow-sm"
+                    className="group inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white py-1.5 pe-3.5 ps-1.5 text-xs font-bold text-slate-800 shadow-2xs transition-all hover:border-cyan-500 hover:bg-slate-50 hover:shadow-sm"
                   >
                     {cat.image_url ? (
                       <img
                         src={resolveImageUrl(cat.image_url)}
                         alt={cat.name}
                         loading="lazy"
-                        className="size-8 rounded-full object-cover ring-2 ring-slate-100 group-hover:ring-cyan-500 transition-all"
+                        className="size-7 rounded-full object-cover ring-2 ring-slate-100 group-hover:ring-cyan-500 transition-all"
                       />
                     ) : (
-                      <div className="grid size-8 place-items-center rounded-full bg-cyan-50 text-cyan-600 group-hover:bg-cyan-600 group-hover:text-white transition-colors">
-                        <Icon className="size-4" />
+                      <div className="grid size-7 place-items-center rounded-full bg-cyan-50 text-cyan-600 group-hover:bg-cyan-600 group-hover:text-white transition-colors">
+                        <Icon className="size-3.5" />
                       </div>
                     )}
                     <span>{localizedText({ ...cat }, "name", locale) ?? cat.name}</span>
@@ -165,12 +165,12 @@ function SearchPage() {
               })}
             </div>
 
-            {/* Scroll Right Button */}
+            {/* Scroll Right Button (Hidden on Mobile for touch scroll) */}
             <button
               type="button"
               onClick={() => scroll("right")}
               aria-label="Scroll categories right"
-              className="absolute end-0 top-1/2 z-10 -translate-y-1/2 grid size-9 place-items-center rounded-full border border-slate-200 bg-white shadow-md text-slate-700 transition-all hover:bg-slate-50 hover:scale-105 active:scale-95"
+              className="hidden sm:grid absolute end-0 top-1/2 z-10 -translate-y-1/2 size-9 place-items-center rounded-full border border-slate-200 bg-white shadow-md text-slate-700 transition-all hover:bg-slate-50 hover:scale-105 active:scale-95"
             >
               {isAr ? <ChevronLeft className="size-5" /> : <ChevronRight className="size-5" />}
             </button>
@@ -179,21 +179,21 @@ function SearchPage() {
 
         {/* Services Grouped by Category */}
         {services.length ? (
-          <div className="mt-10 space-y-12">
+          <div className="mt-8 space-y-8 sm:space-y-12">
             {grouped.map(({ cat, items }) => {
               const catName = localizedText({ ...cat }, "name", locale) ?? cat.name;
               return (
-                <section key={cat.id} className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs">
-                  <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-100">
-                    <div className="flex items-center gap-2.5">
+                <section key={cat.id} className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-2xs">
+                  <div className="flex items-center justify-between gap-4 pb-3 sm:pb-4 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
                       {cat.image_url && (
                         <img
                           src={resolveImageUrl(cat.image_url)}
                           alt=""
-                          className="size-7 rounded-full object-cover"
+                          className="size-6 sm:size-7 rounded-full object-cover"
                         />
                       )}
-                      <h2 className="text-lg font-bold text-slate-900">
+                      <h2 className="text-base sm:text-lg font-bold text-slate-900">
                         {catName}
                       </h2>
                     </div>
@@ -208,7 +208,7 @@ function SearchPage() {
                     </Link>
                   </div>
 
-                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="mt-4 sm:mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                     {items.map((service) => (
                       <ServiceCard key={service.id} service={service} categoryName={catName} />
                     ))}
@@ -218,11 +218,11 @@ function SearchPage() {
             })}
 
             {ungrouped.length ? (
-              <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs">
-                <h2 className="text-lg font-bold text-slate-900 pb-4 border-b border-slate-100">
+              <section className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-2xs">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 pb-3 sm:pb-4 border-b border-slate-100">
                   {t("search.moreServices")}
                 </h2>
-                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="mt-4 sm:mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                   {ungrouped.map((service) => {
                     const catObj = categories.find((c) => c.id === service.category_id);
                     const catName = catObj ? (localizedText({ ...catObj }, "name", locale) ?? catObj.name) : undefined;
