@@ -313,14 +313,7 @@ export function OptionsManager({ service, onClose }: { service: Row | null; onCl
               value={groupDraft.image_url ?? ""}
               onChange={(url) => setGroupDraft({ ...groupDraft, image_url: url })}
             />
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Sort order">
-                <Input
-                  type="number"
-                  value={groupDraft.sort_order}
-                  onChange={(e) => setGroupDraft({ ...groupDraft, sort_order: e.target.value })}
-                />
-              </Field>
+            <div className="grid grid-cols-1 gap-3">
               <Field label="Active">
                 <Switch
                   checked={Boolean(groupDraft.is_active)}
@@ -391,6 +384,7 @@ export function OptionsManager({ service, onClose }: { service: Row | null; onCl
               <Field label="Price (AED)">
                 <Input
                   type="number"
+                  min="0"
                   value={optionDraft.price}
                   onChange={(e) => setOptionDraft({ ...optionDraft, price: e.target.value })}
                 />
@@ -398,6 +392,7 @@ export function OptionsManager({ service, onClose }: { service: Row | null; onCl
               <Field label="Original price">
                 <Input
                   type="number"
+                  min="0"
                   value={optionDraft.original_price}
                   onChange={(e) =>
                     setOptionDraft({ ...optionDraft, original_price: e.target.value })
@@ -407,6 +402,7 @@ export function OptionsManager({ service, onClose }: { service: Row | null; onCl
               <Field label="Duration (min)">
                 <Input
                   type="number"
+                  min="0"
                   value={optionDraft.duration_minutes}
                   onChange={(e) =>
                     setOptionDraft({ ...optionDraft, duration_minutes: e.target.value })
@@ -416,23 +412,19 @@ export function OptionsManager({ service, onClose }: { service: Row | null; onCl
               <Field label="Max quantity">
                 <Input
                   type="number"
+                  min="1"
                   value={optionDraft.max_quantity}
                   onChange={(e) => setOptionDraft({ ...optionDraft, max_quantity: e.target.value })}
                 />
               </Field>
-              <Field label="Sort order">
-                <Input
-                  type="number"
-                  value={optionDraft.sort_order}
-                  onChange={(e) => setOptionDraft({ ...optionDraft, sort_order: e.target.value })}
-                />
-              </Field>
-              <Field label="Active">
-                <Switch
-                  checked={Boolean(optionDraft.is_active)}
-                  onCheckedChange={(v) => setOptionDraft({ ...optionDraft, is_active: v })}
-                />
-              </Field>
+              <div className="col-span-2">
+                <Field label="Active">
+                  <Switch
+                    checked={Boolean(optionDraft.is_active)}
+                    onCheckedChange={(v) => setOptionDraft({ ...optionDraft, is_active: v })}
+                  />
+                </Field>
+              </div>
             </div>
           </InlineEditor>
         ) : null}
@@ -463,9 +455,15 @@ function OptionList({
       {rows.map((o) => (
         <li key={o.id} className="flex items-center gap-3 p-3">
           {o.image_url ? (
-            <img src={resolveImageUrl(o.image_url)} alt="" className="size-10 rounded-md object-cover" />
+            <img
+              src={resolveImageUrl(o.image_url)}
+              alt=""
+              className="size-10 rounded-full object-cover border border-slate-200 shrink-0 shadow-xs"
+            />
           ) : (
-            <div className="size-10 rounded-md bg-muted" />
+            <div className="size-10 rounded-full bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center text-xs font-bold text-slate-400">
+              {o.name?.charAt(0) || "O"}
+            </div>
           )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{o.name}</p>

@@ -113,6 +113,7 @@ function BookingWizard() {
   const [materials, setMaterials] = useState(false);
   const [instructions, setInstructions] = useState("");
   const [addonIds, setAddonIds] = useState<string[]>([]);
+  const [selectedAddonDetail, setSelectedAddonDetail] = useState<any | null>(null);
   const [optionQty, setOptionQty] = useState<Record<string, number>>({});
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
 
@@ -740,11 +741,7 @@ function BookingWizard() {
                     return (
                       <div
                         key={a.id}
-                        onClick={() =>
-                          setAddonIds((prev) =>
-                            selected ? prev.filter((x) => x !== a.id) : [...prev, a.id],
-                          )
-                        }
+                        onClick={() => setSelectedAddonDetail(a)}
                         className={`group relative flex flex-col overflow-hidden rounded-2xl border cursor-pointer transition-all ${
                           selected
                             ? "border-cyan-500 bg-cyan-50/30 ring-2 ring-cyan-500/20 shadow-sm"
@@ -759,6 +756,12 @@ function BookingWizard() {
                           />
                           {/* Circular Cyan Plus / Check Action Button */}
                           <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAddonIds((prev) =>
+                                selected ? prev.filter((x) => x !== a.id) : [...prev, a.id],
+                              );
+                            }}
                             className={`absolute bottom-2 end-2 grid size-7 place-items-center rounded-full shadow-md transition-transform active:scale-90 ${
                               selected ? "bg-cyan-600 text-white" : "bg-cyan-400 text-white hover:bg-cyan-500"
                             }`}
@@ -1499,6 +1502,108 @@ function BookingWizard() {
             >
               {isAr ? "فهمت ذلك" : "Got it"}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ADD-ON DETAIL MODAL (Matching Reference UI) */}
+      <Dialog
+        open={Boolean(selectedAddonDetail)}
+        onOpenChange={(open) => !open && setSelectedAddonDetail(null)}
+      >
+        <DialogContent className="max-w-md bg-white rounded-3xl p-0 overflow-hidden border-slate-200">
+          <div className="flex items-center justify-between p-5 border-b border-slate-100">
+            <DialogTitle className="text-base font-extrabold text-slate-900">
+              {localizedText(selectedAddonDetail, "name", locale) ?? selectedAddonDetail?.name}
+            </DialogTitle>
+          </div>
+
+          {/* Hero Image */}
+          {(selectedAddonDetail?.image_url || selectedAddonDetail?.imageUrl) && (
+            <div className="relative aspect-[16/9] w-full bg-slate-100 overflow-hidden">
+              <img
+                src={resolveImageUrl(selectedAddonDetail.image_url || selectedAddonDetail.imageUrl)}
+                alt=""
+                className="size-full object-cover"
+              />
+            </div>
+          )}
+
+          {/* Details Content */}
+          <div className="p-5 space-y-4 text-xs text-slate-700">
+            {/* Description */}
+            {(localizedText(selectedAddonDetail, "description", locale) ?? selectedAddonDetail?.description) && (
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                {localizedText(selectedAddonDetail, "description", locale) ?? selectedAddonDetail?.description}
+              </p>
+            )}
+
+            {/* Price & Original Price */}
+            <div className="flex items-center gap-2">
+              <span className="text-base font-extrabold text-slate-900">
+                AED {Number(selectedAddonDetail?.price || 0).toFixed(0)}
+              </span>
+              {(selectedAddonDetail?.original_price || selectedAddonDetail?.originalPrice) && (
+                <span className="text-xs font-semibold text-slate-400 line-through">
+                  AED {Number(selectedAddonDetail.original_price || selectedAddonDetail.originalPrice).toFixed(0)}
+                </span>
+              )}
+            </div>
+
+            {/* Additional Time Note */}
+            {(selectedAddonDetail?.duration_minutes || selectedAddonDetail?.durationMinutes) ? (
+              <p className="text-xs text-slate-500 font-medium">
+                {isAr
+                  ? `إضافة ${selectedAddonDetail.duration_minutes || selectedAddonDetail.durationMinutes} دقيقة إلى حجزك.`
+                  : `Additional ${selectedAddonDetail.duration_minutes || selectedAddonDetail.durationMinutes} mins added to your booking.`}
+              </p>
+            ) : null}
+
+            {/* What's Included */}
+            {(selectedAddonDetail?.includes || selectedAddonDetail?.includes_ar) && (
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <p className="font-extrabold text-slate-900 text-xs">
+                  {isAr ? "ما تشمله الخدمة:" : "What's included:"}
+                </p>
+                <ul className="space-y-1.5 ps-1 text-slate-600">
+                  {(Array.isArray(isAr && selectedAddonDetail.includes_ar ? selectedAddonDetail.includes_ar : selectedAddonDetail.includes)
+                    ? (isAr && selectedAddonDetail.includes_ar ? selectedAddonDetail.includes_ar : selectedAddonDetail.includes)
+                    : String(isAr && selectedAddonDetail.includes_ar ? selectedAddonDetail.includes_ar : selectedAddonDetail.includes || "").split("\n")
+                  ).map((item: string, i: number) => (
+                    <li key={i} className="flex items-start gap-2 text-xs">
+                      <span className="size-1.5 rounded-full bg-slate-700 shrink-0 mt-1.5" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Action Button */}
+            <div className="pt-4 border-t border-slate-100">
+              <Button
+                type="button"
+                onClick={() => {
+                  if (!selectedAddonDetail) return;
+                  const id = selectedAddonDetail.id;
+                  if (!addonIds.includes(id)) {
+                    setAddonIds((prev) => [...prev, id]);
+                    toast.success(`${selectedAddonDetail.name} added to your booking!`);
+                  } else {
+                    setAddonIds((prev) => prev.filter((x) => x !== id));
+                    toast.info(`${selectedAddonDetail.name} removed from your booking.`);
+                  }
+                  setSelectedAddonDetail(null);
+                }}
+                className="w-full bg-[#0093A3] hover:bg-[#007b88] text-white font-extrabold text-xs py-3.5 rounded-full shadow-md"
+              >
+                {addonIds.includes(selectedAddonDetail?.id)
+                  ? (isAr ? "إزالة من الحجز" : "Remove from booking")
+                  : (isAr
+                      ? `إضافة مقابل AED ${Number(selectedAddonDetail?.price || 0).toFixed(0)}`
+                      : `Add for AED ${Number(selectedAddonDetail?.price || 0).toFixed(0)}`)}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

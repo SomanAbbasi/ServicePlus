@@ -79,6 +79,7 @@ export const ADMIN_NAVIGATION: NavGroupItem[] = [
       { to: "/admin/categories", label: "Category Management" },
       { to: "/admin/services", label: "Services Management" },
       { to: "/admin/service-grouping", label: "Service Grouping" },
+      { to: "/admin/addons", label: "Add-on Facility" },
       { to: "/admin/plans", label: "Plans Management" },
       { to: "/admin/coupons", label: "Coupon Management" },
     ],

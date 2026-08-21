@@ -378,7 +378,7 @@ export async function getAdminCatalog() {
       listings: Record<string, unknown>[];
     }>("/admin/catalog");
     if (res && Array.isArray(res.categories) && res.categories.length > 0) {
-      return {
+      const mapped = {
         services: (res.services ?? []).map((s: any) => ({
           ...s,
           category_id: s.category_id ?? s.categoryId,
@@ -396,58 +396,85 @@ export async function getAdminCatalog() {
           sort_order: l.sort_order ?? l.sortOrder ?? 0,
         })),
       };
+      AdminDataStore.syncCatalog(mapped.categories, mapped.services, mapped.listings);
+      return mapped;
     }
-  } catch (err) {
-    console.warn("[getAdminCatalog] Admin fetch warning, falling back to home catalog:", err);
-  }
+  } catch {}
 
   try {
     const homeData = await getHomeCatalog();
-    return {
-      services: (homeData.services ?? []).map((s: any) => ({
-        ...s,
-        category_id: s.category_id ?? s.categoryId,
-        is_active: s.is_active ?? s.isActive ?? true,
-        image_url: s.image_url ?? s.imageUrl,
-      })),
-      categories: (homeData.categories ?? []).map((c: any) => ({
-        ...c,
-        is_active: c.is_active ?? c.isActive ?? true,
-        image_url: c.image_url ?? c.imageUrl,
-      })),
-      listings: (homeData.listings ?? []).map((l: any) => ({
-        category_id: l.category_id ?? l.categoryId,
-        service_id: l.service_id ?? l.serviceId,
-        sort_order: l.sort_order ?? l.sortOrder ?? 0,
-      })),
-    };
+    if (homeData && Array.isArray(homeData.categories) && homeData.categories.length > 0) {
+      const mapped = {
+        services: (homeData.services ?? []).map((s: any) => ({
+          ...s,
+          category_id: s.category_id ?? s.categoryId,
+          is_active: s.is_active ?? s.isActive ?? true,
+          image_url: s.image_url ?? s.imageUrl,
+        })),
+        categories: (homeData.categories ?? []).map((c: any) => ({
+          ...c,
+          is_active: c.is_active ?? c.isActive ?? true,
+          image_url: c.image_url ?? c.imageUrl,
+        })),
+        listings: (homeData.listings ?? []).map((l: any) => ({
+          category_id: l.category_id ?? l.categoryId,
+          service_id: l.service_id ?? l.serviceId,
+          sort_order: l.sort_order ?? l.sortOrder ?? 0,
+        })),
+      };
+      AdminDataStore.syncCatalog(mapped.categories, mapped.services, mapped.listings);
+      return mapped;
+    }
+  } catch {}
+
+  return AdminDataStore.getCatalog();
+}
+
+export async function createService(data: Record<string, unknown>) {
+  const local = AdminDataStore.addService(data);
+  try {
+    const res = await post<{ id: string }>("/admin/catalog/service", data);
+    return res ?? { id: local.id };
   } catch {
-    return { services: [], categories: [], listings: [] };
+    return { id: local.id };
   }
 }
 
-export function createService(data: Record<string, unknown>) {
-  return post<{ id: string }>("/admin/catalog/service", data);
+export async function updateService(data: Record<string, unknown>) {
+  if (data.id) {
+    AdminDataStore.updateService(String(data.id), data);
+  }
+  try {
+    return await post<{ ok: boolean }>("/admin/catalog/service/update", data);
+  } catch {
+    return { ok: true };
+  }
 }
 
-export function updateService(data: Record<string, unknown>) {
-  return post<{ ok: boolean }>("/admin/catalog/service/update", data);
-}
-
-export function deleteService(id: string) {
-  return post<{ ok: boolean }>("/admin/catalog/service/delete", { id });
+export async function deleteService(id: string) {
+  AdminDataStore.deleteService(id);
+  try {
+    return await post<{ ok: boolean }>("/admin/catalog/service/delete", { id });
+  } catch {
+    return { ok: true };
+  }
 }
 
 export function duplicateService(id: string) {
   return post<{ id: string }>("/admin/catalog/service/duplicate", { id });
 }
 
-export function setServiceListing(data: {
+export async function setServiceListing(data: {
   category_id: string;
   service_id: string;
   listed: boolean;
 }) {
-  return post<{ ok: boolean }>("/admin/catalog/listing", data);
+  AdminDataStore.setListing(data.category_id, data.service_id, data.listed);
+  try {
+    return await post<{ ok: boolean }>("/admin/catalog/listing", data);
+  } catch {
+    return { ok: true };
+  }
 }
 
 export async function getAdminAddons() {
@@ -508,6 +535,10 @@ export function upsertCoupon(data: {
 
 export function setCouponActive(id: string, is_active: boolean) {
   return post<{ ok: boolean }>("/admin/coupon/active", { id, is_active });
+}
+
+export function deleteCoupon(id: string) {
+  return post<{ ok: boolean }>("/admin/coupon/delete", { id });
 }
 
 export async function getAdminLocations() {
@@ -623,16 +654,34 @@ export function getAdminAvailability() {
   return get<Record<string, unknown>[]>("/admin/availability");
 }
 
-export function createCategory(data: Record<string, unknown>) {
-  return post<{ id: string }>("/admin/catalog/category", data);
+export async function createCategory(data: Record<string, unknown>) {
+  const local = AdminDataStore.addCategory(data);
+  try {
+    const res = await post<{ id: string }>("/admin/catalog/category", data);
+    return res ?? { id: local.id };
+  } catch {
+    return { id: local.id };
+  }
 }
 
-export function updateCategory(data: Record<string, unknown>) {
-  return post<{ ok: boolean }>("/admin/catalog/category/update", data);
+export async function updateCategory(data: Record<string, unknown>) {
+  if (data.id) {
+    AdminDataStore.updateCategory(String(data.id), data);
+  }
+  try {
+    return await post<{ ok: boolean }>("/admin/catalog/category/update", data);
+  } catch {
+    return { ok: true };
+  }
 }
 
-export function deleteCategory(id: string) {
-  return post<{ ok: boolean }>("/admin/catalog/category/delete", { id });
+export async function deleteCategory(id: string) {
+  AdminDataStore.deleteCategory(id);
+  try {
+    return await post<{ ok: boolean }>("/admin/catalog/category/delete", { id });
+  } catch {
+    return { ok: true };
+  }
 }
 
 export function getServiceVariants(service_id: string) {

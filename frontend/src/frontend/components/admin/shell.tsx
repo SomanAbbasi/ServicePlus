@@ -56,39 +56,50 @@ export function StatsCard({
 }
 
 const STATUS_TONES: Record<string, string> = {
-  COMPLETED: "bg-emerald-100 text-emerald-700",
-  CONFIRMED: "bg-emerald-100 text-emerald-700",
-  PAID: "bg-emerald-100 text-emerald-700",
-  AVAILABLE: "bg-emerald-100 text-emerald-700",
-  ACTIVE: "bg-emerald-100 text-emerald-700",
-  PENDING: "bg-amber-100 text-amber-700",
-  DRAFT: "bg-muted text-muted-foreground",
-  ASSIGNING: "bg-amber-100 text-amber-700",
-  ASSIGNED: "bg-sky-100 text-sky-700",
-  EN_ROUTE: "bg-sky-100 text-sky-700",
-  ARRIVED: "bg-sky-100 text-sky-700",
-  IN_PROGRESS: "bg-sky-100 text-sky-700",
-  BUSY: "bg-sky-100 text-sky-700",
-  RESCHEDULED: "bg-violet-100 text-violet-700",
-  CANCELLED: "bg-rose-100 text-rose-700",
-  FAILED: "bg-rose-100 text-rose-700",
-  PAYMENT_FAILED: "bg-rose-100 text-rose-700",
-  SUSPENDED: "bg-rose-100 text-rose-700",
-  REFUNDED: "bg-violet-100 text-violet-700",
-  OFFLINE: "bg-muted text-muted-foreground",
-  ON_LEAVE: "bg-muted text-muted-foreground",
+  COMPLETED: "bg-emerald-100/70 text-emerald-600",
+  CONFIRMED: "bg-emerald-100/70 text-emerald-600",
+  PAID: "bg-emerald-100/70 text-emerald-600",
+  AVAILABLE: "bg-emerald-100/70 text-emerald-600",
+  ACTIVE: "bg-emerald-100/70 text-emerald-600",
+  ACTIVATED: "bg-emerald-100/70 text-emerald-600",
+  INACTIVE: "bg-rose-100/70 text-rose-600",
+  DEACTIVATED: "bg-rose-100/70 text-rose-600",
+  PENDING: "bg-amber-100/70 text-amber-600",
+  DRAFT: "bg-slate-100 text-slate-600",
+  ASSIGNING: "bg-amber-100/70 text-amber-600",
+  ASSIGNED: "bg-sky-100/70 text-sky-600",
+  EN_ROUTE: "bg-sky-100/70 text-sky-600",
+  ARRIVED: "bg-sky-100/70 text-sky-600",
+  IN_PROGRESS: "bg-sky-100/70 text-sky-600",
+  BUSY: "bg-sky-100/70 text-sky-600",
+  RESCHEDULED: "bg-violet-100/70 text-violet-600",
+  CANCELLED: "bg-rose-100/70 text-rose-600",
+  FAILED: "bg-rose-100/70 text-rose-600",
+  PAYMENT_FAILED: "bg-rose-100/70 text-rose-600",
+  SUSPENDED: "bg-rose-100/70 text-rose-600",
+  REFUNDED: "bg-violet-100/70 text-violet-600",
+  OFFLINE: "bg-slate-100 text-slate-600",
+  ON_LEAVE: "bg-slate-100 text-slate-600",
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {
   const key = String(status ?? "").toUpperCase();
+  const label =
+    key === "ACTIVE"
+      ? "Activated"
+      : key === "INACTIVE"
+        ? "Deactivated"
+        : key
+          ? key.replaceAll("_", " ").toLowerCase()
+          : "—";
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-        STATUS_TONES[key] ?? "bg-muted text-muted-foreground",
+        "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+        STATUS_TONES[key] ?? "bg-slate-100 text-slate-600",
       )}
     >
-      {key ? key.replaceAll("_", " ").toLowerCase() : "—"}
+      {label}
     </span>
   );
 }

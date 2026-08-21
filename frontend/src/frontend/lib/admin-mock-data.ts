@@ -161,9 +161,343 @@ export interface AdminPlan {
   popular?: boolean;
 }
 
+export interface AdminCategory {
+  id: string;
+  name: string;
+  name_ar?: string;
+  nameAr?: string;
+  slug: string;
+  description?: string;
+  description_ar?: string;
+  descriptionAr?: string;
+  image_url?: string;
+  imageUrl?: string;
+  icon?: string;
+  is_active: boolean;
+  isActive?: boolean;
+  sort_order: number;
+  sortOrder?: number;
+}
+
+export interface AdminService {
+  id: string;
+  name: string;
+  name_ar?: string;
+  nameAr?: string;
+  slug: string;
+  category_id: string;
+  categoryId?: string;
+  short_description?: string;
+  shortDescription?: string;
+  description?: string;
+  description_ar?: string;
+  descriptionAr?: string;
+  image_url?: string;
+  imageUrl?: string;
+  base_price: number;
+  basePrice?: number;
+  original_price?: number | null;
+  originalPrice?: number | null;
+  hourly_rate?: number | null;
+  hourlyRate?: number | null;
+  materials_price?: number;
+  materialsPrice?: number;
+  booking_type?: string;
+  bookingType?: string;
+  duration_minutes?: number;
+  durationMinutes?: number;
+  is_active: boolean;
+  isActive?: boolean;
+  is_featured?: boolean;
+  isFeatured?: boolean;
+  sort_order: number;
+  sortOrder?: number;
+}
+
+export interface AdminListing {
+  id?: string;
+  category_id: string;
+  categoryId?: string;
+  service_id: string;
+  serviceId?: string;
+  sort_order: number;
+  sortOrder?: number;
+}
+
 /* ==========================================================================
-   DEFAULT CLEAN SYSTEM TEMPLATES (No Dummy People / Records)
+   DEFAULT CLEAN SYSTEM TEMPLATES
    ========================================================================== */
+
+export const INITIAL_CATEGORIES: AdminCategory[] = [
+  {
+    id: "e6eaf8c8-af7e-493e-96cc-fe163eb33603",
+    name: "Home Cleaning",
+    name_ar: "تنظيف المنازل بالساعة",
+    nameAr: "تنظيف المنازل بالساعة",
+    slug: "home-cleaning",
+    imageUrl: "/api/media/file/catalog/736cbbf1-df0e-4dd5-97b6-4a84330f5591-homeclean.png.jpg",
+    image_url: "/api/media/file/catalog/736cbbf1-df0e-4dd5-97b6-4a84330f5591-homeclean.png.jpg",
+    icon: "Sparkles",
+    description: "Professional home cleaning services for every need.",
+    description_ar: "أفضل تنظيف المنازل بالساعة في دبي والإمارات.",
+    descriptionAr: "أفضل تنظيف المنازل بالساعة في دبي والإمارات.",
+    is_active: true,
+    isActive: true,
+    sort_order: 0,
+    sortOrder: 0,
+  },
+  {
+    id: "b1573133-0f86-478f-a015-d63bea4e5907",
+    name: "General Cleaning",
+    name_ar: "التنظيف العام",
+    nameAr: "التنظيف العام",
+    slug: "general-cleaning",
+    imageUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
+    image_url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
+    icon: "Sparkles",
+    description: "Top-rated home cleaning, AC maintenance, furniture deep cleaning, villa deep cleaning, laundry & shoe care.",
+    description_ar: "تنظيف منازل بالساعة، صيانة مكيفات، غسيل كنب وسجاد، تنظيف عميق للفلل والمباني، غسيل ملابس وتنظيف أحذية.",
+    descriptionAr: "تنظيف منازل بالساعة، صيانة مكيفات، غسيل كنب وسجاد، تنظيف عميق للفلل والمباني، غسيل ملابس وتنظيف أحذية.",
+    is_active: true,
+    isActive: true,
+    sort_order: 1,
+    sortOrder: 1,
+  },
+  {
+    id: "b6c6665c-456d-4328-b7f3-5a80998851d1",
+    name: "Salon & Spa at Home",
+    name_ar: "صالون وسبا في المنزل",
+    nameAr: "صالون وسبا في المنزل",
+    slug: "salon-spa-at-home",
+    imageUrl: "/api/media/file/catalog/72aa77b5-60c7-4cf9-8b9a-20d71f03daa0-menhaircut.webp",
+    image_url: "/api/media/file/catalog/72aa77b5-60c7-4cf9-8b9a-20d71f03daa0-menhaircut.webp",
+    icon: "Sparkles",
+    description: "Top-rated women's and men's beauty, salon and luxury spa wellness treatments delivered to your home.",
+    description_ar: "خدمات التجميل والسبا النسائية والرجالية الفاخرة تصلك حتى باب منزلك.",
+    descriptionAr: "خدمات التجميل والسبا النسائية والرجالية الفاخرة تصلك حتى باب منزلك.",
+    is_active: true,
+    isActive: true,
+    sort_order: 2,
+    sortOrder: 2,
+  },
+  {
+    id: "5dd165f2-1f59-4e66-95fb-8d8a35c252cd",
+    name: "Handyman",
+    name_ar: "خدمات Handyman",
+    nameAr: "خدمات Handyman",
+    slug: "handyman",
+    imageUrl: "/api/media/file/catalog/cae87c5f-ef98-420a-bd08-c55d0d1b4072-handyman.jpeg.jpg",
+    image_url: "/api/media/file/catalog/cae87c5f-ef98-420a-bd08-c55d0d1b4072-handyman.jpeg.jpg",
+    icon: "Wrench",
+    description: "Expert handyman services for repairs and maintenance.",
+    description_ar: "أفضل خدمات Handyman في دبي والإمارات.",
+    descriptionAr: "أفضل خدمات Handyman في دبي والإمارات.",
+    is_active: false,
+    isActive: false,
+    sort_order: 3,
+    sortOrder: 3,
+  },
+  {
+    id: "6591ba21-6409-4062-a244-fdc386de9373",
+    name: "Healthcare at Home",
+    name_ar: "الرعاية الصحية في المنزل",
+    nameAr: "الرعاية الصحية في المنزل",
+    slug: "healthcare-at-home",
+    imageUrl: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80",
+    image_url: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80",
+    icon: "Activity",
+    description: "DHA-licensed medical consultations, home lab tests, IV therapy, nurse care, vaccines and physical therapy.",
+    description_ar: "فحوصات مخبرية منزلية، علاج بالوريد، استشارات طبية، رعاية تمريضية، لقاحات وعلاج طبيعي.",
+    descriptionAr: "فحوصات مخبرية منزلية، علاج بالوريد، استشارات طبية، رعاية تمريضية، لقاحات وعلاج طبيعي.",
+    is_active: false,
+    isActive: false,
+    sort_order: 4,
+    sortOrder: 4,
+  },
+  {
+    id: "14f21a0e-c63a-49da-a004-8f151844777c",
+    name: "Handyman & Maintenance",
+    name_ar: "الصيانة والخدمات المنزلية",
+    nameAr: "الصيانة والخدمات المنزلية",
+    slug: "handyman-maintenance",
+    imageUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
+    image_url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
+    icon: "Wrench",
+    description: "Skilled handymen, electricians, plumbers, home painting & roof waterproofing services at home.",
+    description_ar: "حرفيون مهرة، كهربائيون، سباكون، دهان منازل وعزل أسطح معتمد في منزلك.",
+    descriptionAr: "حرفيون مهرة، كهربائيون، سباكون، دهان منازل وعزل أسطح معتمد في منزلك.",
+    is_active: false,
+    isActive: false,
+    sort_order: 5,
+    sortOrder: 5,
+  },
+  {
+    id: "198d67a7-88e4-4eef-8990-3004f717af4a",
+    name: "Car Services",
+    name_ar: "خدمات السيارات",
+    nameAr: "خدمات السيارات",
+    slug: "car-services",
+    imageUrl: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=800&q=80",
+    image_url: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=800&q=80",
+    icon: "Car",
+    description: "Doorstep car service, periodic 10K maintenance, oil changes, detailing & eco-friendly car wash at home.",
+    description_ar: "خدمات صيانة وتغيير زيت السيارات عند البيت، غسيل وتلميع متنقل وتنظيف عميق.",
+    descriptionAr: "خدمات صيانة وتغيير زيت السيارات عند البيت، غسيل وتلميع متنقل وتنظيف عميق.",
+    is_active: false,
+    isActive: false,
+    sort_order: 6,
+    sortOrder: 6,
+  },
+  {
+    id: "bb8d60bf-0ccc-4535-a019-9dc2561a4b52",
+    name: "Water Purifiers",
+    name_ar: "أجهزة تنقية المياه",
+    nameAr: "أجهزة تنقية المياه",
+    slug: "water-purifiers",
+    imageUrl: "/api/media/file/catalog/238ed6a2-5ab5-4f76-87e3-1f1306ef238e-water.webp",
+    image_url: "/api/media/file/catalog/238ed6a2-5ab5-4f76-87e3-1f1306ef238e-water.webp",
+    icon: "Droplet",
+    description: "Premium countertop & floor-standing UV & RO water purification systems and hassle-free subscriptions.",
+    description_ar: "أنظمة تنقية المياه المنزلية المتطورة بالفلترة النانوية والأشعة فوق البنفسجية واشتراكات ميسرة.",
+    descriptionAr: "أنظمة تنقية المياه المنزلية المتطورة بالفلترة النانوية والأشعة فوق البنفسجية واشتراكات ميسرة.",
+    is_active: false,
+    isActive: false,
+    sort_order: 7,
+    sortOrder: 7,
+  },
+  {
+    id: "3b06f46b-4732-40e8-af48-0b13fb78cb4e",
+    name: "Pet Care at Home",
+    name_ar: "العناية بالحيوانات الأليفة في المنزل",
+    nameAr: "العناية بالحيوانات الأليفة في المنزل",
+    slug: "pet-care-at-home",
+    imageUrl: "/api/media/file/catalog/c98d34bd-2dfb-4fc4-a291-7129ec80c663-petcare.webp",
+    image_url: "/api/media/file/catalog/c98d34bd-2dfb-4fc4-a291-7129ec80c663-petcare.webp",
+    icon: "PawPrint",
+    description: "Doorstep mobile pet grooming vans, home bathing, VIP pet spa, MOCCAE-certified vet visits, vaccines & walking.",
+    description_ar: "سيارات متنقلة لقص وتزيين الحيوانات الأليفة، سبا منزلي، وفحوصات بيطرية وتطعيمات معتمدة.",
+    descriptionAr: "سيارات متنقلة لقص وتزيين الحيوانات الأليفة، سبا منزلي، وفحوصات بيطرية وتطعيمات معتمدة.",
+    is_active: false,
+    isActive: false,
+    sort_order: 8,
+    sortOrder: 8,
+  },
+  {
+    id: "f1cebfff-43c3-40d9-be23-152bc1ba6800",
+    name: "Pest Control & Disinfection",
+    name_ar: "مكافحة الآفات والتطهير",
+    nameAr: "مكافحة الآفات والتطهير",
+    slug: "pest-control",
+    imageUrl: "/api/media/file/catalog/3e545700-ee94-4ce7-a589-afa3d90ae3ca-pest.webp",
+    image_url: "/api/media/file/catalog/3e545700-ee94-4ce7-a589-afa3d90ae3ca-pest.webp",
+    icon: "Shield",
+    description: "Cockroach, bed bug, pest management & sanitization",
+    description_ar: "خدمات مكافحة الحشرات الفعالة.",
+    descriptionAr: "خدمات مكافحة الحشرات الفعالة.",
+    is_active: false,
+    isActive: false,
+    sort_order: 9,
+    sortOrder: 9,
+  },
+  {
+    id: "5b0b82c5-9056-4468-9f18-838889ff5e10",
+    name: "Disinfection",
+    name_ar: "تعقيم",
+    nameAr: "تعقيم",
+    slug: "disinfection",
+    imageUrl: "https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600&q=80",
+    image_url: "https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600&q=80",
+    icon: "ShieldCheck",
+    description: "Complete home and office disinfection and sanitisation.",
+    description_ar: "تعقيم وتطهير شامل للمنازل والمكاتب.",
+    descriptionAr: "تعقيم وتطهير شامل للمنازل والمكاتب.",
+    is_active: false,
+    isActive: false,
+    sort_order: 10,
+    sortOrder: 10,
+  },
+];
+
+export const INITIAL_SERVICES: AdminService[] = [
+  {
+    id: "svc-std-home-cleaning",
+    name: "Standard Home Cleaning",
+    name_ar: "تنظيف منازل بالساعة",
+    nameAr: "تنظيف منازل بالساعة",
+    slug: "standard-home-cleaning",
+    category_id: "e6eaf8c8-af7e-493e-96cc-fe163eb33603",
+    categoryId: "e6eaf8c8-af7e-493e-96cc-fe163eb33603",
+    short_description: "Professional hourly home cleaning with certified cleaners.",
+    description: "Full dusting, vacuuming, mopping, and kitchen/bathroom sanitization.",
+    image_url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop&q=80",
+    base_price: 120,
+    basePrice: 120,
+    booking_type: "hourly",
+    bookingType: "hourly",
+    duration_minutes: 120,
+    durationMinutes: 120,
+    is_active: true,
+    isActive: true,
+    is_featured: true,
+    sort_order: 1,
+    sortOrder: 1,
+  },
+  {
+    id: "svc-general-cleaning",
+    name: "General Cleaning Service",
+    name_ar: "خدمة التنظيف العام",
+    nameAr: "خدمة التنظيف العام",
+    slug: "general-cleaning-service",
+    category_id: "b1573133-0f86-478f-a015-d63bea4e5907",
+    categoryId: "b1573133-0f86-478f-a015-d63bea4e5907",
+    short_description: "General home and office cleaning package.",
+    description: "Top-rated cleaning with all materials provided.",
+    image_url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
+    base_price: 150,
+    basePrice: 150,
+    booking_type: "fixed",
+    bookingType: "fixed",
+    duration_minutes: 180,
+    durationMinutes: 180,
+    is_active: true,
+    isActive: true,
+    is_featured: true,
+    sort_order: 2,
+    sortOrder: 2,
+  },
+  {
+    id: "svc-swedish-massage",
+    name: "Salon & Spa at Home Care",
+    name_ar: "صالون وسبا في المنزل",
+    nameAr: "صالون وسبا في المنزل",
+    slug: "salon-spa-at-home-care",
+    category_id: "b6c6665c-456d-4328-b7f3-5a80998851d1",
+    categoryId: "b6c6665c-456d-4328-b7f3-5a80998851d1",
+    short_description: "Luxury wellness and relaxing spa treatments.",
+    description: "Certified therapists deliver salon treatments directly to your home.",
+    image_url: "/api/media/file/catalog/72aa77b5-60c7-4cf9-8b9a-20d71f03daa0-menhaircut.webp",
+    imageUrl: "/api/media/file/catalog/72aa77b5-60c7-4cf9-8b9a-20d71f03daa0-menhaircut.webp",
+    base_price: 220,
+    basePrice: 220,
+    booking_type: "hourly",
+    bookingType: "hourly",
+    duration_minutes: 60,
+    durationMinutes: 60,
+    is_active: true,
+    isActive: true,
+    is_featured: true,
+    sort_order: 3,
+    sortOrder: 3,
+  },
+];
+
+export const INITIAL_LISTINGS: AdminListing[] = [
+  { category_id: "e6eaf8c8-af7e-493e-96cc-fe163eb33603", service_id: "svc-std-home-cleaning", sort_order: 1 },
+  { category_id: "b1573133-0f86-478f-a015-d63bea4e5907", service_id: "svc-general-cleaning", sort_order: 2 },
+  { category_id: "b6c6665c-456d-4328-b7f3-5a80998851d1", service_id: "svc-swedish-massage", sort_order: 3 },
+];
 
 const INITIAL_COMPANIES: AdminCompany[] = [];
 const INITIAL_PROFESSIONALS: AdminProfessional[] = [];
@@ -243,7 +577,7 @@ const INITIAL_ROLES: AdminRole[] = [
    STORAGE ENGINE & CACHE CLEANSING
    ========================================================================== */
 
-const STORAGE_VERSION = "v2_clean_real_data";
+const STORAGE_VERSION = "v3_real_catalog_data";
 
 function getFromStorage<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -261,6 +595,9 @@ function getFromStorage<T>(key: string, fallback: T): T {
         "serviceplus_admin_material_requests",
         "serviceplus_admin_plans",
         "serviceplus_admin_staff",
+        "serviceplus_admin_categories",
+        "serviceplus_admin_services",
+        "serviceplus_admin_listings",
       ];
       keysToClear.forEach((k) => localStorage.removeItem(k));
       localStorage.setItem("serviceplus_admin_data_version", STORAGE_VERSION);
@@ -674,5 +1011,182 @@ export const AdminDataStore = {
     const list = AdminDataStore.getPlans();
     AdminDataStore.savePlans(list.filter((p) => p.id !== id));
     return true;
+  },
+
+  // Categories
+  getCategories: (): AdminCategory[] => getFromStorage("categories", INITIAL_CATEGORIES),
+  saveCategories: (categories: AdminCategory[]) => saveToStorage("categories", categories),
+  addCategory: (cat: Record<string, any>): AdminCategory => {
+    const list = AdminDataStore.getCategories();
+    const newCat: AdminCategory = {
+      id: cat.id || `cat-${Date.now()}`,
+      name: cat.name || "",
+      name_ar: cat.name_ar || cat.nameAr,
+      nameAr: cat.name_ar || cat.nameAr,
+      slug: cat.slug || (cat.name || "").toLowerCase().replace(/\s+/g, "-"),
+      description: cat.description,
+      description_ar: cat.description_ar || cat.descriptionAr,
+      descriptionAr: cat.description_ar || cat.descriptionAr,
+      image_url: cat.image_url || cat.imageUrl,
+      imageUrl: cat.image_url || cat.imageUrl,
+      icon: cat.icon || "Sparkles",
+      is_active: cat.is_active ?? cat.isActive ?? true,
+      isActive: cat.is_active ?? cat.isActive ?? true,
+      sort_order: cat.sort_order ?? cat.sortOrder ?? list.length + 1,
+      sortOrder: cat.sort_order ?? cat.sortOrder ?? list.length + 1,
+    };
+    const updated = [...list, newCat];
+    AdminDataStore.saveCategories(updated);
+    return newCat;
+  },
+  updateCategory: (id: string, patch: Record<string, any>): AdminCategory | null => {
+    const list = AdminDataStore.getCategories();
+    const idx = list.findIndex((c) => c.id === id);
+    if (idx === -1 || !list[idx]) return null;
+    const existing = list[idx]!;
+    const updated: AdminCategory = {
+      ...existing,
+      ...patch,
+      id: existing.id,
+      name: patch.name !== undefined ? patch.name : existing.name,
+      name_ar: patch.name_ar !== undefined ? patch.name_ar : (patch.nameAr !== undefined ? patch.nameAr : existing.name_ar),
+      nameAr: patch.name_ar !== undefined ? patch.name_ar : (patch.nameAr !== undefined ? patch.nameAr : existing.nameAr),
+      description: patch.description !== undefined ? patch.description : existing.description,
+      description_ar: patch.description_ar !== undefined ? patch.description_ar : (patch.descriptionAr !== undefined ? patch.descriptionAr : existing.description_ar),
+      descriptionAr: patch.description_ar !== undefined ? patch.description_ar : (patch.descriptionAr !== undefined ? patch.descriptionAr : existing.descriptionAr),
+      image_url: patch.image_url !== undefined ? patch.image_url : (patch.imageUrl !== undefined ? patch.imageUrl : existing.image_url),
+      imageUrl: patch.image_url !== undefined ? patch.image_url : (patch.imageUrl !== undefined ? patch.imageUrl : existing.imageUrl),
+      is_active: patch.is_active !== undefined ? patch.is_active : (patch.isActive !== undefined ? patch.isActive : existing.is_active),
+      isActive: patch.is_active !== undefined ? patch.is_active : (patch.isActive !== undefined ? patch.isActive : existing.isActive),
+      sort_order: patch.sort_order !== undefined ? patch.sort_order : (patch.sortOrder !== undefined ? patch.sortOrder : existing.sort_order),
+      sortOrder: patch.sort_order !== undefined ? patch.sort_order : (patch.sortOrder !== undefined ? patch.sortOrder : existing.sortOrder),
+    };
+    list[idx] = updated;
+    AdminDataStore.saveCategories(list);
+    return updated;
+  },
+  deleteCategory: (id: string): boolean => {
+    const list = AdminDataStore.getCategories();
+    AdminDataStore.saveCategories(list.filter((c) => c.id !== id));
+    return true;
+  },
+
+  // Services
+  getServices: (): AdminService[] => getFromStorage("services", INITIAL_SERVICES),
+  saveServices: (services: AdminService[]) => saveToStorage("services", services),
+  addService: (svc: Record<string, any>): AdminService => {
+    const list = AdminDataStore.getServices();
+    const newSvc: AdminService = {
+      id: svc.id || `svc-${Date.now()}`,
+      name: svc.name || "",
+      name_ar: svc.name_ar || svc.nameAr,
+      nameAr: svc.name_ar || svc.nameAr,
+      slug: svc.slug || (svc.name || "").toLowerCase().replace(/\s+/g, "-"),
+      category_id: svc.category_id || svc.categoryId || "",
+      categoryId: svc.category_id || svc.categoryId || "",
+      short_description: svc.short_description || svc.shortDescription,
+      shortDescription: svc.short_description || svc.shortDescription,
+      description: svc.description,
+      description_ar: svc.description_ar || svc.descriptionAr,
+      descriptionAr: svc.description_ar || svc.descriptionAr,
+      image_url: svc.image_url || svc.imageUrl,
+      imageUrl: svc.image_url || svc.imageUrl,
+      base_price: Number(svc.base_price ?? svc.basePrice ?? 0),
+      basePrice: Number(svc.base_price ?? svc.basePrice ?? 0),
+      original_price: svc.original_price ?? svc.originalPrice ?? null,
+      originalPrice: svc.original_price ?? svc.originalPrice ?? null,
+      hourly_rate: svc.hourly_rate ?? svc.hourlyRate ?? null,
+      hourlyRate: svc.hourly_rate ?? svc.hourlyRate ?? null,
+      materials_price: Number(svc.materials_price ?? svc.materialsPrice ?? 0),
+      materialsPrice: Number(svc.materials_price ?? svc.materialsPrice ?? 0),
+      booking_type: svc.booking_type || svc.bookingType || "fixed",
+      bookingType: svc.booking_type || svc.bookingType || "fixed",
+      duration_minutes: Number(svc.duration_minutes ?? svc.durationMinutes ?? 60),
+      durationMinutes: Number(svc.duration_minutes ?? svc.durationMinutes ?? 60),
+      is_active: svc.is_active ?? svc.isActive ?? true,
+      isActive: svc.is_active ?? svc.isActive ?? true,
+      is_featured: svc.is_featured ?? svc.isFeatured ?? false,
+      isFeatured: svc.is_featured ?? svc.isFeatured ?? false,
+      sort_order: svc.sort_order ?? svc.sortOrder ?? list.length + 1,
+      sortOrder: svc.sort_order ?? svc.sortOrder ?? list.length + 1,
+    };
+    const updated = [...list, newSvc];
+    AdminDataStore.saveServices(updated);
+    return newSvc;
+  },
+  updateService: (id: string, patch: Record<string, any>): AdminService | null => {
+    const list = AdminDataStore.getServices();
+    const idx = list.findIndex((s) => s.id === id);
+    if (idx === -1 || !list[idx]) return null;
+    const existing = list[idx]!;
+    const updated: AdminService = {
+      ...existing,
+      ...patch,
+      id: existing.id,
+      name: patch.name !== undefined ? patch.name : existing.name,
+      category_id: patch.category_id || patch.categoryId || existing.category_id,
+      categoryId: patch.category_id || patch.categoryId || existing.categoryId,
+      is_active: patch.is_active !== undefined ? patch.is_active : (patch.isActive !== undefined ? patch.isActive : existing.is_active),
+      isActive: patch.is_active !== undefined ? patch.is_active : (patch.isActive !== undefined ? patch.isActive : existing.isActive),
+    };
+    list[idx] = updated;
+    AdminDataStore.saveServices(list);
+    return updated;
+  },
+  deleteService: (id: string): boolean => {
+    const list = AdminDataStore.getServices();
+    AdminDataStore.saveServices(list.filter((s) => s.id !== id));
+    return true;
+  },
+
+  // Listings
+  getListings: (): AdminListing[] => getFromStorage("listings", INITIAL_LISTINGS),
+  saveListings: (listings: AdminListing[]) => saveToStorage("listings", listings),
+  setListing: (categoryId: string, serviceId: string, listed: boolean) => {
+    const list = AdminDataStore.getListings();
+    if (listed) {
+      if (!list.some((l) => (l.category_id === categoryId || l.categoryId === categoryId) && (l.service_id === serviceId || l.serviceId === serviceId))) {
+        AdminDataStore.saveListings([...list, { category_id: categoryId, service_id: serviceId, sort_order: list.length + 1 }]);
+      }
+    } else {
+      AdminDataStore.saveListings(list.filter((l) => !((l.category_id === categoryId || l.categoryId === categoryId) && (l.service_id === serviceId || l.serviceId === serviceId))));
+    }
+  },
+
+  // Combined Catalog
+  getCatalog: () => {
+    return {
+      categories: AdminDataStore.getCategories(),
+      services: AdminDataStore.getServices(),
+      listings: AdminDataStore.getListings(),
+    };
+  },
+  syncCatalog: (categories?: any[], services?: any[], listings?: any[]) => {
+    if (Array.isArray(categories) && categories.length > 0) {
+      AdminDataStore.saveCategories(categories.map((c) => ({
+        ...c,
+        category_id: c.category_id ?? c.categoryId,
+        is_active: c.is_active ?? c.isActive ?? true,
+        image_url: c.image_url ?? c.imageUrl,
+        sort_order: c.sort_order ?? c.sortOrder ?? 0,
+      })));
+    }
+    if (Array.isArray(services) && services.length > 0) {
+      AdminDataStore.saveServices(services.map((s) => ({
+        ...s,
+        category_id: s.category_id ?? s.categoryId,
+        is_active: s.is_active ?? s.isActive ?? true,
+        image_url: s.image_url ?? s.imageUrl,
+        sort_order: s.sort_order ?? s.sortOrder ?? 0,
+      })));
+    }
+    if (Array.isArray(listings) && listings.length > 0) {
+      AdminDataStore.saveListings(listings.map((l) => ({
+        ...l,
+        category_id: l.category_id ?? l.categoryId,
+        service_id: l.service_id ?? l.serviceId,
+        sort_order: l.sort_order ?? l.sortOrder ?? 0,
+      })));
+    }
   },
 };

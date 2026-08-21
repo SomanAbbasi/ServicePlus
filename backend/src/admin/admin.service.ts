@@ -568,6 +568,12 @@ export class AdminService {
     });
   }
 
+  async deleteCoupon(id: string) {
+    await this.prisma.couponRedemption.deleteMany({ where: { couponId: id } });
+    await this.prisma.booking.updateMany({ where: { couponId: id }, data: { couponId: null } });
+    return this.prisma.coupon.delete({ where: { id } });
+  }
+
   async getLocations() {
     const [countries, cities] = await Promise.all([
       this.prisma.country.findMany(),

@@ -163,6 +163,11 @@ export class AdminController {
     return this.adminService.setCouponActive(body.id, body.is_active);
   }
 
+  @Post('coupon/delete')
+  async deleteCoupon(@Body() body: { id: string }) {
+    return this.adminService.deleteCoupon(body.id);
+  }
+
   @Get('professionals')
   async professionals() {
     return this.adminService.getProfessionals();

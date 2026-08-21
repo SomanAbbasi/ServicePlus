@@ -27,13 +27,12 @@ export function ServiceCard({
     (isAr ? "خدمة منزلية احترافية وموثوقة." : "Professional home service.");
   const imageUrl = resolveImageUrl(service.image_url) || FALLBACK_IMAGE;
   const rating = service.rating ?? 4.8;
-  const durationText = (service as any).duration_minutes ? `⚡ ${(service as any).duration_minutes} mins` : "⚡ 30 mins";
 
   return (
     <div
       className={`group flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-cyan-500/40 ${className}`}
     >
-      {/* Image Container with Badges (Matching Image 2 Reference UI) */}
+      {/* Image Container with Badges */}
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
         <img
           src={imageUrl}
@@ -41,11 +40,6 @@ export function ServiceCard({
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-
-        {/* Top-Left Duration Badge (⚡ 30 mins) */}
-        <span className="absolute top-2 start-2 sm:top-3 sm:start-3 rounded-md bg-amber-400/95 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-[11px] font-extrabold text-slate-900 shadow-2xs backdrop-blur-xs">
-          {durationText}
-        </span>
 
         {/* Bottom-Right Star Rating Badge */}
         <div className="absolute bottom-2 end-2 sm:bottom-3 sm:end-3 flex items-center gap-1 rounded-full bg-slate-900/85 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-[11px] font-extrabold text-white shadow-md">
