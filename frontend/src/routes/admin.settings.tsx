@@ -19,7 +19,7 @@ function AdminSettings() {
   
   // Local Settings States
   const [adminEmail, setAdminEmail] = useState(() => {
-    return localStorage.getItem("serviceplus_admin_email") || "admin@serviceplus.ae";
+    return localStorage.getItem("serviceplus_admin_email") || "somanabbasi305@gmail.com";
   });
   
   const [operatingHours, setOperatingHours] = useState(() => {

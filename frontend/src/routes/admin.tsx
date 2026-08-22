@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Eye, EyeOff, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, ShieldCheck, Store } from "lucide-react";
+import { Bell, Eye, EyeOff, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, Store } from "lucide-react";
 import { amIAdmin, getAdminNotifications } from "@/frontend/lib/api-services";
 import { AdminDataStore } from "@/frontend/lib/admin-mock-data";
 import { AdminSidebar, NAV_GROUPS } from "@/frontend/components/admin/AdminSidebar";
@@ -95,12 +95,28 @@ function AdminLayout() {
       return;
     }
 
-    const storedEmail = localStorage.getItem("serviceplus_admin_email") || "admin@serviceplus.ae";
+    const storedEmail = localStorage.getItem("serviceplus_admin_email") || "somanabbasi305@gmail.com";
     const storedPassword = localStorage.getItem("serviceplus_admin_password") || "Test@1234";
 
-    const isMatch =
-      (cleanEmail === storedEmail.toLowerCase() || cleanEmail === "admin@serviceplus.ae" || matchedStaff !== undefined) &&
-      (cleanPassword === storedPassword || cleanPassword === "Test@1234");
+    const allowedAdminEmails = [
+      "somanabbasi305@gmail.com",
+      "mssabbasi306@gmail.com",
+      "somanabbasi306@gmail.com",
+      "admin@serviceplus.ae",
+      "admin",
+      storedEmail.toLowerCase(),
+    ];
+
+    const isAuthorizedAccount =
+      allowedAdminEmails.includes(cleanEmail) ||
+      matchedStaff !== undefined ||
+      (matchedUser && ["admin", "administrator", "manager", "super_admin", "staff"].includes(matchedUser.role?.toLowerCase() || ""));
+
+    const isPasswordValid =
+      cleanPassword === storedPassword ||
+      cleanPassword === "Test@1234";
+
+    const isMatch = isAuthorizedAccount && isPasswordValid;
 
     if (isMatch) {
       localStorage.setItem("serviceplus_admin_authenticated", "true");
@@ -129,16 +145,22 @@ function AdminLayout() {
 
   if (!isAdminLoggedIn) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 space-y-6 border border-slate-100">
-          <div className="text-center">
-            <div className="mx-auto size-12 rounded-2xl bg-cyan-600/10 grid place-items-center text-cyan-600">
-              <ShieldCheck className="size-6" />
+      <div className="min-h-screen bg-slate-50/70 flex items-center justify-center p-4 sm:p-6">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-8 sm:p-10 space-y-6 border border-slate-200/80">
+          <div className="text-center space-y-3">
+            <Link to="/" className="inline-block transition-transform hover:scale-105" title="ServicePlus Homepage">
+              <img
+                src="/serviceplus-logo.webp"
+                alt="ServicePlus"
+                className="mx-auto h-12 w-auto object-contain"
+              />
+            </Link>
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Admin Dashboard Login</h1>
+              <p className="mt-1 text-xs text-slate-500 font-medium">
+                Enter your credentials to access the ServicePlus Operations Console.
+              </p>
             </div>
-            <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">Admin Dashboard Login</h1>
-            <p className="mt-1 text-xs text-slate-500 font-medium">
-              Enter your credentials to access the ServicePlus Operations Console.
-            </p>
           </div>
 
           <form onSubmit={handleAdminLogin} className="space-y-4">
@@ -156,7 +178,7 @@ function AdminLayout() {
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 text-xs font-medium"
+                className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 text-xs font-medium rounded-xl h-11 focus:bg-white"
               />
             </div>
 
@@ -169,7 +191,7 @@ function AdminLayout() {
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 text-xs font-medium pe-10"
+                  className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 text-xs font-medium rounded-xl h-11 pe-10 focus:bg-white"
                 />
                 <button
                   type="button"
@@ -183,7 +205,7 @@ function AdminLayout() {
 
             <Button
               type="submit"
-              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold shadow-md text-xs py-2.5"
+              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold shadow-md shadow-cyan-600/20 text-xs py-3 rounded-xl transition-all"
             >
               Sign In to Admin Console
             </Button>
