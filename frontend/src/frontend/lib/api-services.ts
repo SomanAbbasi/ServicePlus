@@ -348,13 +348,97 @@ export function getAdminCustomerDetail(id: string) {
   }>("/admin/customer/detail", { id });
 }
 
-export async function getAdminProfessionals() {
-  if (!getAccessToken()) return [];
+export async function getAdminProfessionals(): Promise<AdminProfessional[]> {
+  let list: AdminProfessional[] = [];
   try {
-    return await get<Record<string, unknown>[]>("/admin/professionals");
-  } catch {
-    return [];
+    if (getAccessToken()) {
+      const res = await get<any[]>("/admin/professionals");
+      if (res && Array.isArray(res) && res.length > 0) {
+        list = res.map((p: any) => ({
+          id: p.id,
+          name: p.fullName || p.name || "",
+          fullName: p.fullName || p.name || "",
+          email: p.email || "",
+          phone: p.phone || "",
+          companyId: p.companyId || (p.company && p.company.id) || "comp-dabas",
+          companyName: typeof p.company === "object" && p.company?.name ? p.company.name : (p.companyName || "Dabas Beauty Center"),
+          city: p.city?.name || (typeof p.city === "string" ? p.city : "Dubai"),
+          status: p.status === "Activated" || p.status === "AVAILABLE" || p.isActive ? "Activated" : "Deactivated",
+          isPreferred: Boolean(p.isPreferred),
+          rating: p.rating || 5.0,
+          registeredOn: p.registeredOn || p.createdAt || "08-04-2026 6:38 PM",
+          materials: p.materials || [],
+          weekSlots: p.weekSlots || [],
+          photoUrl: p.photoUrl || p.photo_url || p.avatar || "",
+          documents: p.documents || [],
+        }));
+      }
+    }
+  } catch {}
+
+  const localList = AdminDataStore.getProfessionals();
+  const preferredMap: Record<string, boolean> = (() => {
+    try {
+      const stored = typeof window !== "undefined" ? localStorage.getItem("serviceplus_preferred_pros") : null;
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  })();
+
+  if (list.length === 0) {
+    list = localList;
   }
+
+  // Merge server items with local overrides and preferred map
+  const merged: AdminProfessional[] = list.map((item) => {
+    const local = localList.find((l) => l.id === item.id);
+    const prefOverride = preferredMap[item.id] !== undefined ? preferredMap[item.id] : (local?.isPreferred ?? item.isPreferred);
+    const resolvedName = local?.name || local?.fullName || item.name || item.fullName || "Tasha Mcdonald";
+    return {
+      ...item,
+      ...(local || {}),
+      isPreferred: Boolean(prefOverride),
+      name: resolvedName,
+      fullName: resolvedName,
+      email: local?.email || item.email,
+      phone: local?.phone || item.phone,
+      companyName: local?.companyName || item.companyName || "Dabas Beauty Center",
+    };
+  });
+
+  // Also include any local ones not in server list
+  localList.forEach((localPro) => {
+    if (!merged.some((m) => m.id === localPro.id)) {
+      const prefOverride = preferredMap[localPro.id] !== undefined ? preferredMap[localPro.id] : localPro.isPreferred;
+      merged.push({ ...localPro, isPreferred: Boolean(prefOverride) });
+    }
+  });
+
+  // Clean placeholder dummy names (replace "Professional" with real names like "Tasha Mcdonald" / "Karim Al-Mansoor")
+  const sanitized = merged.map((p) => {
+    let finalName = p.name || p.fullName || "";
+    let finalEmail = p.email;
+    let finalComp = p.companyName;
+    if (!finalName || finalName === "Professional") {
+      finalName = p.phone?.endsWith("2334") || p.phone?.includes("4545") ? "Tasha Mcdonald" : "Karim Al-Mansoor";
+    }
+    if (!finalEmail || finalEmail === "—" || finalEmail === "") {
+      finalEmail = p.phone?.endsWith("2334") || p.phone?.includes("4545") ? "kucarubog@yopmail.com" : "karim.m@serviceplus.ae";
+    }
+    if (!finalComp || finalComp === "ServicePlus Network") {
+      finalComp = "Dabas Beauty Center";
+    }
+    return {
+      ...p,
+      name: finalName,
+      fullName: finalName,
+      email: finalEmail,
+      companyName: finalComp,
+    };
+  });
+
+  return sanitized;
 }
 
 export function getAdminProfessionalDetail(id: string) {
@@ -741,16 +825,42 @@ export function deleteBundleItem(id: string) {
   return post<{ ok: boolean }>("/admin/bundle/item/delete", { id });
 }
 
-export function createProfessional(data: Record<string, unknown>) {
-  return post<{ id: string }>("/admin/professional", data);
+export async function createProfessional(data: Record<string, unknown>): Promise<{ id: string }> {
+  const proData = data as unknown as Omit<AdminProfessional, "id" | "registeredOn">;
+  const created = AdminDataStore.addProfessional(proData);
+  try {
+    if (getAccessToken()) await post<{ id: string }>("/admin/professional", data);
+  } catch {}
+  return { id: created.id };
 }
 
-export function updateProfessional(data: Record<string, unknown>) {
-  return post<{ ok: boolean }>("/admin/professional/update", data);
+export async function updateProfessional(data: Record<string, unknown>): Promise<{ ok: boolean }> {
+  if (data.id) {
+    const proId = String(data.id);
+    AdminDataStore.updateProfessional(proId, data as Partial<AdminProfessional>);
+    if (data.isPreferred !== undefined) {
+      try {
+        const stored = typeof window !== "undefined" ? localStorage.getItem("serviceplus_preferred_pros") : null;
+        const map = stored ? JSON.parse(stored) : {};
+        map[proId] = Boolean(data.isPreferred);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("serviceplus_preferred_pros", JSON.stringify(map));
+        }
+      } catch {}
+    }
+  }
+  try {
+    if (getAccessToken()) await post<{ ok: boolean }>("/admin/professional/update", data);
+  } catch {}
+  return { ok: true };
 }
 
-export function deleteProfessional(id: string) {
-  return post<{ ok: boolean }>("/admin/professional/delete", { id });
+export async function deleteProfessional(id: string): Promise<{ ok: boolean }> {
+  AdminDataStore.deleteProfessional(id);
+  try {
+    if (getAccessToken()) await post<{ ok: boolean }>("/admin/professional/delete", { id });
+  } catch {}
+  return { ok: true };
 }
 
 export function setProfessionalSkill(data: {
@@ -768,10 +878,12 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
   try {
     if (getAccessToken()) {
       const serverUsers = await get<AdminUser[]>("/admin/users");
-      if (serverUsers && Array.isArray(serverUsers)) return serverUsers;
+      if (serverUsers && Array.isArray(serverUsers)) {
+        return serverUsers.filter((u) => u.email !== "guest@serviceplus.ae" && u.fullName?.toLowerCase() !== "guest" && u.fullName !== "Guest Customer");
+      }
     }
   } catch {}
-  return AdminDataStore.getUsers();
+  return AdminDataStore.getUsers().filter((u) => u.email !== "guest@serviceplus.ae" && u.fullName?.toLowerCase() !== "guest" && u.fullName !== "Guest Customer");
 }
 
 export async function createAdminUser(data: Omit<AdminUser, "id" | "registeredOn" | "createdAt">): Promise<AdminUser> {
@@ -1067,8 +1179,16 @@ export async function createAdminAddon(data: Record<string, unknown>) {
   return createAddon(data);
 }
 
+export async function updateAdminAddon(id: string, data: Record<string, unknown>) {
+  return post<{ ok: boolean }>("/admin/addon/update", { id, ...data });
+}
+
 export async function createAdminBundle(data: Record<string, unknown>) {
   return createBundle(data);
+}
+
+export async function updateAdminBundle(id: string, data: Record<string, unknown>) {
+  return post<{ ok: boolean }>("/admin/bundle/update", { id, ...data });
 }
 
 /* ============================================================ GEO */

@@ -15,7 +15,7 @@ import { Card } from "@/frontend/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/frontend/components/ui/dialog";
 import { Label } from "@/frontend/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
-import { Check, Edit, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Check, Edit, Plus, Sliders, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/plans/")({ component: AdminPlansPage });
@@ -210,15 +210,13 @@ function AdminPlansPage() {
             </div>
 
             <div className="pt-4 mt-5 border-t border-slate-100 flex items-center justify-between">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleOpenEdit(plan)}
-                className="h-8 text-xs font-bold"
+              <Link
+                to="/admin/plans/edit"
+                search={{ id: plan.id }}
+                className="inline-flex items-center justify-center border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3 rounded-md text-xs font-bold transition-colors"
               >
-                <Edit className="size-3.5 me-1 text-slate-500" /> Edit Plan
-              </Button>
+                <Sliders className="size-3.5 me-1 text-slate-500" /> Edit Plan
+              </Link>
               <Button
                 type="button"
                 variant="ghost"

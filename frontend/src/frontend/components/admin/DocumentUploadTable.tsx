@@ -3,6 +3,7 @@ import { ComplianceDocument } from "@/frontend/lib/admin-mock-data";
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
+import { AdminDateInput } from "@/frontend/components/admin/AdminDateInput";
 import { Calendar, Plus, Trash2, Upload, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 import { compressImageFile } from "@/frontend/lib/image-compression";
 import { toast } from "sonner";
@@ -191,32 +192,22 @@ export function DocumentUploadTable({
 
                     {/* Issue Date */}
                     <td className="px-3 py-2.5">
-                      <div className="relative">
-                        <Input
-                          type="date"
-                          value={doc.issueDate}
-                          onChange={(e) => handleUpdateRow(doc.id, { issueDate: e.target.value })}
-                          className="h-9 text-xs bg-white border-slate-200 pe-7"
-                        />
-                        <Calendar className="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
-                      </div>
+                      <AdminDateInput
+                        placeholder="Issue Date"
+                        value={doc.issueDate || ""}
+                        onChange={(val) => handleUpdateRow(doc.id, { issueDate: val })}
+                        className="h-9"
+                      />
                     </td>
 
                     {/* Expiry Date */}
                     <td className="px-3 py-2.5">
-                      <div className="relative">
-                        <Input
-                          type="date"
-                          value={doc.expiryDate}
-                          onChange={(e) => handleUpdateRow(doc.id, { expiryDate: e.target.value })}
-                          className={`h-9 text-xs pe-7 ${
-                            isExpired
-                              ? "border-rose-300 bg-rose-50/50 text-rose-700 font-bold"
-                              : "bg-white border-slate-200"
-                          }`}
-                        />
-                        <Calendar className="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
-                      </div>
+                      <AdminDateInput
+                        placeholder="Expiry Date"
+                        value={doc.expiryDate || ""}
+                        onChange={(val) => handleUpdateRow(doc.id, { expiryDate: val })}
+                        className={`h-9 ${isExpired ? "border-rose-300 bg-rose-50/50 text-rose-700 font-bold" : ""}`}
+                      />
                     </td>
 
                     {/* Document File with Choose button & Max 5MB description */}

@@ -15,6 +15,7 @@ import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
 import { Button } from "@/frontend/components/ui/button";
 import { Card } from "@/frontend/components/ui/card";
 import { Input } from "@/frontend/components/ui/input";
+import { AdminDateInput } from "@/frontend/components/admin/AdminDateInput";
 import { formatMoney, num } from "@/frontend/lib/money";
 
 export const Route = createFileRoute("/admin/reports")({ component: AdminReports });
@@ -98,15 +99,24 @@ function AdminReports() {
         }
       />
 
-      <Card className="mb-4 flex flex-wrap items-center gap-2 p-3">
-        <Input
-          type="date"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          className="w-auto"
-        />
-        <span className="text-sm text-muted-foreground">to</span>
-        <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-auto" />
+      <Card className="mb-4 flex flex-wrap items-center gap-3 p-3 bg-white border-slate-200 shadow-xs">
+        <div className="w-44">
+          <AdminDateInput
+            placeholder="Start Date"
+            value={from}
+            onChange={setFrom}
+            className="h-9"
+          />
+        </div>
+        <span className="text-xs font-semibold text-slate-500">to</span>
+        <div className="w-44">
+          <AdminDateInput
+            placeholder="End Date"
+            value={to}
+            onChange={setTo}
+            className="h-9"
+          />
+        </div>
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

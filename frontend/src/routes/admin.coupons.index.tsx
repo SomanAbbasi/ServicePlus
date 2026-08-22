@@ -16,6 +16,7 @@ import { Card } from "@/frontend/components/ui/card";
 import { Label } from "@/frontend/components/ui/label";
 import { Switch } from "@/frontend/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
+import { AdminDateInput } from "@/frontend/components/admin/AdminDateInput";
 import {
   Dialog,
   DialogContent,
@@ -25,14 +26,18 @@ import {
   DialogDescription,
 } from "@/frontend/components/ui/dialog";
 import {
+  Check,
+  ChevronsUpDown,
   Edit,
   Filter,
   Loader2,
   Plus,
   RotateCcw,
   Search,
+  Sliders,
   Tag,
   Trash2,
+  X,
 } from "lucide-react";
 import { formatMoney, num } from "@/frontend/lib/money";
 
@@ -249,21 +254,24 @@ function AdminCoupons() {
           <div className="flex items-center gap-2.5">
             <Button
               type="button"
-              size="sm"
+              variant={isSearchOpen ? "default" : "outline"}
               onClick={() => setIsSearchOpen((v) => !v)}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
+              className={`font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs transition-all ${
+                isSearchOpen
+                  ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                  : "border-slate-300 text-slate-700 hover:bg-slate-50"
+              }`}
             >
               <Search className="size-3.5 me-1.5" /> Search
             </Button>
-            <Link to="/admin/coupons/create">
-              <Button
-                type="button"
-                size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
-              >
+            <Button
+              asChild
+              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 sm:h-10 px-5 rounded-xl shadow-sm"
+            >
+              <Link to="/admin/coupons/create">
                 <Plus className="size-3.5 me-1.5" /> Add Coupon
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -356,14 +364,46 @@ function AdminCoupons() {
             <thead className="text-slate-500 font-semibold border-b border-slate-200">
               <tr>
                 <th className="px-3 py-3 w-12 text-center">#</th>
-                <th className="px-4 py-3">Code</th>
-                <th className="px-4 py-3">Description</th>
-                <th className="px-3 py-3">Discount</th>
-                <th className="px-3 py-3">Min Spend</th>
-                <th className="px-3 py-3 text-center">Redemptions</th>
-                <th className="px-3 py-3 text-center">Expires</th>
-                <th className="px-3 py-3 text-center w-28">Status</th>
-                <th className="px-4 py-3 text-right w-28">Actions</th>
+                <th className="px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    Code <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    Description <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3">
+                  <div className="flex items-center gap-1">
+                    Discount <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3">
+                  <div className="flex items-center gap-1">
+                    Min Spend <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    Redemptions <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    Expires <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center w-28">
+                  <div className="flex items-center justify-center gap-1">
+                    Status <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center w-24">
+                  <div className="flex items-center justify-center gap-1 text-slate-600 font-bold">
+                    Action <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -444,51 +484,54 @@ function AdminCoupons() {
                         {expiresAt ? String(expiresAt).slice(0, 10) : "—"}
                       </td>
 
-                      {/* Status Toggle Soft Pill */}
+                      {/* Status Column */}
                       <td className="px-3 py-3.5 text-center whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleStatus(r)}
-                          className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold transition-all hover:opacity-85 ${
+                        <span
+                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
                             isActive
-                              ? "bg-emerald-100/70 text-emerald-600 hover:bg-emerald-100"
-                              : "bg-rose-100/70 text-rose-600 hover:bg-rose-100"
+                              ? "bg-emerald-100/70 text-emerald-600"
+                              : "bg-rose-100/70 text-rose-600"
                           }`}
                         >
                           {isActive ? "Activated" : "Deactivated"}
-                        </button>
+                        </span>
                       </td>
 
-                      {/* Actions */}
-                      <td className="px-4 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Edit */}
-                          <Button
+                      {/* Action Horizontal Row */}
+                      <td className="px-3 py-3.5 text-center align-middle">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
                             type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenEdit(r)}
-                            title="Edit Coupon"
-                            className="size-8 p-0 text-slate-500 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg"
+                            onClick={() => handleToggleStatus(r)}
+                            title={isActive ? "Deactivate Coupon" : "Activate Coupon"}
+                            className="text-rose-500 hover:scale-125 transition-transform"
                           >
-                            <Edit className="size-3.5" />
-                          </Button>
-
-                          {/* Delete */}
-                          <Button
+                            {isActive ? (
+                              <X className="size-4 text-rose-500 stroke-[2.5]" />
+                            ) : (
+                              <Check className="size-4 text-emerald-500 stroke-[2.5]" />
+                            )}
+                          </button>
+                          <Link
+                            to="/admin/coupons/edit"
+                            search={{ id: r.id }}
+                            title="Edit Coupon"
+                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
+                          >
+                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
+                          </Link>
+                          <button
                             type="button"
-                            variant="ghost"
-                            size="sm"
                             onClick={() => {
                               if (confirm(`Are you sure you want to delete coupon code "${r.code}"?`)) {
                                 delMutation.mutate(r.id);
                               }
                             }}
                             title="Delete Coupon"
-                            className="size-8 p-0 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg"
+                            className="text-rose-500 hover:scale-125 transition-transform"
                           >
-                            <Trash2 className="size-3.5" />
-                          </Button>
+                            <Trash2 className="size-4 text-rose-500 stroke-[2.5]" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -702,11 +745,10 @@ function AdminCoupons() {
 
               <div className="space-y-1">
                 <Label className="text-xs font-bold text-slate-700">Expiry Date</Label>
-                <Input
-                  type="date"
+                <AdminDateInput
+                  placeholder="Expiry Date"
                   value={editExpiresAt}
-                  onChange={(e) => setEditExpiresAt(e.target.value)}
-                  className="h-10 text-xs"
+                  onChange={setEditExpiresAt}
                 />
               </div>
 

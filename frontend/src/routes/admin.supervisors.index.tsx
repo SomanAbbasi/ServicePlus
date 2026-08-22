@@ -15,13 +15,22 @@ import { Input } from "@/frontend/components/ui/input";
 import { Card } from "@/frontend/components/ui/card";
 import { Label } from "@/frontend/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
+import { AdminDateInput } from "@/frontend/components/admin/AdminDateInput";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/frontend/components/ui/dropdown-menu";
 import {
   Calendar,
   Check,
   ChevronsUpDown,
+  Download,
   Eye,
   Filter,
   Lock,
+  MoreVertical,
   Plus,
   RotateCcw,
   Search,
@@ -243,127 +252,140 @@ function AdminSupervisorsPage() {
         <span className="text-slate-600">Super Visors Management</span>
       </div>
 
-      {/* Top Header Bar matching reference screenshot */}
+      {/* Top Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
-          Super Visors Management
+          Supervisors Management
         </h1>
         <div className="flex items-center gap-2.5">
           <Button
             type="button"
-            size="sm"
+            variant={isSearchOpen ? "default" : "outline"}
             onClick={() => setIsSearchOpen((v) => !v)}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-2xs"
+            className={`font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs transition-all ${
+              isSearchOpen
+                ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                : "border-slate-300 text-slate-700 hover:bg-slate-50"
+            }`}
           >
             <Search className="size-3.5 me-1.5" /> Search
           </Button>
           <Button
             type="button"
-            size="sm"
+            variant="outline"
             onClick={handleExportCsv}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-2xs"
+            className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs"
           >
-            <Upload className="size-3.5 me-1.5" /> Export
+            <Download className="size-3.5 me-1.5" /> Export
+          </Button>
+          <Button
+            asChild
+            className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 sm:h-10 px-5 rounded-xl shadow-sm"
+          >
+            <Link to="/admin/supervisors/create">
+              <Plus className="size-3.5 me-1.5" /> Add New Supervisor
+            </Link>
           </Button>
         </div>
       </div>
 
-      {/* Filter Form Card matching reference screenshot */}
+      {/* Filter Form Card */}
       {isSearchOpen && (
-        <Card className="p-5 sm:p-6 bg-white border border-slate-200/80 rounded-2xl shadow-xs transition-all">
+        <Card className="p-4 sm:p-5 bg-white border border-slate-200/80 rounded-2xl shadow-xs transition-all">
           <form onSubmit={handleApplyFilter} className="space-y-4">
-            {/* Row 1: Search Company, Search Name, Search Email */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input
-                value={searchCompany}
-                onChange={(e) => setSearchCompany(e.target.value)}
-                placeholder="Search Company"
-                className="h-11 text-xs bg-white border-slate-200 rounded-lg"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Search Company</Label>
+                <Input
+                  value={searchCompany}
+                  onChange={(e) => setSearchCompany(e.target.value)}
+                  placeholder="Search Company"
+                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
+                />
+              </div>
 
-              <Input
-                value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
-                placeholder="Search Name"
-                className="h-11 text-xs bg-white border-slate-200 rounded-lg"
-              />
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Search Name</Label>
+                <Input
+                  value={searchName}
+                  onChange={(e) => setSearchName(e.target.value)}
+                  placeholder="Search Name"
+                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
+                />
+              </div>
 
-              <Input
-                value={searchEmail}
-                onChange={(e) => setSearchEmail(e.target.value)}
-                placeholder="Search Email"
-                className="h-11 text-xs bg-white border-slate-200 rounded-lg"
-              />
-            </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Search Email</Label>
+                <Input
+                  value={searchEmail}
+                  onChange={(e) => setSearchEmail(e.target.value)}
+                  placeholder="Search Email"
+                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
+                />
+              </div>
 
-            {/* Row 2: Search Phone Number, Status, Start Date */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input
-                value={searchPhone}
-                onChange={(e) => setSearchPhone(e.target.value)}
-                placeholder="Search Phone Number"
-                className="h-11 text-xs bg-white border-slate-200 rounded-lg"
-              />
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Search Phone Number</Label>
+                <Input
+                  value={searchPhone}
+                  onChange={(e) => setSearchPhone(e.target.value)}
+                  placeholder="Search Phone Number"
+                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
+                />
+              </div>
 
-              <div className="relative">
-                <label className="absolute -top-2 start-3 px-1 text-[11px] font-semibold text-slate-500 bg-white z-10">
-                  Status
-                </label>
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Status</Label>
                 <Select value={searchStatus} onValueChange={setSearchStatus}>
-                  <SelectTrigger className="h-11 bg-white border-slate-200 rounded-lg text-xs">
-                    <SelectValue placeholder="Select Status" />
+                  <SelectTrigger className="h-10 text-xs bg-white border-slate-200 rounded-lg">
+                    <SelectValue placeholder="Select Status (All)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all" className="text-xs">Select Status (All)</SelectItem>
-                    <SelectItem value="Activated" className="text-xs text-emerald-600 font-semibold">
+                    <SelectItem value="all" className="text-xs font-semibold">Select Status (All)</SelectItem>
+                    <SelectItem value="Activated" className="text-xs text-emerald-600 font-bold">
                       Activated
                     </SelectItem>
-                    <SelectItem value="Deactivated" className="text-xs text-rose-600 font-semibold">
+                    <SelectItem value="Deactivated" className="text-xs text-rose-600 font-bold">
                       Deactivated
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="relative">
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">Start Date</Label>
+                <AdminDateInput
                   placeholder="Start Date"
-                  className="h-11 text-xs bg-white border-slate-200 rounded-lg pe-9"
+                  value={startDate}
+                  onChange={setStartDate}
                 />
-                <Calendar className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
               </div>
-            </div>
 
-            {/* Row 3: End Date */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="relative">
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-600">End Date</Label>
+                <AdminDateInput
                   placeholder="End Date"
-                  className="h-11 text-xs bg-white border-slate-200 rounded-lg pe-9"
+                  value={endDate}
+                  onChange={setEndDate}
                 />
-                <Calendar className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
               </div>
             </div>
 
             {/* Filter Action Buttons */}
-            <div className="flex items-center justify-end gap-2.5 pt-2">
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
               <Button
                 type="button"
                 variant="outline"
+                size="sm"
                 onClick={handleResetFilter}
-                className="h-10 text-xs font-semibold px-5 rounded-lg border-slate-200 text-slate-700 hover:bg-slate-50"
+                className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
               >
                 <RotateCcw className="size-3.5 me-1.5" /> Reset
               </Button>
               <Button
                 type="submit"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold h-10 text-xs px-6 rounded-lg shadow-2xs"
+                size="sm"
+                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
               >
                 <Filter className="size-3.5 me-1.5" /> Filter
               </Button>
@@ -541,10 +563,9 @@ function AdminSupervisorsPage() {
                         {formattedDate}
                       </td>
 
-                      {/* 8. Action (6 Persistent Action Buttons) */}
-                      <td className="px-2 py-3 text-center align-middle">
-                        <div className="inline-grid grid-cols-2 gap-x-2.5 gap-y-2 place-items-center">
-                          {/* 1. Toggle Status (Red X / Green Check) */}
+                      {/* 8. Action (Horizontal Row) */}
+                      <td className="px-3 py-3.5 text-center align-middle">
+                        <div className="flex items-center justify-center gap-2">
                           <button
                             type="button"
                             onClick={() => handleOpenAction(sup, "toggle_status")}
@@ -557,56 +578,51 @@ function AdminSupervisorsPage() {
                               <Check className="size-4 text-emerald-500 stroke-[2.5]" />
                             )}
                           </button>
-
-                          {/* 2. Edit Profile */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(sup, "edit")}
+                          <Link
+                            to="/admin/supervisors/edit"
+                            search={{ id: sup.id }}
                             title="Edit Supervisor"
-                            className="text-blue-600 hover:scale-125 transition-transform"
+                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
                           >
-                            <Sliders className="size-4 text-blue-600 stroke-[2.5]" />
-                          </button>
-
-                          {/* 3. Info Details */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(sup, "info")}
-                            title="Supervisor Details & History"
-                            className="text-blue-500 hover:scale-125 transition-transform"
-                          >
-                            <Eye className="size-4 text-blue-500 stroke-[2.5]" />
-                          </button>
-
-                          {/* 4. Reset Password */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(sup, "password")}
-                            title="Reset Password"
-                            className="text-teal-500 hover:scale-125 transition-transform"
-                          >
-                            <Lock className="size-4 text-teal-500 stroke-[2.5]" />
-                          </button>
-
-                          {/* 5. Delete Supervisor */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(sup, "delete")}
-                            title="Delete Supervisor"
-                            className="text-rose-500 hover:scale-125 transition-transform"
-                          >
-                            <Trash2 className="size-4 text-rose-500 stroke-[2.5]" />
-                          </button>
-
-                          {/* 6. Send Credentials */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(sup, "send_credentials")}
-                            title="Send Login Credentials"
-                            className="text-slate-800 hover:scale-125 transition-transform"
-                          >
-                            <Send className="size-4 text-slate-800 stroke-[2.5]" />
-                          </button>
+                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
+                          </Link>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                title="More actions"
+                                className="text-slate-600 hover:scale-125 transition-transform p-0.5"
+                              >
+                                <MoreVertical className="size-4 text-slate-600 stroke-[2.5]" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 bg-white border-slate-200">
+                              <DropdownMenuItem
+                                onClick={() => handleOpenAction(sup, "info")}
+                                className="text-xs font-medium cursor-pointer"
+                              >
+                                <Eye className="size-3.5 me-2 text-cyan-600" /> Supervisor Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleOpenAction(sup, "password")}
+                                className="text-xs font-medium cursor-pointer"
+                              >
+                                <Lock className="size-3.5 me-2 text-teal-600" /> Reset Password
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleOpenAction(sup, "send_credentials")}
+                                className="text-xs font-medium cursor-pointer"
+                              >
+                                <Send className="size-3.5 me-2 text-indigo-600" /> Send Credentials
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleOpenAction(sup, "delete")}
+                                className="text-xs font-medium text-rose-600 hover:text-rose-700 cursor-pointer"
+                              >
+                                <Trash2 className="size-3.5 me-2 text-rose-600" /> Delete Supervisor
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>

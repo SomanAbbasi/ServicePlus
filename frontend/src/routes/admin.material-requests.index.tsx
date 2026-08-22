@@ -20,6 +20,7 @@ import {
   AlertCircle,
   Check,
   CheckCircle2,
+  ChevronsUpDown,
   Clock,
   Download,
   Package,
@@ -27,6 +28,7 @@ import {
   Plus,
   Search,
   Send,
+  Sliders,
   Truck,
   X,
   XCircle,
@@ -235,17 +237,49 @@ function AdminMaterialRequestsPage() {
 
         <div className="overflow-x-auto mt-2">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 text-slate-600 font-bold border-b border-slate-200">
+            <thead className="text-slate-500 font-semibold border-b border-slate-200">
               <tr>
                 <th className="px-3 py-3 w-10 text-center text-slate-400">#</th>
-                <th className="px-4 py-3 min-w-[130px]">Request ID</th>
-                <th className="px-4 py-3 min-w-[160px]">Requested By</th>
-                <th className="px-4 py-3 min-w-[160px]">Company</th>
-                <th className="px-4 py-3 min-w-[220px]">Requested Items</th>
-                <th className="px-3 py-3 text-center min-w-[100px]">Urgency</th>
-                <th className="px-4 py-3 min-w-[140px]">Request Date</th>
-                <th className="px-3 py-3 text-center min-w-[110px]">Status</th>
-                <th className="px-4 py-3 text-center min-w-[140px]">Approval Action</th>
+                <th className="px-4 py-3 min-w-[130px]">
+                  <div className="flex items-center gap-1">
+                    Request ID <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-4 py-3 min-w-[160px]">
+                  <div className="flex items-center gap-1">
+                    Requested By <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-4 py-3 min-w-[160px]">
+                  <div className="flex items-center gap-1">
+                    Company <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-4 py-3 min-w-[220px]">
+                  <div className="flex items-center gap-1">
+                    Requested Items <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center min-w-[100px]">
+                  <div className="flex items-center justify-center gap-1">
+                    Urgency <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-4 py-3 min-w-[140px]">
+                  <div className="flex items-center gap-1">
+                    Request Date <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center min-w-[110px]">
+                  <div className="flex items-center justify-center gap-1">
+                    Status <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center w-24">
+                  <div className="flex items-center justify-center gap-1 text-slate-600 font-bold">
+                    Action <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -283,51 +317,59 @@ function AdminMaterialRequestsPage() {
                       <td className="px-3 py-3 text-center">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            req.urgency === "Urgent" ? "bg-rose-100 text-rose-700 animate-pulse" : "bg-slate-100 text-slate-600"
+                            req.urgency === "Urgent" ? "bg-rose-100/70 text-rose-700 animate-pulse" : "bg-slate-100 text-slate-600"
                           }`}
                         >
                           {req.urgency}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-500 text-[11px]">{req.requestDate}</td>
-                      <td className="px-3 py-3 text-center">
+                      <td className="px-3 py-3 text-center whitespace-nowrap">
                         {req.status === "Pending" ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100/70 text-amber-800">
                             Pending
                           </span>
                         ) : req.status === "Approved" ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-cyan-100 text-cyan-700">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-cyan-100/70 text-cyan-700">
                             Approved
                           </span>
                         ) : req.status === "Dispatched" ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100/70 text-emerald-700">
                             Dispatched
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100/70 text-rose-700">
                             Rejected
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 shadow-xs">
+                      <td className="px-3 py-3.5 text-center align-middle">
+                        <div className="flex items-center justify-center gap-2">
+                          <Link
+                            to="/admin/material-requests/edit"
+                            search={{ id: req.id }}
+                            title="Review & Edit Status"
+                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
+                          >
+                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
+                          </Link>
                           {req.status === "Pending" && (
                             <>
                               <button
                                 type="button"
                                 onClick={() => handleUpdateStatus(req.id, "Approved")}
                                 title="Approve Request"
-                                className="text-emerald-600 hover:scale-110 transition-transform"
+                                className="text-emerald-600 hover:scale-125 transition-transform"
                               >
-                                <Check className="size-4 text-emerald-600" />
+                                <Check className="size-4 text-emerald-600 stroke-[2.5]" />
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleUpdateStatus(req.id, "Rejected")}
                                 title="Reject Request"
-                                className="text-rose-500 hover:scale-110 transition-transform"
+                                className="text-rose-500 hover:scale-125 transition-transform"
                               >
-                                <X className="size-4 text-rose-500" />
+                                <X className="size-4 text-rose-500 stroke-[2.5]" />
                               </button>
                             </>
                           )}
@@ -336,13 +378,10 @@ function AdminMaterialRequestsPage() {
                               type="button"
                               onClick={() => handleUpdateStatus(req.id, "Dispatched")}
                               title="Mark as Dispatched"
-                              className="text-cyan-600 hover:scale-110 transition-transform"
+                              className="text-cyan-600 hover:scale-125 transition-transform"
                             >
-                              <Truck className="size-4 text-cyan-600" />
+                              <Truck className="size-4 text-cyan-600 stroke-[2.5]" />
                             </button>
-                          )}
-                          {(req.status === "Dispatched" || req.status === "Rejected") && (
-                            <span className="text-[11px] text-slate-400 font-semibold px-2 py-0.5">Finalized</span>
                           )}
                         </div>
                       </td>

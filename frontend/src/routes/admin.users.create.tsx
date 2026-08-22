@@ -231,7 +231,7 @@ function AddUserPage() {
               <Input
                 type="number"
                 step="0.01"
-                placeholder="0.00"
+                placeholder="0"
                 value={wallet}
                 onChange={(e) => setWallet(e.target.value)}
                 className="h-11 bg-white border-slate-200 rounded-lg text-xs"

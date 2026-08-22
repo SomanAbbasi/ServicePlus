@@ -1,10 +1,10 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Eye, EyeOff, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, Store } from "lucide-react";
+import { Bell, Eye, EyeOff, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, ShieldAlert, Store } from "lucide-react";
 import { amIAdmin, getAdminNotifications } from "@/frontend/lib/api-services";
 import { AdminDataStore } from "@/frontend/lib/admin-mock-data";
-import { AdminSidebar, NAV_GROUPS } from "@/frontend/components/admin/AdminSidebar";
+import { AdminSidebar, NAV_GROUPS, isRoutePermitted } from "@/frontend/components/admin/AdminSidebar";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
 import { toast } from "sonner";
 import { Button } from "@/frontend/components/ui/button";
@@ -120,6 +120,30 @@ function AdminLayout() {
 
     if (isMatch) {
       localStorage.setItem("serviceplus_admin_authenticated", "true");
+      if (allowedAdminEmails.includes(cleanEmail)) {
+        localStorage.setItem("serviceplus_admin_user_name", "Master Administrator");
+        localStorage.setItem("serviceplus_admin_user_role", "Master Admin");
+        localStorage.setItem("serviceplus_admin_user_email", cleanEmail);
+        localStorage.setItem("serviceplus_admin_user_permissions", "*");
+      } else if (matchedStaff) {
+        localStorage.setItem("serviceplus_admin_user_name", matchedStaff.name || "Staff Member");
+        localStorage.setItem("serviceplus_admin_user_role", matchedStaff.roleName || "Staff");
+        localStorage.setItem("serviceplus_admin_user_email", matchedStaff.email);
+        const roles = AdminDataStore.getRoles();
+        const roleObj = roles.find(
+          (r) => r.id === matchedStaff.roleId || r.name.toLowerCase() === (matchedStaff.roleName || "").toLowerCase()
+        );
+        localStorage.setItem(
+          "serviceplus_admin_user_permissions",
+          JSON.stringify(roleObj?.permissions || {})
+        );
+      } else if (matchedUser) {
+        localStorage.setItem("serviceplus_admin_user_name", matchedUser.fullName || "Administrator");
+        localStorage.setItem("serviceplus_admin_user_role", matchedUser.role || "Admin");
+        localStorage.setItem("serviceplus_admin_user_email", matchedUser.email);
+        localStorage.setItem("serviceplus_admin_user_permissions", "*");
+      }
+
       setIsAdminLoggedIn(true);
       setLoginError("");
       setFailedAttempts(0);
@@ -140,6 +164,10 @@ function AdminLayout() {
 
   const handleAdminLogout = () => {
     localStorage.removeItem("serviceplus_admin_authenticated");
+    localStorage.removeItem("serviceplus_admin_user_name");
+    localStorage.removeItem("serviceplus_admin_user_role");
+    localStorage.removeItem("serviceplus_admin_user_email");
+    localStorage.removeItem("serviceplus_admin_user_permissions");
     setIsAdminLoggedIn(false);
   };
 
@@ -330,7 +358,32 @@ function AdminLayout() {
         </header>
 
         <main className="p-4 sm:p-6">
-          <Outlet />
+          {isRoutePermitted(
+            pathname,
+            typeof window !== "undefined" ? localStorage.getItem("serviceplus_admin_user_permissions") : null
+          ) ? (
+            <Outlet />
+          ) : (
+            <div className="p-8 max-w-xl mx-auto text-center bg-white border border-rose-200 rounded-2xl shadow-xs space-y-4 my-10 animate-in fade-in duration-200">
+              <div className="size-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-xs">
+                <ShieldAlert className="size-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-extrabold text-slate-900">Access Restricted</h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  Your assigned role does not have permission to view or manage this section. Please contact your system administrator to request access.
+                </p>
+              </div>
+              <div className="pt-2">
+                <Link
+                  to="/admin"
+                  className="inline-flex items-center justify-center px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-bold transition-colors shadow-xs"
+                >
+                  Return to Dashboard
+                </Link>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>

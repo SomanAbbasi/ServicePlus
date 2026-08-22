@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   Boxes,
   CheckCircle2,
+  ChevronsUpDown,
   Download,
   Edit,
   Package,
@@ -280,16 +281,44 @@ function AdminMaterialsPage() {
 
         <div className="overflow-x-auto mt-2">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 text-slate-600 font-bold border-b border-slate-200">
+            <thead className="text-slate-500 font-semibold border-b border-slate-200">
               <tr>
                 <th className="px-3 py-3 w-10 text-center text-slate-400">#</th>
-                <th className="px-4 py-3 min-w-[220px]">Item / Material Name</th>
-                <th className="px-3 py-3 min-w-[120px]">Category</th>
-                <th className="px-4 py-3 min-w-[120px]">SKU</th>
-                <th className="px-4 py-3 min-w-[130px]">Current Stock</th>
-                <th className="px-4 py-3 min-w-[110px]">Unit Price</th>
-                <th className="px-3 py-3 text-center min-w-[110px]">Status</th>
-                <th className="px-4 py-3 text-center min-w-[130px]">Action</th>
+                <th className="px-4 py-3 min-w-[220px]">
+                  <div className="flex items-center gap-1">
+                    Item / Material Name <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 min-w-[120px]">
+                  <div className="flex items-center gap-1">
+                    Category <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-4 py-3 min-w-[120px]">
+                  <div className="flex items-center gap-1">
+                    SKU <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-4 py-3 min-w-[130px]">
+                  <div className="flex items-center gap-1">
+                    Current Stock <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-4 py-3 min-w-[110px]">
+                  <div className="flex items-center gap-1">
+                    Unit Price <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center min-w-[110px]">
+                  <div className="flex items-center justify-center gap-1">
+                    Status <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center w-24">
+                  <div className="flex items-center justify-center gap-1 text-slate-600 font-bold">
+                    Action <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -323,23 +352,23 @@ function AdminMaterialsPage() {
                         <span className="text-slate-400 text-[11px]">{mat.unit}</span>
                       </td>
                       <td className="px-4 py-3 font-bold text-slate-900">AED {mat.unitPrice.toFixed(2)}</td>
-                      <td className="px-3 py-3 text-center">
+                      <td className="px-3 py-3 text-center whitespace-nowrap">
                         {mat.status === "In Stock" ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100/70 text-emerald-700">
                             In Stock
                           </span>
                         ) : mat.status === "Low Stock" ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 animate-pulse">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100/70 text-amber-800 animate-pulse">
                             Low Stock
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100/70 text-rose-700">
                             Out of Stock
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-slate-200 shadow-xs">
+                      <td className="px-3 py-3.5 text-center align-middle">
+                        <div className="flex items-center justify-center gap-2">
                           <button
                             type="button"
                             onClick={() => {
@@ -347,25 +376,25 @@ function AdminMaterialsPage() {
                               setAdjustAmount("10");
                             }}
                             title="Quick Adjust Stock"
-                            className="text-emerald-600 hover:scale-110 transition-transform"
+                            className="text-emerald-600 hover:scale-125 transition-transform"
                           >
-                            <PackagePlus className="size-4 text-emerald-600" />
+                            <PackagePlus className="size-4 text-emerald-600 stroke-[2.5]" />
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEdit(mat)}
+                          <Link
+                            to="/admin/materials/edit"
+                            search={{ id: mat.id }}
                             title="Edit Material"
-                            className="text-cyan-600 hover:scale-110 transition-transform"
+                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
                           >
-                            <Edit className="size-4 text-cyan-600" />
-                          </button>
+                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
+                          </Link>
                           <button
                             type="button"
                             onClick={() => handleDelete(mat.id, mat.name)}
                             title="Delete Material"
-                            className="text-rose-500 hover:scale-110 transition-transform"
+                            className="text-rose-500 hover:scale-125 transition-transform"
                           >
-                            <Trash2 className="size-4 text-rose-500" />
+                            <Trash2 className="size-4 text-rose-500 stroke-[2.5]" />
                           </button>
                         </div>
                       </td>

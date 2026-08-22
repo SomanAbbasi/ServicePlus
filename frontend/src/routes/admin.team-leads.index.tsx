@@ -16,11 +16,19 @@ import { Card } from "@/frontend/components/ui/card";
 import { Label } from "@/frontend/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/frontend/components/ui/dropdown-menu";
+import {
   Check,
   ChevronsUpDown,
+  Download,
   Eye,
   Filter,
   Lock,
+  MoreVertical,
   Plus,
   RotateCcw,
   Search,
@@ -224,7 +232,7 @@ function AdminTeamLeadsPage() {
         <span className="text-slate-600">Team Lead Management</span>
       </div>
 
-      {/* Top Header Bar matching reference screenshot */}
+      {/* Top Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
           Team Lead Management
@@ -232,24 +240,27 @@ function AdminTeamLeadsPage() {
         <div className="flex items-center gap-2.5">
           <Button
             type="button"
-            size="sm"
+            variant={isSearchOpen ? "default" : "outline"}
             onClick={() => setIsSearchOpen((v) => !v)}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-2xs"
+            className={`font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs transition-all ${
+              isSearchOpen
+                ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                : "border-slate-300 text-slate-700 hover:bg-slate-50"
+            }`}
           >
             <Search className="size-3.5 me-1.5" /> Search
           </Button>
           <Button
             type="button"
-            size="sm"
+            variant="outline"
             onClick={handleExportCsv}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-2xs"
+            className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs"
           >
-            <Upload className="size-3.5 me-1.5" /> Export
+            <Download className="size-3.5 me-1.5" /> Export
           </Button>
           <Button
             asChild
-            size="sm"
-            className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-2xs"
+            className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 sm:h-10 px-5 rounded-xl shadow-sm"
           >
             <Link to="/admin/team-leads/create">
               <Plus className="size-3.5 me-1.5" /> Add New Team Lead
@@ -262,58 +273,45 @@ function AdminTeamLeadsPage() {
       {isSearchOpen && (
         <Card className="p-4 sm:p-5 bg-white border border-slate-200/80 rounded-2xl shadow-xs transition-all animate-in fade-in-50 duration-200">
           <form onSubmit={handleApplyFilter} className="space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase tracking-wide">
-                <Filter className="size-3.5 text-cyan-600" /> Filter Team Leads
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsSearchOpen(false)}
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold"
-              >
-                ✕ Close
-              </button>
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               <div className="space-y-1">
-                <Label className="text-[11px] font-semibold text-slate-600">Search Name</Label>
+                <Label className="text-xs font-semibold text-slate-600">Search Name</Label>
                 <Input
                   value={searchName}
                   onChange={(e) => setSearchName(e.target.value)}
-                  placeholder="e.g. Hammett Pratt"
-                  className="h-9 text-xs bg-slate-50 border-slate-200"
+                  placeholder="Search Name"
+                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-[11px] font-semibold text-slate-600">E-mail</Label>
+                <Label className="text-xs font-semibold text-slate-600">Search E-mail</Label>
                 <Input
                   value={searchEmail}
                   onChange={(e) => setSearchEmail(e.target.value)}
-                  placeholder="e.g. libyqypy@yopmail.com"
-                  className="h-9 text-xs bg-slate-50 border-slate-200"
+                  placeholder="Search E-mail"
+                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-[11px] font-semibold text-slate-600">Phone Number</Label>
+                <Label className="text-xs font-semibold text-slate-600">Search Phone Number</Label>
                 <Input
                   value={searchPhone}
                   onChange={(e) => setSearchPhone(e.target.value)}
-                  placeholder="e.g. 4799738345"
-                  className="h-9 text-xs bg-slate-50 border-slate-200"
+                  placeholder="Search Phone Number"
+                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-[11px] font-semibold text-slate-600">Company</Label>
+                <Label className="text-xs font-semibold text-slate-600">Company</Label>
                 <Select value={searchCompanyId} onValueChange={setSearchCompanyId}>
-                  <SelectTrigger className="h-9 text-xs bg-slate-50 border-slate-200">
+                  <SelectTrigger className="h-10 text-xs bg-white border-slate-200 rounded-lg">
                     <SelectValue placeholder="All Companies" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all" className="text-xs">All Companies</SelectItem>
+                    <SelectItem value="all" className="text-xs font-semibold">All Companies</SelectItem>
                     {companies.map((c) => (
                       <SelectItem key={c.id} value={c.id} className="text-xs">
                         {c.name}
@@ -324,17 +322,17 @@ function AdminTeamLeadsPage() {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-[11px] font-semibold text-slate-600">Status</Label>
+                <Label className="text-xs font-semibold text-slate-600">Status</Label>
                 <Select value={searchStatus} onValueChange={setSearchStatus}>
-                  <SelectTrigger className="h-9 text-xs bg-slate-50 border-slate-200">
-                    <SelectValue placeholder="All Status" />
+                  <SelectTrigger className="h-10 text-xs bg-white border-slate-200 rounded-lg">
+                    <SelectValue placeholder="Select Status (All)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all" className="text-xs">All Status</SelectItem>
-                    <SelectItem value="Activated" className="text-xs text-emerald-600 font-semibold">
+                    <SelectItem value="all" className="text-xs font-semibold">Select Status (All)</SelectItem>
+                    <SelectItem value="Activated" className="text-xs text-emerald-600 font-bold">
                       Activated
                     </SelectItem>
-                    <SelectItem value="Deactivated" className="text-xs text-rose-600 font-semibold">
+                    <SelectItem value="Deactivated" className="text-xs text-rose-600 font-bold">
                       Deactivated
                     </SelectItem>
                   </SelectContent>
@@ -342,22 +340,22 @@ function AdminTeamLeadsPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleResetFilter}
-                className="h-8 text-xs font-semibold"
+                className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
               >
-                <RotateCcw className="size-3 me-1" /> Reset
+                <RotateCcw className="size-3.5 me-1.5" /> Reset
               </Button>
               <Button
                 type="submit"
                 size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold h-8 text-xs px-4"
+                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
               >
-                <Search className="size-3 me-1" /> Filter
+                <Filter className="size-3.5 me-1.5" /> Filter
               </Button>
             </div>
           </form>
@@ -533,10 +531,9 @@ function AdminTeamLeadsPage() {
                         {formattedDate}
                       </td>
 
-                      {/* 8. Action (6 Persistent Action Buttons) */}
-                      <td className="px-2 py-3 text-center align-middle">
-                        <div className="inline-grid grid-cols-2 gap-x-2.5 gap-y-2 place-items-center">
-                          {/* 1. Toggle Status (Red X / Green Check) */}
+                      {/* 8. Action (Horizontal Row) */}
+                      <td className="px-3 py-3.5 text-center align-middle">
+                        <div className="flex items-center justify-center gap-2">
                           <button
                             type="button"
                             onClick={() => handleOpenAction(lead, "toggle_status")}
@@ -549,56 +546,51 @@ function AdminTeamLeadsPage() {
                               <Check className="size-4 text-emerald-500 stroke-[2.5]" />
                             )}
                           </button>
-
-                          {/* 2. Edit Profile */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(lead, "edit")}
+                          <Link
+                            to="/admin/team-leads/edit"
+                            search={{ id: lead.id }}
                             title="Edit Team Lead"
-                            className="text-blue-600 hover:scale-125 transition-transform"
+                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
                           >
-                            <Sliders className="size-4 text-blue-600 stroke-[2.5]" />
-                          </button>
-
-                          {/* 3. Info Details */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(lead, "info")}
-                            title="Team Lead Details & History"
-                            className="text-blue-500 hover:scale-125 transition-transform"
-                          >
-                            <Eye className="size-4 text-blue-500 stroke-[2.5]" />
-                          </button>
-
-                          {/* 4. Reset Password */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(lead, "password")}
-                            title="Reset Password"
-                            className="text-teal-500 hover:scale-125 transition-transform"
-                          >
-                            <Lock className="size-4 text-teal-500 stroke-[2.5]" />
-                          </button>
-
-                          {/* 5. Delete Team Lead */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(lead, "delete")}
-                            title="Delete Team Lead"
-                            className="text-rose-500 hover:scale-125 transition-transform"
-                          >
-                            <Trash2 className="size-4 text-rose-500 stroke-[2.5]" />
-                          </button>
-
-                          {/* 6. Send Credentials */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(lead, "send_credentials")}
-                            title="Send Login Credentials"
-                            className="text-slate-800 hover:scale-125 transition-transform"
-                          >
-                            <Send className="size-4 text-slate-800 stroke-[2.5]" />
-                          </button>
+                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
+                          </Link>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                title="More actions"
+                                className="text-slate-600 hover:scale-125 transition-transform p-0.5"
+                              >
+                                <MoreVertical className="size-4 text-slate-600 stroke-[2.5]" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 bg-white border-slate-200">
+                              <DropdownMenuItem
+                                onClick={() => handleOpenAction(lead, "info")}
+                                className="text-xs font-medium cursor-pointer"
+                              >
+                                <Eye className="size-3.5 me-2 text-cyan-600" /> Team Lead Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleOpenAction(lead, "password")}
+                                className="text-xs font-medium cursor-pointer"
+                              >
+                                <Lock className="size-3.5 me-2 text-teal-600" /> Reset Password
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleOpenAction(lead, "send_credentials")}
+                                className="text-xs font-medium cursor-pointer"
+                              >
+                                <Send className="size-3.5 me-2 text-indigo-600" /> Send Credentials
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleOpenAction(lead, "delete")}
+                                className="text-xs font-medium text-rose-600 hover:text-rose-700 cursor-pointer"
+                              >
+                                <Trash2 className="size-3.5 me-2 text-rose-600" /> Delete Team Lead
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>

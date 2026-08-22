@@ -79,6 +79,7 @@ export interface AdminCompany {
 export interface AdminProfessional {
   id: string;
   name: string;
+  fullName?: string;
   email: string;
   phone: string;
   companyId: string;
@@ -88,9 +89,9 @@ export interface AdminProfessional {
   status: "Activated" | "Deactivated";
   registeredOn: string;
   rating: number;
-  materials: string[];
-  weekSlots: { day: string; enabled: boolean; start: string; end: string }[];
-  documents: ComplianceDocument[];
+  materials?: string[];
+  weekSlots?: { day: string; enabled: boolean; start: string; end: string }[];
+  documents?: ComplianceDocument[];
   photoUrl?: string;
 }
 
@@ -500,7 +501,53 @@ export const INITIAL_LISTINGS: AdminListing[] = [
 ];
 
 const INITIAL_COMPANIES: AdminCompany[] = [];
-const INITIAL_PROFESSIONALS: AdminProfessional[] = [];
+const INITIAL_PROFESSIONALS: AdminProfessional[] = [
+  {
+    id: "pro-101",
+    name: "Tasha Mcdonald",
+    fullName: "Tasha Mcdonald",
+    email: "kucarubog@yopmail.com",
+    phone: "4545454545",
+    companyId: "comp-dabas",
+    companyName: "Dabas Beauty Center",
+    city: "Dubai",
+    status: "Activated",
+    isPreferred: true,
+    rating: 4.9,
+    registeredOn: "08-04-2026 6:38 PM",
+    documents: [],
+  },
+  {
+    id: "pro-102",
+    name: "Karim Al-Mansoor",
+    fullName: "Karim Al-Mansoor",
+    email: "karim.m@serviceplus.ae",
+    phone: "+971 50 987 6543",
+    companyId: "comp-dabas",
+    companyName: "Dabas Beauty Center",
+    city: "Abu Dhabi",
+    status: "Activated",
+    isPreferred: false,
+    rating: 4.8,
+    registeredOn: "08-04-2026 6:38 PM",
+    documents: [],
+  },
+  {
+    id: "pro-103",
+    name: "Elena Rostova",
+    fullName: "Elena Rostova",
+    email: "elena.r@serviceplus.ae",
+    phone: "+971 52 445 6789",
+    companyId: "comp-1",
+    companyName: "ServicePlus Network",
+    city: "Dubai",
+    status: "Activated",
+    isPreferred: false,
+    rating: 5.0,
+    registeredOn: "08-02-2026 11:20 AM",
+    documents: [],
+  },
+];
 const INITIAL_TEAM_LEADS: AdminTeamLead[] = [];
 const INITIAL_SUPERVISORS: AdminSupervisor[] = [];
 const INITIAL_USERS: AdminUser[] = [];
@@ -623,7 +670,10 @@ function saveToStorage<T>(key: string, data: T): void {
 
 export const AdminDataStore = {
   // Users
-  getUsers: (): AdminUser[] => getFromStorage("users", INITIAL_USERS),
+  getUsers: (): AdminUser[] => {
+    const raw = getFromStorage("users", INITIAL_USERS);
+    return raw.filter((u) => u.email !== "guest@serviceplus.ae" && u.fullName?.toLowerCase() !== "guest" && u.fullName !== "Guest Customer");
+  },
   saveUsers: (users: AdminUser[]) => saveToStorage("users", users),
   addUser: (user: Omit<AdminUser, "id" | "registeredOn" | "createdAt">): AdminUser => {
     const users = AdminDataStore.getUsers();
@@ -1014,7 +1064,16 @@ export const AdminDataStore = {
   },
 
   // Categories
-  getCategories: (): AdminCategory[] => getFromStorage("categories", INITIAL_CATEGORIES),
+  getCategories: (): AdminCategory[] => {
+    const list = getFromStorage("categories", INITIAL_CATEGORIES);
+    return list.map((c) => {
+      const copy = { ...c };
+      delete copy.description;
+      delete copy.description_ar;
+      delete copy.descriptionAr;
+      return copy;
+    });
+  },
   saveCategories: (categories: AdminCategory[]) => saveToStorage("categories", categories),
   addCategory: (cat: Record<string, any>): AdminCategory => {
     const list = AdminDataStore.getCategories();
@@ -1024,9 +1083,6 @@ export const AdminDataStore = {
       name_ar: cat.name_ar || cat.nameAr,
       nameAr: cat.name_ar || cat.nameAr,
       slug: cat.slug || (cat.name || "").toLowerCase().replace(/\s+/g, "-"),
-      description: cat.description,
-      description_ar: cat.description_ar || cat.descriptionAr,
-      descriptionAr: cat.description_ar || cat.descriptionAr,
       image_url: cat.image_url || cat.imageUrl,
       imageUrl: cat.image_url || cat.imageUrl,
       icon: cat.icon || "Sparkles",
@@ -1050,17 +1106,17 @@ export const AdminDataStore = {
       id: existing.id,
       name: patch.name !== undefined ? patch.name : existing.name,
       name_ar: patch.name_ar !== undefined ? patch.name_ar : (patch.nameAr !== undefined ? patch.nameAr : existing.name_ar),
-      nameAr: patch.name_ar !== undefined ? patch.name_ar : (patch.nameAr !== undefined ? patch.nameAr : existing.nameAr),
-      description: patch.description !== undefined ? patch.description : existing.description,
-      description_ar: patch.description_ar !== undefined ? patch.description_ar : (patch.descriptionAr !== undefined ? patch.descriptionAr : existing.description_ar),
-      descriptionAr: patch.description_ar !== undefined ? patch.description_ar : (patch.descriptionAr !== undefined ? patch.descriptionAr : existing.descriptionAr),
-      image_url: patch.image_url !== undefined ? patch.image_url : (patch.imageUrl !== undefined ? patch.imageUrl : existing.image_url),
-      imageUrl: patch.image_url !== undefined ? patch.image_url : (patch.imageUrl !== undefined ? patch.imageUrl : existing.imageUrl),
+      nameAr: patch.nameAr !== undefined ? patch.nameAr : (patch.name_ar !== undefined ? patch.name_ar : existing.nameAr),
+      image_url: patch.image_url !== undefined ? patch.image_url : (patch.imageUrl !== undefined ? patch.imageUrl : (patch.iconUrl !== undefined ? patch.iconUrl : existing.image_url)),
+      imageUrl: patch.image_url !== undefined ? patch.image_url : (patch.imageUrl !== undefined ? patch.imageUrl : (patch.iconUrl !== undefined ? patch.iconUrl : existing.imageUrl)),
       is_active: patch.is_active !== undefined ? patch.is_active : (patch.isActive !== undefined ? patch.isActive : existing.is_active),
       isActive: patch.is_active !== undefined ? patch.is_active : (patch.isActive !== undefined ? patch.isActive : existing.isActive),
       sort_order: patch.sort_order !== undefined ? patch.sort_order : (patch.sortOrder !== undefined ? patch.sortOrder : existing.sort_order),
       sortOrder: patch.sort_order !== undefined ? patch.sort_order : (patch.sortOrder !== undefined ? patch.sortOrder : existing.sortOrder),
     };
+    delete updated.description;
+    delete updated.description_ar;
+    delete updated.descriptionAr;
     list[idx] = updated;
     AdminDataStore.saveCategories(list);
     return updated;

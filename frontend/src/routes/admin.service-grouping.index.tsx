@@ -13,7 +13,7 @@ import { Input } from "@/frontend/components/ui/input";
 import { Card } from "@/frontend/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/frontend/components/ui/dialog";
 import { Label } from "@/frontend/components/ui/label";
-import { Boxes, Layers, Package, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Boxes, Layers, Package, Plus, Sliders, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/service-grouping/")({ component: AdminServiceGroupingPage });
@@ -129,15 +129,24 @@ function AdminServiceGroupingPage() {
 
               <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-[11px] text-slate-400 font-semibold">{bundle.items?.length || 2} Included Services</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(bundle.id, bundle.name)}
-                  className="h-7 text-xs text-rose-600 hover:bg-rose-50 px-2"
-                >
-                  <Trash2 className="size-3.5 me-1" /> Remove
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/admin/service-grouping/edit"
+                    search={{ id: bundle.id }}
+                    className="inline-flex items-center justify-center h-7 text-xs text-cyan-700 hover:bg-cyan-50 px-2 rounded-md font-semibold transition-colors"
+                  >
+                    <Sliders className="size-3.5 me-1" /> Edit
+                  </Link>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(bundle.id, bundle.name)}
+                    className="h-7 text-xs text-rose-600 hover:bg-rose-50 px-2"
+                  >
+                    <Trash2 className="size-3.5 me-1" /> Remove
+                  </Button>
+                </div>
               </div>
             </Card>
           ))

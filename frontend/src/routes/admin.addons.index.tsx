@@ -31,16 +31,26 @@ import {
   DialogDescription,
 } from "@/frontend/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/frontend/components/ui/dropdown-menu";
+import {
   ArrowDown,
   ArrowUp,
+  Check,
+  ChevronsUpDown,
   Edit,
   Filter,
   Layers,
   Loader2,
   Menu,
+  MoreVertical,
   Plus,
   RotateCcw,
   Search,
+  Sliders,
   Trash2,
   Upload,
   X,
@@ -386,21 +396,24 @@ function AdminAddons() {
           <div className="flex items-center gap-2.5">
             <Button
               type="button"
-              size="sm"
+              variant={isSearchOpen ? "default" : "outline"}
               onClick={() => setIsSearchOpen((v) => !v)}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
+              className={`font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs transition-all ${
+                isSearchOpen
+                  ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                  : "border-slate-300 text-slate-700 hover:bg-slate-50"
+              }`}
             >
               <Search className="size-3.5 me-1.5" /> Search
             </Button>
-            <Link to="/admin/addons/create">
-              <Button
-                type="button"
-                size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
-              >
+            <Button
+              asChild
+              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 sm:h-10 px-5 rounded-xl shadow-sm"
+            >
+              <Link to="/admin/addons/create">
                 <Plus className="size-3.5 me-1.5" /> Add Add-on
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -493,12 +506,36 @@ function AdminAddons() {
               <tr>
                 <th className="px-3 py-3 w-14 text-center">#</th>
                 <th className="px-3 py-3 w-16 text-center">Image</th>
-                <th className="px-3 py-3">Add-on Item</th>
-                <th className="px-3 py-3">Price</th>
-                <th className="px-3 py-3 text-center">Duration</th>
-                <th className="px-3 py-3 text-center">Offered With</th>
-                <th className="px-3 py-3 text-center w-28">Status</th>
-                <th className="px-3 py-3 text-right w-36">Actions</th>
+                <th className="px-3 py-3">
+                  <div className="flex items-center gap-1">
+                    Add-on Item <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3">
+                  <div className="flex items-center gap-1">
+                    Price <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    Duration <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    Offered With <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center w-28">
+                  <div className="flex items-center justify-center gap-1">
+                    Status <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center w-24">
+                  <div className="flex items-center justify-center gap-1 text-slate-600 font-bold">
+                    Action <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -628,51 +665,71 @@ function AdminAddons() {
                         </button>
                       </td>
 
-                      {/* Status Column with Soft Pill Badge */}
+                      {/* Status Column */}
                       <td className="px-3 py-3.5 text-center whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleStatus(a)}
-                          className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold transition-all hover:opacity-85 ${
+                        <span
+                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
                             isActive
-                              ? "bg-emerald-100/70 text-emerald-600 hover:bg-emerald-100"
-                              : "bg-rose-100/70 text-rose-600 hover:bg-rose-100"
+                              ? "bg-emerald-100/70 text-emerald-600"
+                              : "bg-rose-100/70 text-rose-600"
                           }`}
                         >
                           {isActive ? "Activated" : "Deactivated"}
-                        </button>
+                        </span>
                       </td>
 
-                      {/* Action Buttons */}
-                      <td className="px-3 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Edit */}
-                          <Button
+                      {/* Action Horizontal Row */}
+                      <td className="px-3 py-3.5 text-center align-middle">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
                             type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenEdit(a)}
+                            onClick={() => handleToggleStatus(a)}
+                            title={isActive ? "Deactivate Add-on" : "Activate Add-on"}
+                            className="text-rose-500 hover:scale-125 transition-transform"
+                          >
+                            {isActive ? (
+                              <X className="size-4 text-rose-500 stroke-[2.5]" />
+                            ) : (
+                              <Check className="size-4 text-emerald-500 stroke-[2.5]" />
+                            )}
+                          </button>
+                          <Link
+                            to="/admin/addons/edit"
+                            search={{ id: a.id }}
                             title="Edit Add-on"
-                            className="size-8 p-0 text-slate-500 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg"
+                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
                           >
-                            <Edit className="size-3.5" />
-                          </Button>
-
-                          {/* Delete */}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              if (confirm(`Are you sure you want to delete "${a.name}"?`)) {
-                                delMutation.mutate(a.id);
-                              }
-                            }}
-                            title="Delete Add-on"
-                            className="size-8 p-0 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg"
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
+                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
+                          </Link>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                title="More actions"
+                                className="text-slate-600 hover:scale-125 transition-transform p-0.5"
+                              >
+                                <MoreVertical className="size-4 text-slate-600 stroke-[2.5]" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 bg-white border-slate-200">
+                              <DropdownMenuItem
+                                onClick={() => setLinking(a)}
+                                className="text-xs font-medium cursor-pointer"
+                              >
+                                <Layers className="size-3.5 me-2 text-cyan-600" /> Link Services
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  if (confirm(`Are you sure you want to delete "${a.name}"?`)) {
+                                    delMutation.mutate(a.id);
+                                  }
+                                }}
+                                className="text-xs font-medium text-rose-600 hover:text-rose-700 cursor-pointer"
+                              >
+                                <Trash2 className="size-3.5 me-2 text-rose-600" /> Delete Add-on
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>

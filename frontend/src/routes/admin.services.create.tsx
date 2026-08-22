@@ -31,7 +31,7 @@ function AddServicePage() {
   const queryClient = useQueryClient();
   const { data: catalogData } = useAdminQuery("catalog", getAdminCatalog);
   const categories = ((catalogData?.categories ?? []) as any[]).filter(
-    (c) => c.is_active ?? c.isActive ?? true,
+    (c) => c.status !== "Deactivated" && c.is_active !== false && c.isActive !== false,
   );
 
   const [activeTab, setActiveTab] = useState<"en" | "ar">("en");

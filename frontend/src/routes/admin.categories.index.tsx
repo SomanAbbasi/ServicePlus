@@ -38,6 +38,7 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
+  ChevronsUpDown,
   Edit,
   Filter,
   Layers,
@@ -48,6 +49,7 @@ import {
   RotateCcw,
   Save,
   Search,
+  Sliders,
   Sparkles,
   Trash2,
   Upload,
@@ -358,21 +360,24 @@ function AdminCategories() {
           <div className="flex items-center gap-2.5">
             <Button
               type="button"
-              size="sm"
+              variant={isSearchOpen ? "default" : "outline"}
               onClick={() => setIsSearchOpen((v) => !v)}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
+              className={`font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs transition-all ${
+                isSearchOpen
+                  ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                  : "border-slate-300 text-slate-700 hover:bg-slate-50"
+              }`}
             >
               <Search className="size-3.5 me-1.5" /> Search
             </Button>
-            <Link to="/admin/categories/create">
-              <Button
-                type="button"
-                size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
-              >
+            <Button
+              asChild
+              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 sm:h-10 px-5 rounded-xl shadow-sm"
+            >
+              <Link to="/admin/categories/create">
                 <Plus className="size-3.5 me-1.5" /> Add Category
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -464,10 +469,22 @@ function AdminCategories() {
             <thead className="text-slate-500 font-semibold border-b border-slate-200">
               <tr>
                 <th className="px-3 py-3 w-14 text-center">#</th>
-                <th className="px-3 py-3 w-16">Image</th>
-                <th className="px-3 py-3">Name</th>
-                <th className="px-3 py-3 text-center w-28">Status</th>
-                <th className="px-3 py-3 text-center w-24">Action</th>
+                <th className="px-3 py-3 w-16 text-center">Image</th>
+                <th className="px-3 py-3">
+                  <div className="flex items-center gap-1">
+                    Name <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center w-28">
+                  <div className="flex items-center justify-center gap-1">
+                    Status <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center w-24">
+                  <div className="flex items-center justify-center gap-1 text-slate-600 font-bold">
+                    Action <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -595,14 +612,14 @@ function AdminCategories() {
                           </button>
 
                           {/* Edit button */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEdit(c)}
+                          <Link
+                            to="/admin/categories/edit"
+                            search={{ id: c.id }}
                             title="Edit Category"
-                            className="text-cyan-600 hover:scale-125 transition-transform"
+                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
                           >
-                            <Edit className="size-4 text-cyan-600 stroke-[2.5]" />
-                          </button>
+                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
+                          </Link>
 
                           {/* More menu (Manage Services, Delete) */}
                           <DropdownMenu>

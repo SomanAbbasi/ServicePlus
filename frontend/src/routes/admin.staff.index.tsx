@@ -15,13 +15,22 @@ import { Card } from "@/frontend/components/ui/card";
 import { Label } from "@/frontend/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/frontend/components/ui/dropdown-menu";
+import {
   Check,
+  ChevronsUpDown,
   Download,
   Filter,
+  MoreVertical,
   Plus,
   RotateCcw,
   Search,
   Send,
+  Sliders,
   Trash2,
   X,
 } from "lucide-react";
@@ -55,6 +64,17 @@ function AdminStaffPage() {
 
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<string>("registeredOn");
+  const [sortAsc, setSortAsc] = useState(false);
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortAsc(!sortAsc);
+    } else {
+      setSortField(field);
+      setSortAsc(true);
+    }
+  };
 
   const handleApplyFilter = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -85,7 +105,7 @@ function AdminStaffPage() {
   };
 
   const filteredStaff = useMemo(() => {
-    return staffList.filter((s) => {
+    const list = staffList.filter((s) => {
       if (appliedFilters.name && !(s.name || "").toLowerCase().includes(appliedFilters.name)) return false;
       if (appliedFilters.email && !(s.email || "").toLowerCase().includes(appliedFilters.email)) return false;
       if (appliedFilters.phone && !(s.phone || "").toLowerCase().includes(appliedFilters.phone)) return false;
@@ -93,7 +113,17 @@ function AdminStaffPage() {
       if (appliedFilters.roleId !== "all" && s.roleId !== appliedFilters.roleId) return false;
       return true;
     });
-  }, [staffList, appliedFilters]);
+
+    return [...list].sort((a: any, b: any) => {
+      let aVal = a[sortField] ?? "";
+      let bVal = b[sortField] ?? "";
+      if (typeof aVal === "string") aVal = aVal.toLowerCase();
+      if (typeof bVal === "string") bVal = bVal.toLowerCase();
+      if (aVal < bVal) return sortAsc ? -1 : 1;
+      if (aVal > bVal) return sortAsc ? 1 : -1;
+      return 0;
+    });
+  }, [staffList, appliedFilters, sortField, sortAsc]);
 
   const totalPages = Math.ceil(filteredStaff.length / pageSize) || 1;
   const paginatedStaff = useMemo(() => {
@@ -302,16 +332,62 @@ function AdminStaffPage() {
 
         <div className="overflow-x-auto mt-3">
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-50/80 text-slate-600 font-bold border-b border-slate-200">
+            <thead className="text-slate-500 font-semibold border-b border-slate-200">
               <tr>
-                <th className="px-3 py-3 w-10 text-center text-slate-400">#</th>
-                <th className="px-4 py-3 font-bold text-slate-700">Name</th>
-                <th className="px-4 py-3 font-bold text-slate-700">E-mail</th>
-                <th className="px-4 py-3 font-bold text-slate-700">Phone Number</th>
-                <th className="px-4 py-3 font-bold text-slate-700">Role / Designation</th>
-                <th className="px-3 py-3 font-bold text-slate-700 text-center">Status</th>
-                <th className="px-4 py-3 font-bold text-slate-700">Registered On</th>
-                <th className="px-4 py-3 font-bold text-slate-700 text-center w-40">Actions</th>
+                <th className="px-3 py-3 w-10 text-center">#</th>
+                <th
+                  className="px-4 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  onClick={() => handleSort("fullName")}
+                >
+                  <div className="flex items-center gap-1">
+                    Name <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th
+                  className="px-4 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  onClick={() => handleSort("email")}
+                >
+                  <div className="flex items-center gap-1">
+                    E-mail <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th
+                  className="px-4 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  onClick={() => handleSort("phone")}
+                >
+                  <div className="flex items-center gap-1">
+                    Phone Number <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th
+                  className="px-4 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  onClick={() => handleSort("roleName")}
+                >
+                  <div className="flex items-center gap-1">
+                    Role / Designation <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th
+                  className="px-3 py-3 text-center cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  onClick={() => handleSort("status")}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    Status <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th
+                  className="px-4 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  onClick={() => handleSort("registeredOn")}
+                >
+                  <div className="flex items-center gap-1">
+                    Registered On <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-center w-16">
+                  <div className="flex items-center justify-center gap-1 text-slate-600 font-bold">
+                    Action <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -355,12 +431,12 @@ function AdminStaffPage() {
                           {roleDisplayName}
                         </span>
                       </td>
-                      <td className="px-3 py-3.5 text-center">
+                      <td className="px-3 py-3.5 text-center whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
                             isActivated
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : "bg-rose-50 text-rose-700 border border-rose-200"
+                              ? "bg-emerald-100/70 text-emerald-600"
+                              : "bg-rose-100/70 text-rose-600"
                           }`}
                         >
                           {staff.status || "Activated"}
@@ -369,32 +445,53 @@ function AdminStaffPage() {
                       <td className="px-4 py-3.5 text-slate-500 text-[11px]">
                         {staff.registeredOn || staff.createdAt?.slice(0, 10) || "—"}
                       </td>
-                      <td className="px-2 py-3 text-center align-middle">
-                        <div className="inline-grid grid-cols-2 gap-x-2.5 gap-y-1.5 place-items-center">
+                      <td className="px-3 py-3.5 text-center align-middle">
+                        <div className="flex items-center justify-center gap-2">
                           <button
                             type="button"
                             onClick={() => handleToggleStatus(staff)}
                             title={isActivated ? "Deactivate Staff" : "Activate Staff"}
                             className="text-rose-500 hover:scale-125 transition-transform"
                           >
-                            {isActivated ? <X className="size-4 text-rose-500 stroke-[2.5]" /> : <Check className="size-4 text-emerald-500 stroke-[2.5]" />}
+                            {isActivated ? (
+                              <X className="size-4 text-rose-500 stroke-[2.5]" />
+                            ) : (
+                              <Check className="size-4 text-emerald-500 stroke-[2.5]" />
+                            )}
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => handleSendCredentials(staff)}
-                            title="Send Login Credentials"
-                            className="text-slate-900 hover:scale-125 transition-transform"
+                          <Link
+                            to="/admin/staff/edit"
+                            search={{ id: staff.id }}
+                            title="Edit Staff Member"
+                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
                           >
-                            <Send className="size-4 text-slate-900 stroke-[2.5]" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteStaff(staff.id)}
-                            title="Delete Staff"
-                            className="text-rose-500 hover:scale-125 transition-transform col-span-2"
-                          >
-                            <Trash2 className="size-4 text-rose-500 stroke-[2.5]" />
-                          </button>
+                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
+                          </Link>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                title="More actions"
+                                className="text-slate-600 hover:scale-125 transition-transform p-0.5"
+                              >
+                                <MoreVertical className="size-4 text-slate-600 stroke-[2.5]" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 bg-white border-slate-200">
+                              <DropdownMenuItem
+                                onClick={() => handleSendCredentials(staff)}
+                                className="text-xs font-medium cursor-pointer"
+                              >
+                                <Send className="size-3.5 me-2 text-indigo-600" /> Send Credentials
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteStaff(staff.id)}
+                                className="text-xs font-medium text-rose-600 hover:text-rose-700 cursor-pointer"
+                              >
+                                <Trash2 className="size-3.5 me-2 text-rose-600" /> Delete Staff
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>

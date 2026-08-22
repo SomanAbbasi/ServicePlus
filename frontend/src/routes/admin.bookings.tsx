@@ -1,539 +1,436 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  assignProfessional,
-  getAdminBookingDetail,
-  getAdminBookings,
-  getAdminProfessionals,
-  setBookingStatus,
-} from "@/frontend/lib/api-services";
-import { ExternalLink, MapPin, Package, Sparkles } from "lucide-react";
-import { resolveImageUrl } from "@/frontend/lib/api-client";
-type BookingStatus = string;
-
-
-import {
-  EmptyState,
-  ErrorState,
-  PageHeader,
-  StatusBadge,
-  TableSkeleton,
-} from "@/frontend/components/admin/shell";
-import { downloadCsv } from "@/frontend/components/admin/shell";
+import { getAdminBookings, getAdminProfessionals, setBookingStatus, assignProfessional, getAdminBookingDetail } from "@/frontend/lib/api-services";
+import { StatusBadge, TableSkeleton, ErrorState, downloadCsv } from "@/frontend/components/admin/shell";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
+import { AdminDateInput } from "@/frontend/components/admin/AdminDateInput";
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { Card } from "@/frontend/components/ui/card";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/frontend/components/ui/sheet";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/frontend/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
 import { formatMoney, num } from "@/frontend/lib/money";
-
-export const Route = createFileRoute("/admin/bookings")({ component: AdminBookings });
-
-const STATUSES: BookingStatus[] = [
-  "DRAFT",
-  "PENDING",
-  "CONFIRMED",
-  "ASSIGNING",
-  "ASSIGNED",
-  "EN_ROUTE",
-  "ARRIVED",
-  "IN_PROGRESS",
-  "COMPLETED",
-  "CANCELLED",
-  "RESCHEDULED",
-  "PAYMENT_FAILED",
-];
-
-const ACTION_STATUSES: BookingStatus[] = [
-  "CONFIRMED",
-  "COMPLETED",
-  "CANCELLED",
-];
-
-const PAGE_SIZE = 20;
-
-function AdminBookings() {
-  const qc = useQueryClient();
-  const { data, isPending, isError } = useAdminQuery("bookings", getAdminBookings);
-  const { data: pros } = useAdminQuery("professionals", getAdminProfessionals);
-  const [term, setTerm] = useState("");
-  const [status, setStatus] = useState("");
-  const [date, setDate] = useState("");
-  const [page, setPage] = useState(0);
-  const [openId, setOpenId] = useState<string | null>(null);
-
-  const statusMutation = useMutation({
-    mutationFn: (vars: { id: string; status: BookingStatus }) =>
-      setBookingStatus(vars.id, vars.status),
-    onSuccess: () => {
-      toast.success("Booking updated");
-      void qc.invalidateQueries({ queryKey: ["admin"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const assignMutation = useMutation({
-    mutationFn: (vars: { id: string; professional_id: string | null }) =>
-      assignProfessional(vars.id, vars.professional_id),
-    onSuccess: () => {
-      toast.success("Professional assigned");
-      void qc.invalidateQueries({ queryKey: ["admin"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const rows = useMemo(() => {
-    const list = (data ?? []) as unknown as AnyRow[];
-    const t = term.trim().toLowerCase();
-    return list.filter((b) => {
-      if (status && b.status !== status) return false;
-      if (date && b.scheduled_date !== date) return false;
-      if (!t) return true;
-      return [
-        b.booking_number,
-        b.service?.name,
-        b.profile?.full_name,
-        b.guest_phone,
-        b.profile?.phone,
-      ]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(t));
-    });
-  }, [data, term, status, date]);
-
-  const pageRows = rows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
-
-  if (isError) return <ErrorState />;
-
-  return (
-    <>
-      <PageHeader
-        title="Bookings"
-        description={`${rows.length} bookings`}
-        actions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              downloadCsv(
-                "bookings.csv",
-                rows.map((b) => ({
-                  booking: b.booking_number,
-                  service: b.service?.name ?? "",
-                  customer: b.profile?.full_name ?? b.guest_phone ?? "",
-                  date: b.scheduled_date ?? "",
-                  status: b.status,
-                  total: b.total,
-                })),
-              )
-            }
-          >
-            Export CSV
-          </Button>
-        }
-      />
-
-      <Card className="mb-4 flex flex-wrap items-center gap-2 p-3">
-        <Input
-          value={term}
-          onChange={(e) => {
-            setTerm(e.target.value);
-            setPage(0);
-          }}
-          placeholder="Search booking, customer or service"
-          className="w-full sm:w-64"
-        />
-        <select
-          value={status}
-          onChange={(e) => {
-            setStatus(e.target.value);
-            setPage(0);
-          }}
-          className="h-9 rounded-md border border-input bg-transparent px-2 text-sm"
-        >
-          <option value="">All statuses</option>
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <Input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="w-auto"
-        />
-        {(term || status || date) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setTerm("");
-              setStatus("");
-              setDate("");
-            }}
-          >
-            Clear
-          </Button>
-        )}
-      </Card>
-
-      <Card className="p-2">
-        {isPending ? (
-          <TableSkeleton rows={8} />
-        ) : rows.length ? (
-          <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Booking</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Service</TableHead>
-                  <TableHead>Schedule</TableHead>
-                  <TableHead>Professional</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pageRows.map((b) => (
-                  <TableRow key={b.id} className="cursor-pointer" onClick={() => setOpenId(b.id)}>
-                    <TableCell className="font-medium">{b.booking_number}</TableCell>
-                    <TableCell>{b.profile?.full_name ?? b.guest_phone ?? "Guest"}</TableCell>
-                    <TableCell>{b.service?.name ?? "—"}</TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {b.scheduled_date ?? "—"} {String(b.scheduled_start ?? "").slice(0, 5)}
-                    </TableCell>
-                    <TableCell>{b.professionals?.full_name ?? "Unassigned"}</TableCell>
-                    <TableCell>{formatMoney(num(b.total))}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={b.status} />
-                    </TableCell>
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <select
-                        value={b.status}
-                        onChange={(e) =>
-                          statusMutation.mutate({
-                            id: b.id,
-                            status: e.target.value as BookingStatus,
-                          })
-                        }
-                        className="h-8 rounded-md border border-input bg-transparent px-1 text-xs"
-                      >
-                        {Array.from(new Set([b.status, ...ACTION_STATUSES])).map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <div className="flex items-center justify-between p-3 text-sm text-muted-foreground">
-              <span>
-                {page * PAGE_SIZE + 1}–{Math.min(rows.length, (page + 1) * PAGE_SIZE)} of{" "}
-                {rows.length}
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => p - 1)}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={(page + 1) * PAGE_SIZE >= rows.length}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <EmptyState title="No bookings match these filters" />
-        )}
-      </Card>
-
-      <BookingDrawer
-        id={openId}
-        onClose={() => setOpenId(null)}
-        professionals={(pros ?? []) as unknown as AnyRow[]}
-        onAssign={(id, professional_id) => assignMutation.mutate({ id, professional_id })}
-      />
-    </>
-  );
-}
+import { cn } from "@/frontend/lib/utils";
+import { Search, Calendar, Download, RefreshCw, Filter, MapPin, Navigation, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookingDetailModal } from "@/frontend/components/admin/BookingDetailModal";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRow = any;
 
-function BookingDrawer({
-  id,
-  onClose,
-  professionals,
-  onAssign,
-}: {
-  id: string | null;
-  onClose: () => void;
-  professionals: AnyRow[];
-  onAssign: (id: string, professionalId: string | null) => void;
-}) {
-  const { data, isPending } = useQuery({
-    queryKey: ["admin", "booking", id],
-    queryFn: () => getAdminBookingDetail(id!),
-    enabled: Boolean(id),
+export const Route = createFileRoute("/admin/bookings")({ component: AdminBookings });
+
+function AdminBookings() {
+  const qc = useQueryClient();
+  const { data, isPending, isError } = useAdminQuery("bookings", getAdminBookings);
+  
+  // State for filters panel visibility
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Filter states
+  const [fServiceName, setFServiceName] = useState("");
+  const [fCategoryName, setFCategoryName] = useState("");
+  const [fBookingDate, setFBookingDate] = useState("");
+  const [fBookingNumber, setFBookingNumber] = useState("");
+  const [fArea, setFArea] = useState("");
+  const [fCompanyName, setFCompanyName] = useState("");
+  const [fSupervisor, setFSupervisor] = useState("");
+  const [fTeamLeader, setFTeamLeader] = useState("");
+  const [fProfessional, setFProfessional] = useState("");
+  const [fAutoAssign, setFAutoAssign] = useState("all");
+  const [fRescheduled, setFRescheduled] = useState("all");
+  const [fPaymentMethod, setFPaymentMethod] = useState("all");
+  const [fStartDate, setFStartDate] = useState("");
+  const [fEndDate, setFEndDate] = useState("");
+  
+  // Actually applied filters
+  const [appliedFilters, setAppliedFilters] = useState({
+    serviceName: "",
+    categoryName: "",
+    bookingDate: "",
+    bookingNumber: "",
+    area: "",
+    companyName: "",
+    supervisor: "",
+    teamLeader: "",
+    professional: "",
+    autoAssign: "all",
+    rescheduled: "all",
+    paymentMethod: "all",
+    startDate: "",
+    endDate: "",
   });
 
-  const booking = data?.booking as AnyRow;
-  const addr = booking?.address || booking?.addresses;
-  const cityObj = booking?.city || booking?.cities;
-  const lat = addr?.latitude;
-  const lng = addr?.longitude;
-  const addressParts = [
-    addr?.building,
-    addr?.unit ? `Unit ${addr.unit}` : null,
-    addr?.street,
-    cityObj?.name,
-  ].filter(Boolean);
-  const formattedAddress = addressParts.join(", ");
-  const googleMapsUrl =
-    lat && lng
-      ? `https://www.google.com/maps?q=${lat},${lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((formattedAddress || "Dubai") + ", Dubai")}`;
+  // Pagination
+  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(0);
+
+  // Modal
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  const resetFilters = () => {
+    setFServiceName("");
+    setFCategoryName("");
+    setFBookingDate("");
+    setFBookingNumber("");
+    setFArea("");
+    setFCompanyName("");
+    setFSupervisor("");
+    setFTeamLeader("");
+    setFProfessional("");
+    setFAutoAssign("all");
+    setFRescheduled("all");
+    setFPaymentMethod("all");
+    setFStartDate("");
+    setFEndDate("");
+    
+    setAppliedFilters({
+      serviceName: "",
+      categoryName: "",
+      bookingDate: "",
+      bookingNumber: "",
+      area: "",
+      companyName: "",
+      supervisor: "",
+      teamLeader: "",
+      professional: "",
+      autoAssign: "all",
+      rescheduled: "all",
+      paymentMethod: "all",
+      startDate: "",
+      endDate: "",
+    });
+    setPage(0);
+  };
+
+  const applyFilters = () => {
+    setAppliedFilters({
+      serviceName: fServiceName,
+      categoryName: fCategoryName,
+      bookingDate: fBookingDate,
+      bookingNumber: fBookingNumber,
+      area: fArea,
+      companyName: fCompanyName,
+      supervisor: fSupervisor,
+      teamLeader: fTeamLeader,
+      professional: fProfessional,
+      autoAssign: fAutoAssign,
+      rescheduled: fRescheduled,
+      paymentMethod: fPaymentMethod,
+      startDate: fStartDate,
+      endDate: fEndDate,
+    });
+    setPage(0);
+  };
+
+  const rows = useMemo(() => {
+    const list = (data ?? []) as AnyRow[];
+    return list.filter((b) => {
+      if (appliedFilters.serviceName && !b.service?.name?.toLowerCase().includes(appliedFilters.serviceName.toLowerCase())) return false;
+      if (appliedFilters.categoryName && !b.category?.name?.toLowerCase().includes(appliedFilters.categoryName.toLowerCase())) return false;
+      if (appliedFilters.bookingDate && b.scheduled_date !== appliedFilters.bookingDate) return false;
+      if (appliedFilters.bookingNumber && !b.booking_number?.toLowerCase().includes(appliedFilters.bookingNumber.toLowerCase())) return false;
+      
+      const areaMatch = b.city?.name?.toLowerCase() || b.cities?.name?.toLowerCase() || b.area?.name?.toLowerCase() || "";
+      if (appliedFilters.area && !areaMatch.includes(appliedFilters.area.toLowerCase())) return false;
+      
+      if (appliedFilters.companyName && !b.company?.name?.toLowerCase().includes(appliedFilters.companyName.toLowerCase())) return false;
+      if (appliedFilters.supervisor && !b.supervisor?.name?.toLowerCase().includes(appliedFilters.supervisor.toLowerCase())) return false;
+      if (appliedFilters.teamLeader && !b.team_leader?.name?.toLowerCase().includes(appliedFilters.teamLeader.toLowerCase())) return false;
+      if (appliedFilters.professional && !b.professionals?.full_name?.toLowerCase().includes(appliedFilters.professional.toLowerCase())) return false;
+      
+      if (appliedFilters.autoAssign !== "all") {
+        const isAuto = Boolean(b.is_auto_assign);
+        if (appliedFilters.autoAssign === "yes" && !isAuto) return false;
+        if (appliedFilters.autoAssign === "no" && isAuto) return false;
+      }
+      
+      if (appliedFilters.rescheduled !== "all") {
+        const isRescheduled = Boolean(b.is_rescheduled);
+        if (appliedFilters.rescheduled === "yes" && !isRescheduled) return false;
+        if (appliedFilters.rescheduled === "no" && isRescheduled) return false;
+      }
+
+      if (appliedFilters.paymentMethod !== "all" && b.payment_method !== appliedFilters.paymentMethod) return false;
+      
+      if (appliedFilters.startDate && b.scheduled_date && b.scheduled_date < appliedFilters.startDate) return false;
+      if (appliedFilters.endDate && b.scheduled_date && b.scheduled_date > appliedFilters.endDate) return false;
+
+      return true;
+    });
+  }, [data, appliedFilters]);
+
+  const totalPages = Math.ceil(rows.length / pageSize);
+  const pageRows = rows.slice(page * pageSize, page * pageSize + pageSize);
+
+  const handleExport = () => {
+    downloadCsv(
+      "bookings.csv",
+      rows.map((b) => ({
+        booking: b.booking_number,
+        service: b.service?.name ?? "",
+        customer: b.profile?.full_name ?? b.guest_phone ?? "",
+        date: b.scheduled_date ?? "",
+        status: b.status,
+        total: b.total,
+      }))
+    );
+  };
+
+  if (isError) return <ErrorState />;
 
   return (
-    <Sheet open={Boolean(id)} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
-        <SheetHeader>
-          <SheetTitle>{booking?.booking_number ?? "Booking"}</SheetTitle>
-        </SheetHeader>
-        {isPending || !booking || !data ? (
-          <div className="mt-4">
-            <TableSkeleton rows={6} />
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="text-sm text-slate-500 mb-1">Dashboard / Booking Management</div>
+          <h1 className="text-2xl font-extrabold text-slate-900">Booking Management</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            className="rounded-full bg-cyan-500 hover:bg-cyan-600 text-white" 
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Search className="w-4 h-4 mr-2" />
+            Search
+          </Button>
+          <Link to="/admin/calendar">
+            <Button className="rounded-full bg-amber-500 hover:bg-amber-600 text-white">
+              <Calendar className="w-4 h-4 mr-2" />
+              Calendar View
+            </Button>
+          </Link>
+          <Button className="rounded-full bg-blue-600 hover:bg-blue-700 text-white" onClick={handleExport}>
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+        </div>
+      </div>
+
+      {/* Filter Panel */}
+      {showFilters && (
+        <Card className="p-4 bg-white space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input placeholder="Service Name" value={fServiceName} onChange={e => setFServiceName(e.target.value)} />
+            <Input placeholder="Category Name" value={fCategoryName} onChange={e => setFCategoryName(e.target.value)} />
+            <AdminDateInput placeholder="Booking Date" value={fBookingDate} onChange={setFBookingDate} className="h-10" />
+            
+            <Input placeholder="Booking Number" value={fBookingNumber} onChange={e => setFBookingNumber(e.target.value)} />
+            <Input placeholder="Area" value={fArea} onChange={e => setFArea(e.target.value)} />
+            <Input placeholder="Company Name" value={fCompanyName} onChange={e => setFCompanyName(e.target.value)} />
+            
+            <Input placeholder="Supervisor Name" value={fSupervisor} onChange={e => setFSupervisor(e.target.value)} />
+            <Input placeholder="Team Leader Name" value={fTeamLeader} onChange={e => setFTeamLeader(e.target.value)} />
+            <Input placeholder="Professional Name" value={fProfessional} onChange={e => setFProfessional(e.target.value)} />
+            
+            <Select value={fAutoAssign} onValueChange={setFAutoAssign}>
+              <SelectTrigger><SelectValue placeholder="Auto Assign Preference" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Auto Assign Preference</SelectItem>
+                <SelectItem value="yes">Yes</SelectItem>
+                <SelectItem value="no">No</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={fRescheduled} onValueChange={setFRescheduled}>
+              <SelectTrigger><SelectValue placeholder="Rescheduled Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Rescheduled Status (All)</SelectItem>
+                <SelectItem value="yes">Yes</SelectItem>
+                <SelectItem value="no">No</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={fPaymentMethod} onValueChange={setFPaymentMethod}>
+              <SelectTrigger><SelectValue placeholder="Payment Method" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Payment Method (All)</SelectItem>
+                <SelectItem value="CARD">Card</SelectItem>
+                <SelectItem value="CASH">Cash</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <AdminDateInput placeholder="Start Date" value={fStartDate} onChange={setFStartDate} className="h-10" />
+            <AdminDateInput placeholder="End Date" value={fEndDate} onChange={setFEndDate} className="h-10" />
           </div>
-        ) : (
-          <div className="mt-4 space-y-5 text-sm">
-            <div className="flex items-center gap-2">
-              <StatusBadge status={booking.status} />
-              <StatusBadge status={booking.payment_status} />
-            </div>
 
-            <Field
-              label="Customer"
-              value={booking.profile?.full_name ?? booking.guest_phone ?? "Guest"}
-            />
-            <Field label="Phone" value={booking.profile?.phone ?? booking.guest_phone ?? "—"} />
-            <Field label="Service" value={booking.service?.name ?? "—"} />
-            <Field
-              label="Schedule"
-              value={`${booking.scheduled_date ?? "—"} ${String(booking.scheduled_start ?? "").slice(0, 5)}–${String(booking.scheduled_end ?? "").slice(0, 5)}`}
-            />
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" className="border-slate-200" onClick={resetFilters}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Reset
+            </Button>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full" onClick={applyFilters}>
+              <Filter className="w-4 h-4 mr-2" />
+              Filter
+            </Button>
+          </div>
+        </Card>
+      )}
 
-            <div>
-              <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Address
-              </p>
-              {formattedAddress ? (
-                <div className="mt-1 flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 p-3">
-                  <div className="flex items-start gap-2.5">
-                    <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />
-                    <div>
-                      <p className="font-medium text-foreground">{formattedAddress}</p>
-                      {addr?.label ? (
-                        <p className="text-xs text-muted-foreground">Label: {addr.label}</p>
-                      ) : null}
-                    </div>
-                  </div>
-                  <a
-                    href={googleMapsUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
+      {/* Table Card */}
+      <Card className="bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-slate-50 text-slate-500 font-semibold border-b">
+              <tr>
+                <th className="px-4 py-3 font-semibold w-12">#</th>
+                <th className="px-4 py-3 font-semibold">Booking Details</th>
+                <th className="px-4 py-3 font-semibold">Booking Date</th>
+                <th className="px-4 py-3 font-semibold">Customer Details</th>
+                <th className="px-4 py-3 font-semibold">Area</th>
+                <th className="px-4 py-3 font-semibold">Auto Assign</th>
+                <th className="px-4 py-3 font-semibold text-right">Navigate</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {isPending ? (
+                <tr>
+                  <td colSpan={7} className="p-4">
+                    <TableSkeleton rows={8} />
+                  </td>
+                </tr>
+              ) : pageRows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-slate-500">
+                    No bookings match your filters.
+                  </td>
+                </tr>
+              ) : (
+                pageRows.map((b, idx) => (
+                  <tr 
+                    key={b.id} 
+                    className="hover:bg-slate-50 cursor-pointer transition-colors"
+                    onClick={() => setOpenId(b.id)}
                   >
-                    <ExternalLink className="size-3.5" />
-                    Google Maps
-                  </a>
-                </div>
-              ) : (
-                <p className="mt-0.5 text-muted-foreground">—</p>
-              )}
-            </div>
+                    <td className="px-4 py-4 text-slate-500">{page * pageSize + idx + 1}</td>
+                    
+                    <td className="px-4 py-4">
+                      <div className="font-bold text-slate-900">{b.service?.name ?? "—"}</div>
+                      <div className="text-xs text-slate-500 mb-1">{b.category?.name ?? "General"}</div>
+                      <div className="text-xs text-slate-600 mb-1 bg-slate-100 inline-block px-1.5 py-0.5 rounded">
+                        {b.hours ?? 0} Hours, {b.professionals_count ?? 1} Professional
+                      </div>
+                      <div className="font-mono font-bold text-blue-600 mb-1">{b.booking_number}</div>
+                      <div className="font-semibold text-slate-900 mb-2">{formatMoney(num(b.total))}</div>
+                      <StatusBadge status={b.status} />
+                    </td>
 
-            <Field label="City" value={cityObj?.name ?? "Dubai"} />
-            <Field label="Notes" value={booking.instructions ?? "—"} />
-
-            <div>
-              <p className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Professional
-              </p>
-              <select
-                value={booking.professional_id ?? ""}
-                onChange={(e) => onAssign(booking.id, e.target.value || null)}
-                className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm"
-              >
-                <option value="">Unassigned</option>
-                {professionals.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.full_name} · {p.rating}★ · {p.cities?.name ?? "—"}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="rounded-lg border border-border p-3">
-              <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Pricing
-              </p>
-              <Line label="Subtotal" value={num(booking.subtotal)} />
-              <Line label="Add-ons" value={num(booking.addons_total)} />
-              <Line label="Materials" value={num(booking.materials_total)} />
-              <Line label="Discount" value={-num(booking.discount)} />
-              <Line label="Fees" value={num(booking.fees)} />
-              <Line label="VAT" value={num(booking.tax)} />
-              <div className="mt-2 flex justify-between border-t border-border pt-2 font-semibold">
-                <span>Total</span>
-                <span>{formatMoney(num(booking.total))}</span>
-              </div>
-            </div>
-
-            {data.items?.length || data.addons?.length ? (
-              <div>
-                <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                  Booked Services & Add-ons
-                </p>
-                <div className="space-y-2">
-                  {data.items?.map((i: AnyRow) => {
-                    const imgRaw =
-                      i.variant?.imageUrl ||
-                      i.variant?.image_url ||
-                      booking.service?.imageUrl ||
-                      booking.service?.image_url;
-                    const img = imgRaw ? resolveImageUrl(imgRaw) : null;
-                    return (
-                      <div
-                        key={i.id}
-                        className="flex items-center justify-between rounded-lg border border-border bg-card p-3 text-sm"
-                      >
-                        <div className="flex items-center gap-3">
-                          {img ? (
-                            <img
-                              src={img}
-                              alt={i.label}
-                              className="size-11 rounded-lg border border-border object-cover"
-                            />
-                          ) : (
-                            <div className="flex size-11 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                              <Package className="size-5" />
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-medium text-foreground">{i.label}</p>
-                            <p className="text-xs text-muted-foreground">Quantity: {i.quantity}</p>
-                          </div>
-                        </div>
-                        <span className="font-semibold text-foreground">
-                          {formatMoney(num(i.unit_price) * i.quantity)}
+                    <td className="px-4 py-4 align-top">
+                      <div className="font-medium text-slate-900 mb-2">
+                        {b.scheduled_date ? new Date(b.scheduled_date).toLocaleDateString() : "—"}
+                        <br />
+                        <span className="text-xs text-slate-500">
+                          {String(b.scheduled_start ?? "").slice(0, 5)}
                         </span>
                       </div>
-                    );
-                  })}
-                  {data.addons?.map((a: AnyRow) => {
-                    const imgRaw = a.addon?.imageUrl || a.addon?.image_url;
-                    const img = imgRaw ? resolveImageUrl(imgRaw) : null;
-                    return (
-                      <div
-                        key={a.id}
-                        className="flex items-center justify-between rounded-lg border border-border bg-card p-3 text-sm"
-                      >
-                        <div className="flex items-center gap-3">
-                          {img ? (
-                            <img
-                              src={img}
-                              alt={a.label}
-                              className="size-11 rounded-lg border border-border object-cover"
-                            />
-                          ) : (
-                            <div className="flex size-11 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                              <Sparkles className="size-5" />
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-medium text-foreground">{a.label}</p>
-                            <p className="text-xs text-muted-foreground">Add-on × {a.quantity}</p>
-                          </div>
-                        </div>
-                        <span className="font-semibold text-foreground">
-                          {formatMoney(num(a.unit_price) * a.quantity)}
-                        </span>
+                      <div className="mb-2">
+                        <StatusBadge status={b.payment_status} />
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
+                      <div className="text-xs text-slate-600 font-medium">
+                        Rescheduled: {b.is_rescheduled ? "Yes" : "No"}
+                      </div>
+                    </td>
 
-            <div>
-              <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Timeline
-              </p>
-              {data.history.length ? (
-                <ol className="relative space-y-3 border-s border-border ps-4">
-                  {data.history.map((h: AnyRow) => (
-                    <li key={h.id}>
-                      <span className="absolute -start-1 mt-1.5 size-2 rounded-full bg-primary" />
-                      <p className="font-medium">{String(h.to_status).replaceAll("_", " ")}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(h.created_at).toLocaleString()} · {h.actor ?? "system"}
-                      </p>
-                      {h.note ? <p className="text-xs">{h.note}</p> : null}
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <p className="text-xs text-muted-foreground">No status changes recorded yet.</p>
+                    <td className="px-4 py-4 align-top">
+                      <div className="font-semibold text-slate-900 mb-1">
+                        {b.profile?.full_name ?? b.guest_phone ?? "Guest"}
+                      </div>
+                      <div className="text-xs text-slate-500 mb-1">{b.profile?.email ?? "—"}</div>
+                      <div className="text-xs text-slate-500">{b.profile?.phone ?? b.guest_phone ?? "—"}</div>
+                    </td>
+
+                    <td className="px-4 py-4 align-top">
+                      <div className="flex items-start gap-1">
+                        <MapPin className="w-3.5 h-3.5 mt-0.5 text-slate-400 shrink-0" />
+                        <div>
+                          <div className="font-medium text-slate-900">{b.city?.name ?? b.cities?.name ?? "Dubai"}</div>
+                          <div className="text-xs text-slate-500">{b.area?.name ?? "—"}</div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-4 align-top">
+                      <span className={cn(
+                        "inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold",
+                        b.is_auto_assign ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-700"
+                      )}>
+                        {b.is_auto_assign ? "Auto" : "Manual"}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4 align-top text-right" onClick={e => e.stopPropagation()}>
+                      {b.professional_id ? (
+                        <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-xs px-3 h-8">
+                          <Navigation className="w-3 h-3 mr-1.5" />
+                          Navigate to professional
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">Unassigned</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
               )}
-            </div>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-slate-500">Show</span>
+            <Select value={String(pageSize)} onValueChange={v => { setPageSize(Number(v)); setPage(0); }}>
+              <SelectTrigger className="w-20 h-8 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-slate-500">
+              Showing {rows.length === 0 ? 0 : page * pageSize + 1} to {Math.min(rows.length, (page + 1) * pageSize)} of {rows.length} entries
+            </span>
           </div>
-        )}
-      </SheetContent>
-    </Sheet>
-  );
-}
+          
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="w-8 h-8 rounded" 
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <Button
+                key={i}
+                variant={page === i ? "default" : "outline"}
+                className={cn("w-8 h-8 rounded p-0 text-sm", page === i && "bg-blue-600 text-white")}
+                onClick={() => setPage(i)}
+              >
+                {i + 1}
+              </Button>
+            ))}
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="w-8 h-8 rounded" 
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </Card>
 
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{label}</p>
-      <p className="mt-0.5">{value}</p>
-    </div>
-  );
-}
-
-function Line({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex justify-between text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span>{formatMoney(value)}</span>
+      <BookingDetailModal
+        bookingId={openId}
+        open={Boolean(openId)}
+        onClose={() => setOpenId(null)}
+      />
     </div>
   );
 }

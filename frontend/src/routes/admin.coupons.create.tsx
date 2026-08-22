@@ -9,6 +9,7 @@ import { Label } from "@/frontend/components/ui/label";
 import { Textarea } from "@/frontend/components/ui/textarea";
 import { Switch } from "@/frontend/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
+import { AdminDateInput } from "@/frontend/components/admin/AdminDateInput";
 import { Loader2, Plus, Send, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -245,11 +246,10 @@ function AddCouponPage() {
               {/* Expiry Date */}
               <div className="space-y-1.5">
                 <Label className="text-xs font-bold text-slate-700">Expires On</Label>
-                <Input
-                  type="date"
+                <AdminDateInput
+                  placeholder="Expires On"
                   value={expiresAt}
-                  onChange={(e) => setExpiresAt(e.target.value)}
-                  className="h-10 bg-white border-slate-200 rounded-lg text-xs"
+                  onChange={setExpiresAt}
                 />
               </div>
 

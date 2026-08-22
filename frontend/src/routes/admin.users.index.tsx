@@ -14,6 +14,13 @@ import { Input } from "@/frontend/components/ui/input";
 import { Card } from "@/frontend/components/ui/card";
 import { Label } from "@/frontend/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
+import { AdminDateInput } from "@/frontend/components/admin/AdminDateInput";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/frontend/components/ui/dropdown-menu";
 import {
   Calendar,
   Check,
@@ -21,7 +28,10 @@ import {
   Download,
   Eye,
   Filter,
+  Glasses,
+  KeyRound,
   Lock,
+  MoreVertical,
   Plus,
   RotateCcw,
   Search,
@@ -114,28 +124,34 @@ function AdminUsersPage() {
 
   const filteredUsers = useMemo(() => {
     const list = users.filter((u) => {
-      if (appliedFilters.name) {
-        const matchName = (u.fullName || "").toLowerCase().includes(appliedFilters.name);
+      const qName = (appliedFilters.name || searchName).trim().toLowerCase();
+      if (qName) {
+        const matchName = (u.fullName || "").toLowerCase().includes(qName);
         if (!matchName) return false;
       }
-      if (appliedFilters.email) {
-        const matchEmail = (u.email || "").toLowerCase().includes(appliedFilters.email);
+      const qEmail = (appliedFilters.email || searchEmail).trim().toLowerCase();
+      if (qEmail) {
+        const matchEmail = (u.email || "").toLowerCase().includes(qEmail);
         if (!matchEmail) return false;
       }
-      if (appliedFilters.phone) {
-        const matchPhone = (u.phone || "").toLowerCase().includes(appliedFilters.phone);
+      const qPhone = (appliedFilters.phone || searchPhone).trim().toLowerCase();
+      if (qPhone) {
+        const matchPhone = (u.phone || "").toLowerCase().includes(qPhone);
         if (!matchPhone) return false;
       }
-      if (appliedFilters.status !== "all") {
-        if (u.status !== appliedFilters.status) return false;
+      const statusFilter = appliedFilters.status !== "all" ? appliedFilters.status : searchStatus;
+      if (statusFilter !== "all") {
+        if (u.status !== statusFilter) return false;
       }
-      if (appliedFilters.startDate) {
+      const start = appliedFilters.startDate || startDate;
+      if (start) {
         const regDate = u.registeredOn || u.createdAt?.slice(0, 10) || "";
-        if (regDate && regDate < appliedFilters.startDate) return false;
+        if (regDate && regDate < start) return false;
       }
-      if (appliedFilters.endDate) {
+      const end = appliedFilters.endDate || endDate;
+      if (end) {
         const regDate = u.registeredOn || u.createdAt?.slice(0, 10) || "";
-        if (regDate && regDate > appliedFilters.endDate) return false;
+        if (regDate && regDate > end) return false;
       }
       return true;
     });
@@ -151,7 +167,7 @@ function AdminUsersPage() {
     });
 
     return list;
-  }, [users, appliedFilters, sortField, sortAsc]);
+  }, [users, appliedFilters, searchName, searchEmail, searchPhone, searchStatus, startDate, endDate, sortField, sortAsc]);
 
   const totalPages = Math.ceil(filteredUsers.length / pageSize) || 1;
   const paginatedUsers = useMemo(() => {
@@ -309,28 +325,20 @@ function AdminUsersPage() {
 
               <div className="space-y-1">
                 <Label className="text-xs font-semibold text-slate-600">Start Date</Label>
-                <div className="relative">
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="h-10 text-xs bg-white border-slate-200 rounded-lg pe-8"
-                  />
-                  <Calendar className="pointer-events-none absolute end-2.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                </div>
+                <AdminDateInput
+                  placeholder="Start Date"
+                  value={startDate}
+                  onChange={setStartDate}
+                />
               </div>
 
               <div className="space-y-1">
                 <Label className="text-xs font-semibold text-slate-600">End Date</Label>
-                <div className="relative">
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="h-10 text-xs bg-white border-slate-200 rounded-lg pe-8"
-                  />
-                  <Calendar className="pointer-events-none absolute end-2.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                </div>
+                <AdminDateInput
+                  placeholder="End Date"
+                  value={endDate}
+                  onChange={setEndDate}
+                />
               </div>
             </div>
 
@@ -473,8 +481,28 @@ function AdminUsersPage() {
                   const globalIdx = (currentPage - 1) * pageSize + idx + 1;
                   const isActivated = user.status === "Activated";
                   const displayName = user.fullName || user.email?.split("@")[0] || user.phone || "User";
-                  const registeredDate = user.registeredOn || user.createdAt?.slice(0, 10) || "—";
-                  const registeredTime = user.createdAt ? new Date(user.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "3:53 PM";
+                  const rawDate = user.registeredOn || user.createdAt;
+                  let registeredDate = "—";
+                  let registeredTime = "";
+                  if (rawDate) {
+                    if (rawDate.includes(" ")) {
+                      const parts = rawDate.split(" ");
+                      registeredDate = parts[0] || "—";
+                      registeredTime = parts.slice(1).join(" ");
+                    } else {
+                      try {
+                        const d = new Date(rawDate);
+                        if (!isNaN(d.getTime())) {
+                          registeredDate = d.toISOString().slice(0, 10);
+                          registeredTime = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                        } else {
+                          registeredDate = rawDate;
+                        }
+                      } catch {
+                        registeredDate = rawDate;
+                      }
+                    }
+                  }
 
                   return (
                     <tr key={user.id} className="hover:bg-slate-50/80 transition-colors">
@@ -510,66 +538,71 @@ function AdminUsersPage() {
                         <div className="text-[11px] text-slate-400 font-normal">{registeredTime}</div>
                       </td>
 
-                      {/* Reference 2-column Compact Action Grid */}
+                      {/* 6 Action Icons */}
                       <td className="px-2 py-3 text-center align-middle">
-                        <div className="inline-grid grid-cols-2 gap-x-2.5 gap-y-2 place-items-center">
-                          {/* Row 1 */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(user, "toggle_status")}
-                            title={isActivated ? "Deactivate User" : "Activate User"}
-                            className="text-rose-500 hover:scale-125 transition-transform"
-                          >
-                            {isActivated ? (
-                              <X className="size-4 text-rose-500 stroke-[2.5]" />
-                            ) : (
-                              <Check className="size-4 text-emerald-500 stroke-[2.5]" />
-                            )}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(user, "edit")}
-                            title="Edit User"
-                            className="text-blue-600 hover:scale-125 transition-transform"
-                          >
-                            <Sliders className="size-4 text-blue-600 stroke-[2.5]" />
-                          </button>
-
-                          {/* Row 2 */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(user, "info")}
-                            title="User Information & History"
-                            className="text-blue-500 hover:scale-125 transition-transform"
-                          >
-                            <Eye className="size-4 text-blue-500 stroke-[2.5]" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(user, "password")}
-                            title="Reset Password"
-                            className="text-teal-500 hover:scale-125 transition-transform"
-                          >
-                            <Lock className="size-4 text-teal-500 stroke-[2.5]" />
-                          </button>
-
-                          {/* Row 3 */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(user, "delete")}
-                            title="Delete User"
-                            className="text-rose-500 hover:scale-125 transition-transform"
-                          >
-                            <Trash2 className="size-4 text-rose-500 stroke-[2.5]" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAction(user, "send_credentials")}
-                            title="Send Credentials via Email/SMS"
-                            className="text-slate-900 hover:scale-125 transition-transform"
-                          >
-                            <Send className="size-4 text-slate-900 stroke-[2.5]" />
-                          </button>
+                        <div className="flex flex-col items-center justify-center gap-1.5 py-0.5">
+                          <div className="flex items-center justify-center gap-2">
+                            {/* 1. Toggle Status */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenAction(user, "toggle_status")}
+                              title={isActivated ? "Deactivate User" : "Activate User"}
+                              className="text-rose-500 hover:scale-125 transition-transform"
+                            >
+                              {isActivated ? (
+                                <X className="size-4 text-rose-500 stroke-[2.5]" />
+                              ) : (
+                                <Check className="size-4 text-emerald-500 stroke-[2.5]" />
+                              )}
+                            </button>
+                            {/* 2. Edit */}
+                            <Link
+                              to="/admin/users/edit"
+                              search={{ id: user.id }}
+                              title="Edit User Profile"
+                              className="text-blue-500 hover:scale-125 transition-transform inline-flex items-center justify-center"
+                            >
+                              <Sliders className="size-4 text-blue-500 stroke-[2.5]" />
+                            </Link>
+                            {/* 3. View Info */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenAction(user, "info")}
+                              title="User Information"
+                              className="text-blue-600 hover:scale-125 transition-transform"
+                            >
+                              <Glasses className="size-4 text-blue-600 stroke-[2.5]" />
+                            </button>
+                          </div>
+                          <div className="flex items-center justify-center gap-2">
+                            {/* 4. Change Password */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenAction(user, "password")}
+                              title="Reset Password"
+                              className="text-cyan-500 hover:scale-125 transition-transform"
+                            >
+                              <KeyRound className="size-4 text-cyan-500 stroke-[2.5]" />
+                            </button>
+                            {/* 5. Delete */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenAction(user, "delete")}
+                              title="Delete User"
+                              className="text-rose-500 hover:scale-125 transition-transform"
+                            >
+                              <Trash2 className="size-4 text-rose-500 stroke-[2.5]" />
+                            </button>
+                            {/* 6. Send Credentials */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenAction(user, "send_credentials")}
+                              title="Send Credentials"
+                              className="text-slate-800 hover:scale-125 transition-transform"
+                            >
+                              <Send className="size-4 text-slate-800 stroke-[2.5]" />
+                            </button>
+                          </div>
                         </div>
                       </td>
                     </tr>

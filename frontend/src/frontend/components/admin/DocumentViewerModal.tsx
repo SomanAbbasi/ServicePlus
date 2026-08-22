@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { Label } from "@/frontend/components/ui/label";
+import { AdminDateInput } from "@/frontend/components/admin/AdminDateInput";
 import { FileText, Calendar, ShieldCheck, AlertTriangle, Upload, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -158,20 +159,20 @@ export function DocumentViewerModal({
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold text-slate-700">Issue Date</Label>
-                  <Input
-                    type="date"
+                  <AdminDateInput
+                    placeholder="Issue Date"
                     value={newIssueDate}
-                    onChange={(e) => setNewIssueDate(e.target.value)}
-                    className="h-8 text-xs bg-white"
+                    onChange={setNewIssueDate}
+                    className="h-8"
                   />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold text-slate-700">New Expiry Date *</Label>
-                  <Input
-                    type="date"
+                  <AdminDateInput
+                    placeholder="New Expiry Date"
                     value={newExpiryDate}
-                    onChange={(e) => setNewExpiryDate(e.target.value)}
-                    className="h-8 text-xs bg-white border-cyan-400"
+                    onChange={setNewExpiryDate}
+                    className="h-8 border-cyan-400"
                   />
                 </div>
               </div>

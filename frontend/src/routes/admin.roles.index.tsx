@@ -16,7 +16,7 @@ import { Card } from "@/frontend/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/frontend/components/ui/dialog";
 import { Label } from "@/frontend/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
-import { Check, ChevronsUpDown, Edit, Filter, Plus, RotateCcw, Search, Trash2, X } from "lucide-react";
+import { Check, ChevronsUpDown, Edit, Filter, Plus, RotateCcw, Search, Sliders, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/roles/")({ component: AdminRolesPage });
@@ -176,25 +176,23 @@ function AdminRolesPage() {
             <Button
               type="button"
               variant={isSearchOpen ? "default" : "outline"}
-              size="sm"
               onClick={() => setIsSearchOpen((v) => !v)}
-              className={
+              className={`font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs transition-all ${
                 isSearchOpen
-                  ? "bg-cyan-600 text-white hover:bg-cyan-700 font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
-                  : "bg-cyan-600 text-white hover:bg-cyan-700 font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
-              }
+                  ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                  : "border-slate-300 text-slate-700 hover:bg-slate-50"
+              }`}
             >
               <Search className="size-3.5 me-1.5" /> Search
             </Button>
-            <Link to="/admin/roles/create">
-              <Button
-                type="button"
-                size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
-              >
+            <Button
+              asChild
+              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 sm:h-10 px-5 rounded-xl shadow-sm"
+            >
+              <Link to="/admin/roles/create">
                 <Plus className="size-3.5 me-1.5" /> Add Role
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -353,29 +351,33 @@ function AdminRolesPage() {
                         </span>
                       </td>
                       <td className="px-3 py-3.5 text-slate-600 text-xs">{role.registeredOn || "—"}</td>
-                      <td className="px-2 py-3 text-center align-middle">
-                        <div className="inline-grid grid-cols-2 gap-x-2.5 gap-y-1.5 place-items-center">
+                      <td className="px-3 py-3.5 text-center align-middle">
+                        <div className="flex items-center justify-center gap-2">
                           <button
                             type="button"
                             onClick={() => handleToggleStatus(role)}
                             title={isActivated ? "Deactivate Role" : "Activate Role"}
                             className="text-rose-500 hover:scale-125 transition-transform"
                           >
-                            {isActivated ? <X className="size-4 text-rose-500 stroke-[2.5]" /> : <Check className="size-4 text-emerald-500 stroke-[2.5]" />}
+                            {isActivated ? (
+                              <X className="size-4 text-rose-500 stroke-[2.5]" />
+                            ) : (
+                              <Check className="size-4 text-emerald-500 stroke-[2.5]" />
+                            )}
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEdit(role)}
-                            title="Configure Permissions"
-                            className="text-slate-700 hover:scale-125 transition-transform"
+                          <Link
+                            to="/admin/roles/edit"
+                            search={{ id: role.id }}
+                            title="Edit Role & Permissions"
+                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
                           >
-                            <Edit className="size-4 text-slate-700 stroke-[2.5]" />
-                          </button>
+                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
+                          </Link>
                           <button
                             type="button"
                             onClick={() => handleDeleteRole(role.id, role.name)}
                             title="Delete Role"
-                            className="text-rose-500 hover:scale-125 transition-transform col-span-2"
+                            className="text-rose-500 hover:scale-125 transition-transform"
                           >
                             <Trash2 className="size-4 text-rose-500 stroke-[2.5]" />
                           </button>

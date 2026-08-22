@@ -1,8 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  BadgePercent,
-  Bell,
   Boxes,
   Building2,
   CalendarDays,
@@ -11,11 +9,9 @@ import {
   ClipboardList,
   CreditCard,
   FileBarChart,
-  FileCheck2,
   FileText,
   FileWarning,
   History,
-  Layers,
   LayoutGrid,
   LifeBuoy,
   MessageSquare,
@@ -27,7 +23,6 @@ import {
   Sparkles,
   Star,
   Tag,
-  Timer,
   UserCheck,
   UserCog,
   Users,
@@ -132,6 +127,111 @@ export const NAV_GROUPS = [
   },
 ];
 
+export function isRoutePermitted(
+  to: string,
+  rawPermissions: string | null
+): boolean {
+  if (!rawPermissions || rawPermissions === "*") return true;
+  try {
+    const permissions: Record<string, Record<string, boolean>> =
+      typeof rawPermissions === "string" ? JSON.parse(rawPermissions) : rawPermissions;
+
+    if (!permissions || Object.keys(permissions).length === 0) return true;
+
+    if (to === "/admin") {
+      const dash = permissions.dashboard;
+      return !dash || Object.values(dash).some(Boolean);
+    }
+    if (to === "/admin/users" || to.startsWith("/admin/users")) {
+      const u = permissions.users;
+      return !u || Object.values(u).some(Boolean);
+    }
+    if (to === "/admin/staff" || to.startsWith("/admin/staff")) {
+      return permissions.staff_management?.staff_view !== false;
+    }
+    if (to === "/admin/roles" || to.startsWith("/admin/roles")) {
+      return permissions.staff_management?.roles_manage !== false;
+    }
+    if (to === "/admin/professionals" || to.startsWith("/admin/professionals")) {
+      return permissions.staff_management?.professionals_manage !== false;
+    }
+    if (to === "/admin/team-leads" || to.startsWith("/admin/team-leads")) {
+      return permissions.staff_management?.team_leads_manage !== false;
+    }
+    if (to === "/admin/companies" || to.startsWith("/admin/companies")) {
+      return permissions.staff_management?.companies_manage !== false;
+    }
+    if (to === "/admin/supervisors" || to.startsWith("/admin/supervisors")) {
+      return permissions.staff_management?.supervisors_manage !== false;
+    }
+
+    if (to === "/admin/categories" || to.startsWith("/admin/categories")) {
+      return permissions.service_management?.categories !== false;
+    }
+    if (to === "/admin/services" || to.startsWith("/admin/services")) {
+      return permissions.service_management?.services !== false;
+    }
+    if (to === "/admin/service-grouping" || to.startsWith("/admin/service-grouping")) {
+      return permissions.service_management?.service_grouping !== false;
+    }
+    if (to === "/admin/addons" || to.startsWith("/admin/addons")) {
+      return permissions.service_management?.addons !== false;
+    }
+    if (to === "/admin/plans" || to.startsWith("/admin/plans")) {
+      return permissions.service_management?.plans !== false;
+    }
+    if (to === "/admin/coupons" || to.startsWith("/admin/coupons")) {
+      return permissions.service_management?.coupons !== false;
+    }
+
+    if (
+      to === "/admin/bookings" ||
+      to.startsWith("/admin/bookings") ||
+      to === "/admin/calendar" ||
+      to.startsWith("/admin/calendar") ||
+      to === "/admin/reviews" ||
+      to.startsWith("/admin/reviews") ||
+      to === "/admin/payments" ||
+      to.startsWith("/admin/payments")
+    ) {
+      const b = permissions.booking_management;
+      return !b || Object.values(b).some(Boolean);
+    }
+
+    if (to === "/admin/expired-documents" || to.startsWith("/admin/expired-documents")) {
+      const exp = permissions.expired_documents;
+      return !exp || Object.values(exp).some(Boolean);
+    }
+
+    if (to === "/admin/materials" || to.startsWith("/admin/materials")) {
+      return permissions.material_management?.view_stock !== false;
+    }
+    if (to === "/admin/material-requests" || to.startsWith("/admin/material-requests")) {
+      return permissions.material_management?.material_requests !== false;
+    }
+
+    if (to === "/admin/reports" || to.startsWith("/admin/reports")) {
+      const r = permissions.reports || permissions.reports_analytics;
+      return !r || Object.values(r).some(Boolean);
+    }
+    if (to === "/admin/support" || to.startsWith("/admin/support")) {
+      const c = permissions.contact_query;
+      return !c || Object.values(c).some(Boolean);
+    }
+    if (to === "/admin/audit-logs" || to.startsWith("/admin/audit-logs")) {
+      return permissions.system_management?.view_logs !== false;
+    }
+    if (to === "/admin/settings" || to.startsWith("/admin/settings")) {
+      const s = permissions.admin_settings || permissions.settings;
+      return !s || Object.values(s).some(Boolean);
+    }
+
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 export function AdminSidebar({
   collapsed,
   onNavigate,
@@ -140,6 +240,29 @@ export function AdminSidebar({
   onNavigate?: () => void;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const rawPermissions = typeof window !== "undefined" ? localStorage.getItem("serviceplus_admin_user_permissions") : null;
+  const userRole = typeof window !== "undefined" ? localStorage.getItem("serviceplus_admin_user_role") || "Master Admin" : "Master Admin";
+  const userName = typeof window !== "undefined" ? localStorage.getItem("serviceplus_admin_user_name") || "Administrator" : "Administrator";
+
+  // Filter navigation links dynamically based on role permissions
+  const filteredNavigation = useMemo(() => {
+    return ADMIN_NAVIGATION.map((item) => {
+      if (item.children) {
+        const visibleChildren = item.children.filter((child) =>
+          isRoutePermitted(child.to, rawPermissions)
+        );
+        if (visibleChildren.length === 0) return null;
+        return {
+          ...item,
+          children: visibleChildren,
+        };
+      } else if (item.to) {
+        if (!isRoutePermitted(item.to, rawPermissions)) return null;
+        return item;
+      }
+      return item;
+    }).filter(Boolean) as NavGroupItem[];
+  }, [rawPermissions]);
 
   // Keep track of which accordion menus are open (all collapsed by default)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
@@ -152,7 +275,7 @@ export function AdminSidebar({
 
   // Automatically expand group if child is active
   useEffect(() => {
-    ADMIN_NAVIGATION.forEach((item) => {
+    filteredNavigation.forEach((item) => {
       if (item.children) {
         const hasActive = item.children.some(
           (c) => pathname === c.to || pathname.startsWith(`${c.to}/`),
@@ -162,7 +285,7 @@ export function AdminSidebar({
         }
       }
     });
-  }, [pathname]);
+  }, [pathname, filteredNavigation]);
 
   const toggleGroup = (label: string) => {
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
@@ -189,9 +312,24 @@ export function AdminSidebar({
         )}
       </div>
 
+      {/* User Role Profile Tag */}
+      {!collapsed && (
+        <div className="mx-1 mb-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5">
+          <div className="size-7 rounded-full bg-cyan-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+            {userName.charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold text-slate-900 truncate">{userName}</p>
+            <span className="inline-block text-[10px] font-semibold text-cyan-700 bg-cyan-100/70 px-1.5 py-0.2 rounded-md truncate max-w-full">
+              {userRole}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Navigation List */}
       <ul className="space-y-1.5 flex-1">
-        {ADMIN_NAVIGATION.map((item) => {
+        {filteredNavigation.map((item) => {
           const isDirectLink = Boolean(item.to && !item.children);
 
           if (isDirectLink) {
