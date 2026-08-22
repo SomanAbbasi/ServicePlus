@@ -46,7 +46,7 @@ export interface AdminRole {
   name: string;
   status: "Activated" | "Deactivated";
   registeredOn: string;
-  permissions: Record<string, { view: boolean; create: boolean; edit: boolean; delete: boolean; export?: boolean; approve?: boolean }>;
+  permissions: Record<string, Record<string, boolean>>;
 }
 
 export interface ComplianceDocument {

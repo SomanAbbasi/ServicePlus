@@ -38,13 +38,13 @@ function AddPlanPage() {
       await createAdminPlan({
         name: name.trim(),
         nameAr: nameAr.trim(),
+        description: featureList.join(", "),
         price: parseFloat(price) || 0,
         interval: interval,
         hoursIncluded: parseInt(hoursIncluded) || 0,
-        discountPercent: parseInt(discountPercent) || 0,
+        discountPercentage: parseInt(discountPercent) || 0,
         features: featureList,
-        isPopular: false,
-        status: "Activated",
+        isActive: true,
       });
 
       toast.success(`Subscription plan ${name} created successfully!`);

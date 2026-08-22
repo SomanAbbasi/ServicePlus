@@ -67,7 +67,7 @@ export function ProfessionalActionModal({
   if (!professional) return null;
 
   // Edit State
-  const [name, setName] = useState(professional.name || professional.fullName || "");
+  const [name, setName] = useState(professional.name || (professional as any).fullName || "");
   const [email, setEmail] = useState(professional.email || "");
   const [phone, setPhone] = useState(professional.phone || "");
   const [companyId, setCompanyId] = useState(professional.companyId || "");
@@ -92,7 +92,7 @@ export function ProfessionalActionModal({
 
   useEffect(() => {
     if (professional) {
-      setName(professional.name || professional.fullName || "");
+      setName(professional.name || (professional as any).fullName || "");
       setEmail(professional.email || "");
       setPhone(professional.phone || "");
       setCompanyId(professional.companyId || "");
@@ -351,13 +351,13 @@ export function ProfessionalActionModal({
             </div>
 
             {/* Allocated Materials */}
-            {professional.allocatedMaterials && professional.allocatedMaterials.length > 0 && (
+            {((professional as any).allocatedMaterials || professional.materials) && (((professional as any).allocatedMaterials || professional.materials).length > 0) && (
               <div className="space-y-2">
                 <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Sparkles className="size-3.5 text-cyan-600" /> Allocated Materials & Kit
                 </h5>
                 <div className="flex flex-wrap gap-1.5">
-                  {professional.allocatedMaterials.map((mat: any, idx: number) => {
+                  {((professional as any).allocatedMaterials || professional.materials).map((mat: any, idx: number) => {
                     const matName = typeof mat === "object" && mat !== null ? mat.name || mat.title : String(mat);
                     return (
                       <span

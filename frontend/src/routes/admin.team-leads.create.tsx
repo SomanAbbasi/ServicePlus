@@ -113,8 +113,8 @@ function AddTeamLeadPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Available areas based on chosen city
-  const availableAreas = useMemo(() => {
-    return CITY_AREAS[city] || CITY_AREAS["Abu Dhabi"];
+  const availableAreas: string[] = useMemo(() => {
+    return CITY_AREAS[city] || CITY_AREAS["Abu Dhabi"] || [];
   }, [city]);
 
   // Handle Photo Selection & Compression

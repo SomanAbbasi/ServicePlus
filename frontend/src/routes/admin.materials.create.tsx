@@ -17,7 +17,7 @@ function AddMaterialPage() {
   const queryClient = useQueryClient();
 
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("Chemicals");
+  const [category, setCategory] = useState<"Chemicals" | "Equipment" | "Disposables" | "PPE" | "Tools">("Chemicals");
   const [sku, setSku] = useState("");
   const [stock, setStock] = useState("0");
   const [unit, setUnit] = useState("bottles (1L)");
@@ -34,14 +34,19 @@ function AddMaterialPage() {
 
     try {
       setIsSubmitting(true);
+      const currentStock = parseInt(stock) || 0;
+      const minStockAlert = parseInt(minAlert) || 5;
+      const status: "In Stock" | "Low Stock" | "Out of Stock" =
+        currentStock === 0 ? "Out of Stock" : currentStock <= minStockAlert ? "Low Stock" : "In Stock";
       await createAdminMaterial({
         name: name.trim(),
         category: category,
         sku: sku.trim() || `MAT-${Math.floor(1000 + Math.random() * 9000)}`,
-        currentStock: parseInt(stock) || 0,
+        stock: currentStock,
         unit: unit.trim() || "pcs",
-        minAlertLevel: parseInt(minAlert) || 5,
+        minStockAlert: minStockAlert,
         unitPrice: parseFloat(unitPrice) || 0,
+        status: status,
       });
 
       toast.success(`Material ${name} added to inventory!`);
@@ -96,7 +101,7 @@ function AddMaterialPage() {
             {/* Category */}
             <div className="space-y-1.5">
               <Label className="text-xs font-bold text-slate-700">Category</Label>
-              <Select value={category} onValueChange={setCategory}>
+              <Select value={category} onValueChange={(v) => setCategory(v as any)}>
                 <SelectTrigger className="h-11 bg-white border-slate-200 rounded-lg text-xs">
                   <SelectValue />
                 </SelectTrigger>

@@ -197,7 +197,7 @@ function AdminTeamLeadsPage() {
         "Registered On": l.registeredOn || l.createdAt?.slice(0, 10) || "—",
       };
     });
-    downloadCsv(exportData, `team_leads_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    downloadCsv(`team_leads_export_${new Date().toISOString().slice(0, 10)}.csv`, exportData);
     toast.success(`Exported ${exportData.length} records to CSV`);
   };
 

@@ -216,7 +216,7 @@ function AdminSupervisorsPage() {
         "Registered On": s.registeredOn || s.createdAt?.slice(0, 10) || "—",
       };
     });
-    downloadCsv(exportData, `supervisors_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    downloadCsv(`supervisors_export_${new Date().toISOString().slice(0, 10)}.csv`, exportData);
     toast.success(`Exported ${exportData.length} records to CSV`);
   };
 

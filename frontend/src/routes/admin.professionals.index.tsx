@@ -169,13 +169,13 @@ function AdminProfessionalsPage() {
   const handleToggleStatus = async (pro: AdminProfessional) => {
     const isCurrentlyActive = pro.status === "Activated" || (pro as any).status === "AVAILABLE" || (pro as any).isActive;
     const nextStatus = isCurrentlyActive ? "Deactivated" : "Activated";
-    await updateProfessional(pro.id, { status: nextStatus });
+    await updateProfessional({ id: pro.id, status: nextStatus });
     toast.success(`Professional status updated to ${nextStatus}`);
     queryClient.invalidateQueries({ queryKey: ["admin", "professionals"] });
   };
 
   const handleTogglePreferred = async (pro: AdminProfessional, checked: boolean) => {
-    await updateProfessional(pro.id, { isPreferred: checked });
+    await updateProfessional({ id: pro.id, isPreferred: checked });
     toast.success(
       checked
         ? `${pro.name || "Professional"} marked as Preferred ★`
@@ -185,7 +185,7 @@ function AdminProfessionalsPage() {
   };
 
   const handleSaveEdit = async (proId: string, updated: Partial<AdminProfessional>) => {
-    await updateProfessional(proId, updated);
+    await updateProfessional({ id: proId, ...updated });
     queryClient.invalidateQueries({ queryKey: ["admin", "professionals"] });
   };
 
@@ -210,7 +210,7 @@ function AdminProfessionalsPage() {
         "Registered On": p.registeredOn || p.createdAt?.slice(0, 10) || "—",
       };
     });
-    downloadCsv(exportData, `professionals_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    downloadCsv(`professionals_export_${new Date().toISOString().slice(0, 10)}.csv`, exportData);
     toast.success(`Exported ${exportData.length} records to CSV`);
   };
 

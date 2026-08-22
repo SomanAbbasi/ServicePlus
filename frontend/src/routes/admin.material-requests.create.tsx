@@ -50,14 +50,18 @@ function AddMaterialRequestPage() {
     try {
       setIsSubmitting(true);
       await createAdminMaterialRequest({
-        professionalId: proId,
-        professionalName: professional?.name || "Professional",
-        companyId: professional?.companyId || "comp-1",
+        requestedBy: professional?.name || "Professional",
+        requesterRole: "Professional",
         companyName: company?.name || professional?.companyName || "Partner Company",
-        materialId: materialId,
-        materialName: material?.name || "Material",
-        quantityRequested: parseInt(quantity) || 1,
+        items: [
+          {
+            materialId: materialId,
+            materialName: material?.name || "Material",
+            quantity: parseInt(quantity) || 1,
+          },
+        ],
         urgency: urgency,
+        status: "Pending",
         notes: notes.trim(),
       });
 

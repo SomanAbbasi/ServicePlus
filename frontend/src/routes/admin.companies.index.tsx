@@ -182,7 +182,7 @@ function AdminCompaniesPage() {
         "Registered On": c.registeredOn || c.createdAt?.slice(0, 10) || "—",
       };
     });
-    downloadCsv(exportData, `companies_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    downloadCsv(`companies_export_${new Date().toISOString().slice(0, 10)}.csv`, exportData);
     toast.success(`Exported ${exportData.length} records to CSV`);
   };
 

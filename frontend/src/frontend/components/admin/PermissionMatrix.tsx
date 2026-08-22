@@ -221,10 +221,11 @@ export function PermissionMatrix({ permissions = {}, onChange }: PermissionMatri
   const handleGlobalCheckAll = (checked: boolean) => {
     const next: Record<string, Record<string, boolean>> = {};
     MAJOR_PERMISSION_MODULES.forEach((mod) => {
-      next[mod.id] = {};
+      const modPerms: Record<string, boolean> = {};
       mod.subPermissions.forEach((sub) => {
-        next[mod.id][sub.key] = checked;
+        modPerms[sub.key] = checked;
       });
+      next[mod.id] = modPerms;
     });
     onChange(next);
   };

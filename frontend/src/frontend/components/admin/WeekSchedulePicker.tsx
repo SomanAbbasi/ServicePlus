@@ -74,9 +74,10 @@ export function WeekSchedulePicker({ slots = [], onChange }: WeekSchedulePickerP
     const next = fullSchedule.map((d) => {
       if (d.day !== day) return d;
       const updatedSlots = [...d.slots];
+      const current = updatedSlots[slotIndex] || { start: "09:00", end: "18:00" };
       updatedSlots[slotIndex] = {
-        ...updatedSlots[slotIndex],
-        [field]: val,
+        start: field === "start" ? val : current.start,
+        end: field === "end" ? val : current.end,
       };
       return { ...d, slots: updatedSlots };
     });
