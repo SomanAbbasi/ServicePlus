@@ -102,24 +102,25 @@ export function BookingDetailModal({
       const mins = Math.round(diffMs / 60000);
       return `${mins} Minutes`;
     }
-    return booking?.hours ? `${booking.hours * 60} Minutes` : "120 Minutes";
+    return booking?.hours ? `${booking.hours * 60} Minutes` : "—";
   }, [history, booking]);
 
-  const subtotal = num(booking?.subtotal, 70);
-  const addonsTotal = num(booking?.addons_total, addons.reduce((acc: number, a: AnyRow) => acc + (num(a.unit_price) * num(a.quantity, 1)), 0) || 25);
-  const serviceCharge = (subtotal + addonsTotal) * 0.05;
-  const otherCharges = num(booking?.fees, 10);
+  const subtotal = num(booking?.subtotal, 0);
+  const addonsTotal = num(booking?.addons_total, addons.reduce((acc: number, a: AnyRow) => acc + (num(a.unit_price) * num(a.quantity, 1)), 0));
+  const serviceCharge = num(booking?.service_charge, 0);
+  const otherCharges = num(booking?.fees, 0);
   const subTotalCalculated = subtotal + addonsTotal + otherCharges + serviceCharge;
-  const vat = num(booking?.tax, subTotalCalculated * 0.05);
+  const vat = num(booking?.tax, 0);
   const finalAmount = num(booking?.total, subTotalCalculated + vat);
 
-  const customerName = booking?.profile?.full_name || booking?.guest_phone || "Quinlan Test";
-  const customerEmail = booking?.profile?.email || "vy838335@gmail.com";
-  const customerPhone = booking?.profile?.phone || booking?.guest_phone || "1021312313";
-  const companyName = booking?.company?.name || booking?.professional?.company?.name || "Dabas Beauty Center";
-  const supervisorName = booking?.supervisor?.name || "Roanna Gibson";
-  const teamLeaderName = booking?.team_leader?.name || "Hammett Pratt";
-  const categoryName = booking?.service?.category?.name || booking?.service?.name || "Home Cleaning";
+  const customerName = booking?.profile?.fullName || booking?.profile?.full_name || booking?.guestPhone || booking?.guest_phone || "—";
+  const customerEmail = booking?.profile?.email || "—";
+  const customerPhone = booking?.profile?.phone || booking?.guestPhone || booking?.guest_phone || "—";
+  const companyName = booking?.company?.name || booking?.professional?.company?.name || "—";
+  const supervisorName = booking?.supervisor?.name || "—";
+  const teamLeaderName = booking?.team_leader?.name || "—";
+  const categoryName = booking?.service?.category?.name || booking?.service?.name || "—";
+  const bookingNumber = booking?.bookingNumber || booking?.booking_number || "—";
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
@@ -127,8 +128,8 @@ export function BookingDetailModal({
         <DialogHeader className="border-b border-slate-100 pb-3">
           <div className="flex items-center space-x-2">
             <DialogTitle className="text-xl font-extrabold text-slate-900">View Booking</DialogTitle>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-600 text-white">
-              View
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary text-primary-foreground">
+              {bookingNumber}
             </span>
           </div>
         </DialogHeader>
@@ -145,14 +146,14 @@ export function BookingDetailModal({
                 { value: "addon-info", label: "Addon Information" },
                 { value: "booking-customer", label: "Booking Customer Details" },
                 { value: "customer-info", label: "Customer Information" },
-                { value: "additional-instructions", label: "Additional Instructions Images" },
-                { value: "assigned-professionals", label: "Booking Assigned Professionals" },
+                { value: "additional-instructions", label: "Additional Instructions" },
+                { value: "assigned-professionals", label: "Assigned Professionals" },
                 { value: "address-info", label: "Address Information" },
               ].map((tab) => (
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:font-bold data-[state=active]:bg-transparent data-[state=active]:shadow-none py-2.5 px-1 text-xs whitespace-nowrap"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:bg-transparent data-[state=active]:shadow-none py-2.5 px-1 text-xs whitespace-nowrap"
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -162,10 +163,10 @@ export function BookingDetailModal({
             <div className="mt-4">
               {/* Tab 1: Booking Information */}
               <TabsContent value="booking-info" className="m-0 space-y-0">
-                <KeyValueRow label="Booking Id" value={<span className="font-mono text-blue-600 font-bold">{booking.booking_number || "BK20260729201161"}</span>} />
+                <KeyValueRow label="Booking Id" value={<span className="font-mono text-primary font-bold">{bookingNumber}</span>} />
                 <KeyValueRow
                   label="Booking From"
-                  value={`${customerName} (${customerEmail}) ${customerPhone}`}
+                  value={customerName !== "—" ? `${customerName} (${customerEmail}) ${customerPhone}` : "—"}
                 />
                 <KeyValueRow
                   label="Rescheduled Status"
@@ -179,52 +180,51 @@ export function BookingDetailModal({
                 />
                 <KeyValueRow
                   label="Booking Date"
-                  value={safeFormatDate(booking.scheduled_date, booking.scheduled_start || "07:00 AM")}
+                  value={safeFormatDate(booking.scheduled_date || booking.scheduledDate, booking.scheduled_start || booking.scheduledStart)}
                 />
                 <KeyValueRow label="Company" value={companyName} />
-                <KeyValueRow label="SuperVisor" value={supervisorName} />
+                <KeyValueRow label="Supervisor" value={supervisorName} />
                 <KeyValueRow label="Team Leader" value={teamLeaderName} />
                 <KeyValueRow label="Category" value={categoryName} />
                 <KeyValueRow
                   label="Plan"
-                  value={booking.hours ? "Onetime" : "Hourly"}
+                  value={booking.hours ? "Hourly" : "Fixed"}
                 />
                 <KeyValueRow
                   label="Request Hours"
-                  value={`${booking.hours || 2} Hours`}
+                  value={booking.hours ? `${booking.hours} Hours` : "—"}
                 />
                 <KeyValueRow
                   label="Request Professionals"
-                  value={booking.professionals_count || 1}
+                  value={booking.professionals_count || booking.professionalsCount || 1}
                 />
                 <KeyValueRow label="Amount" value={formatMoney(subtotal)} />
-                <KeyValueRow
-                  label="Addons Amount"
-                  value={formatMoney(addonsTotal)}
-                />
-                <KeyValueRow
-                  label="Service Charges 5.00%"
-                  value={formatMoney(serviceCharge)}
-                />
-                <KeyValueRow
-                  label="Other Charges"
-                  value={formatMoney(otherCharges)}
-                />
+                {addonsTotal > 0 && (
+                  <KeyValueRow
+                    label="Addons Amount"
+                    value={formatMoney(addonsTotal)}
+                  />
+                )}
+                {serviceCharge > 0 && (
+                  <KeyValueRow
+                    label="Service Charges"
+                    value={formatMoney(serviceCharge)}
+                  />
+                )}
+                {otherCharges > 0 && (
+                  <KeyValueRow
+                    label="Other Charges"
+                    value={formatMoney(otherCharges)}
+                  />
+                )}
                 <KeyValueRow
                   label="Sub Total"
                   value={formatMoney(subTotalCalculated)}
                 />
-                <KeyValueRow label="Vat 5.00%" value={formatMoney(vat)} />
-                <KeyValueRow label="Reschedule Fee" value={formatMoney(0)} />
+                {vat > 0 && <KeyValueRow label="VAT" value={formatMoney(vat)} />}
                 <KeyValueRow label="Final Amount" value={<span className="text-emerald-700 font-extrabold">{formatMoney(finalAmount)}</span>} />
                 <KeyValueRow
-                  label="Pets"
-                  value={
-                    booking.instructions?.toLowerCase().includes("pet") ? "Yes" : "Yes"
-                  }
-                />
-                <KeyValueRow
-                  label="Tools"
+                  label="Tools / Materials"
                   value={booking.materials ? "Yes" : "No"}
                 />
                 <KeyValueRow label="Start Job Time" value={startJobTime} />
@@ -251,18 +251,18 @@ export function BookingDetailModal({
                       {addons.length > 0 ? (
                         addons.map((a: AnyRow) => (
                           <tr key={a.id}>
-                            <td className="px-4 py-3 font-semibold">{a.label}</td>
+                            <td className="px-4 py-3 font-semibold">{a.label || a.name || a.addon?.name}</td>
                             <td className="px-4 py-3">{a.quantity || 1}</td>
                             <td className="px-4 py-3 font-bold text-slate-900">
-                              {formatMoney(a.unit_price)}
+                              {formatMoney(a.unit_price || a.unitPrice || a.price)}
                             </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td className="px-4 py-3 font-semibold">Party Cleanup</td>
-                          <td className="px-4 py-3">1</td>
-                          <td className="px-4 py-3 font-bold text-slate-900">AED 25.00</td>
+                          <td colSpan={3} className="px-4 py-6 text-center text-slate-400">
+                            No add-on services selected for this booking.
+                          </td>
                         </tr>
                       )}
                     </tbody>
@@ -279,6 +279,10 @@ export function BookingDetailModal({
                 <KeyValueRow
                   label="Email"
                   value={customerEmail}
+                />
+                <KeyValueRow
+                  label="Phone"
+                  value={customerPhone}
                 />
               </TabsContent>
 
@@ -299,26 +303,20 @@ export function BookingDetailModal({
                 <KeyValueRow
                   label="Registered On"
                   value={
-                    booking.profile?.created_at
-                      ? safeFormatDate(booking.profile.created_at, "04:23 PM")
-                      : "16-07-2026 04:23 PM"
+                    booking.profile?.createdAt || booking.profile?.created_at
+                      ? safeFormatDate(booking.profile.createdAt || booking.profile.created_at)
+                      : "—"
                   }
                 />
               </TabsContent>
 
-              {/* Tab 5: Additional Instructions Images */}
+              {/* Tab 5: Additional Instructions */}
               <TabsContent value="additional-instructions" className="m-0">
                 <div className="space-y-4">
                   <KeyValueRow
                     label="Instructions"
-                    value={booking.instructions || "Please ensure deep cleaning of kitchen appliances and pet hair removal from sofa."}
+                    value={booking.instructions || "No additional instructions provided."}
                   />
-                  <div className="pt-2">
-                    <div className="text-slate-500 font-medium text-xs mb-2">Instructions Reference Images</div>
-                    <div className="p-6 border border-dashed rounded-lg bg-slate-50 text-center text-slate-400 text-xs">
-                      No additional images attached for this booking request.
-                    </div>
-                  </div>
                 </div>
               </TabsContent>
 
@@ -326,15 +324,15 @@ export function BookingDetailModal({
               <TabsContent value="assigned-professionals" className="m-0 space-y-0">
                 <KeyValueRow
                   label="Name"
-                  value={booking.professional?.full_name || booking.professionals?.full_name || "Tasha Mcdonald"}
+                  value={booking.professional?.fullName || booking.professional?.full_name || "Unassigned"}
                 />
                 <KeyValueRow
                   label="Phone"
-                  value={booking.professional?.phone || booking.professionals?.phone || "4545454545"}
+                  value={booking.professional?.phone || "—"}
                 />
                 <KeyValueRow
                   label="Rating"
-                  value={`${booking.professional?.rating || 4.9} ★`}
+                  value={booking.professional?.rating ? `${booking.professional.rating} ★` : "—"}
                 />
                 <KeyValueRow
                   label="Company"
@@ -342,7 +340,7 @@ export function BookingDetailModal({
                 />
                 <KeyValueRow
                   label="City"
-                  value={booking.professional?.cities?.name || booking.city?.name || "Dubai"}
+                  value={booking.professional?.city?.name || booking.city?.name || "—"}
                 />
               </TabsContent>
 
@@ -350,36 +348,38 @@ export function BookingDetailModal({
               <TabsContent value="address-info" className="m-0 space-y-0">
                 <KeyValueRow
                   label="Label"
-                  value={booking.address?.label || "Home"}
+                  value={booking.address?.label || "—"}
                 />
                 <KeyValueRow
                   label="Building"
-                  value={booking.address?.building || "1 Zone Yas Mall, Ferrari World"}
+                  value={booking.address?.building || "—"}
                 />
                 <KeyValueRow
                   label="Unit/Apt"
-                  value={booking.address?.unit || "Unit 402"}
+                  value={booking.address?.unit || "—"}
                 />
                 <KeyValueRow
                   label="Street"
-                  value={booking.address?.street || "Warner Bros World, Yas Waterworld"}
+                  value={booking.address?.street || "—"}
                 />
-                <KeyValueRow label="City" value={booking.city?.name || "Dubai"} />
-                <KeyValueRow
-                  label="Coordinates / Map"
-                  value={
-                    <a
-                      href={`https://maps.google.com/?q=${booking.address?.latitude || "25.2048"},${booking.address?.longitude || "55.2708"}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center text-blue-600 hover:underline gap-1 text-xs"
-                    >
-                      <MapPin className="w-3.5 h-3.5" />
-                      View on Google Maps
-                      <ExternalLink className="w-3 h-3 ml-0.5" />
-                    </a>
-                  }
-                />
+                <KeyValueRow label="City" value={booking.city?.name || "—"} />
+                {booking.address?.latitude && booking.address?.longitude && (
+                  <KeyValueRow
+                    label="Coordinates / Map"
+                    value={
+                      <a
+                        href={`https://maps.google.com/?q=${booking.address.latitude},${booking.address.longitude}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center text-primary hover:underline gap-1 text-xs"
+                      >
+                        <MapPin className="w-3.5 h-3.5" />
+                        View on Google Maps
+                        <ExternalLink className="w-3 h-3 ml-0.5" />
+                      </a>
+                    }
+                  />
+                )}
               </TabsContent>
             </div>
           </Tabs>

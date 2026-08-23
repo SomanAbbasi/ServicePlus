@@ -305,7 +305,7 @@ export function AdminSidebar({
             <span className="text-xs font-bold tracking-tight text-slate-900 block truncate">
               ServicePlus Operations
             </span>
-            <span className="text-[10px] font-semibold text-cyan-600 uppercase tracking-wider block">
+            <span className="text-[10px] font-semibold text-primary uppercase tracking-wider block">
               Admin Console
             </span>
           </div>
@@ -315,12 +315,12 @@ export function AdminSidebar({
       {/* User Role Profile Tag */}
       {!collapsed && (
         <div className="mx-1 mb-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5">
-          <div className="size-7 rounded-full bg-cyan-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+          <div className="size-7 rounded-full bg-primary text-primary-foreground font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
             {userName.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold text-slate-900 truncate">{userName}</p>
-            <span className="inline-block text-[10px] font-semibold text-cyan-700 bg-cyan-100/70 px-1.5 py-0.2 rounded-md truncate max-w-full">
+            <span className="inline-block text-[10px] font-semibold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded-md truncate max-w-full">
               {userRole}
             </span>
           </div>
@@ -346,11 +346,11 @@ export function AdminSidebar({
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all",
                     collapsed && "justify-center px-0",
                     active
-                      ? "bg-cyan-50 text-cyan-700 border border-cyan-200/80 shadow-xs"
+                      ? "bg-primary/10 text-primary border border-primary/20 shadow-xs font-bold"
                       : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900",
                   )}
                 >
-                  <Icon className={cn("size-4 shrink-0", active ? "text-cyan-600" : "text-slate-500")} />
+                  <Icon className={cn("size-4 shrink-0", active ? "text-primary" : "text-slate-500")} />
                   {!collapsed && <span className="truncate">{item.label}</span>}
                 </Link>
               </li>
@@ -374,12 +374,12 @@ export function AdminSidebar({
                   "w-full flex items-center justify-between gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all",
                   collapsed && "justify-center px-0",
                   isAnyChildActive && !collapsed
-                    ? "text-cyan-700 bg-cyan-50/50"
+                    ? "text-primary bg-primary/5 font-bold"
                     : "text-slate-700 hover:bg-slate-100/70",
                 )}
               >
                 <div className="flex items-center gap-3 truncate">
-                  <Icon className={cn("size-4 shrink-0", isAnyChildActive ? "text-cyan-600" : "text-slate-500")} />
+                  <Icon className={cn("size-4 shrink-0", isAnyChildActive ? "text-primary" : "text-slate-500")} />
                   {!collapsed && <span className="truncate">{item.label}</span>}
                 </div>
                 {!collapsed && (
@@ -402,13 +402,13 @@ export function AdminSidebar({
                           className={cn(
                             "flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
                             active
-                              ? "bg-cyan-600 text-white font-bold shadow-xs"
+                              ? "bg-primary text-primary-foreground font-bold shadow-xs"
                               : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
                           )}
                         >
                           <span className="truncate">{child.label}</span>
                           {child.badge && (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-cyan-100 text-cyan-800 font-bold">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-bold">
                               {child.badge}
                             </span>
                           )}
