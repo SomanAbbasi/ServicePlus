@@ -35,11 +35,10 @@ import {
   Send,
   Sliders,
   Trash2,
-  Upload,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { downloadCsv } from "@/frontend/components/admin/shell";
+import { PageHeader, PageActions, StatusBadge, ActionIconButton, downloadCsv } from "@/frontend/components/admin/shell";
 
 export const Route = createFileRoute("/admin/team-leads/")({ component: AdminTeamLeadsPage });
 
@@ -501,27 +500,20 @@ function AdminTeamLeadsPage() {
 
                       {/* 8. Action (Horizontal Row) */}
                       <td className="px-3 py-3.5 text-center align-middle">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            type="button"
+                        <div className="flex items-center justify-center gap-1">
+                          <ActionIconButton
+                            icon={isActivated ? X : Check} 
+                            label={isActivated ? "Deactivate" : "Activate"}
+                            action="toggle_status"
                             onClick={() => handleOpenAction(lead, "toggle_status")}
-                            title={isActivated ? "Deactivate Team Lead" : "Activate Team Lead"}
-                            className="text-rose-500 hover:scale-125 transition-transform"
-                          >
-                            {isActivated ? (
-                              <X className="size-4 text-rose-500 stroke-[2.5]" />
-                            ) : (
-                              <Check className="size-4 text-emerald-500 stroke-[2.5]" />
-                            )}
-                          </button>
-                          <Link
+                          />
+                          <ActionIconButton
+                            icon={Sliders}
+                            label="Edit"
+                            action="edit"
                             to="/admin/team-leads/edit"
                             search={{ id: lead.id }}
-                            title="Edit Team Lead"
-                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
-                          >
-                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
-                          </Link>
+                          />
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button

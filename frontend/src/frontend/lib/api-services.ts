@@ -1,4 +1,5 @@
 import { get, post, getAccessToken } from "./api-client";
+import { AdminDataStore, type AdminUser, type AdminStaff, type AdminRole, type AdminCompany, type AdminProfessional, type AdminTeamLead, type AdminSupervisor, type ComplianceDocument, type AdminMaterial, type AdminMaterialRequest, type AdminPlan } from "./admin-mock-data";
 
 /* ------------------------------------------------------------------ types */
 
@@ -60,46 +61,112 @@ export interface PlaceResult {
 /* ============================================================ CATALOG */
 
 export async function getHomeCatalog() {
-  const res = await get<{
-    categories: CategorySummary[];
-    services: ServiceSummary[];
-    listings: { category_id: string; service_id: string; sort_order: number }[];
-    featured_coupon: {
-      code: string;
-      description: string | null;
-      discount_type: string;
-      discount_value: number;
-    } | null;
-  }>("/services/home-catalog", { skipAuth: true });
+  try {
+    const res = await get<{
+      categories: CategorySummary[];
+      services: ServiceSummary[];
+      listings: { category_id: string; service_id: string; sort_order: number }[];
+      featured_coupon: {
+        code: string;
+        description: string | null;
+        discount_type: string;
+        discount_value: number;
+      } | null;
+    }>("/services/home-catalog", { skipAuth: true });
 
-  if (!res || !Array.isArray(res.categories) || res.categories.length === 0) {
-    throw new Error("Empty catalog returned from server");
+    if (res && Array.isArray(res.categories) && res.categories.length > 0) {
+      return res;
+    }
+  } catch (err) {
+    console.warn("[getHomeCatalog] Remote fetch fallback to local store:", err);
   }
-  return res;
+
+  const catalog = AdminDataStore.getCatalog();
+  return {
+    categories: (catalog.categories ?? []) as unknown as CategorySummary[],
+    services: (catalog.services ?? []) as unknown as ServiceSummary[],
+    listings: catalog.listings ?? [],
+    featured_coupon: null,
+  };
 }
 
-export function getServiceDetail(slug: string) {
-  return get<{
-    service: Record<string, unknown> | null;
-    variants: Record<string, unknown>[];
-    option_groups: (Record<string, unknown> & { options: Record<string, unknown>[] })[];
-    related: ServiceSummary[];
-    addons: Record<string, unknown>[];
-  } | null>(`/services/${encodeURIComponent(slug)}`, { skipAuth: true });
+export async function getServiceDetail(slug: string) {
+  try {
+    const res = await get<{
+      service: Record<string, unknown> | null;
+      variants: Record<string, unknown>[];
+      option_groups: (Record<string, unknown> & { options: Record<string, unknown>[] })[];
+      related: ServiceSummary[];
+      addons: Record<string, unknown>[];
+    } | null>(`/services/${encodeURIComponent(slug)}`, { skipAuth: true });
+
+    if (res && res.service) return res;
+  } catch (err) {
+    console.warn("[getServiceDetail] Remote fetch fallback to local store:", err);
+  }
+
+  const catalog = AdminDataStore.getCatalog();
+  const svc = (catalog.services ?? []).find((s: any) => s.slug === slug || s.id === slug) as any;
+  if (!svc) return null;
+
+  return {
+    service: svc,
+    variants: [],
+    option_groups: [],
+    related: (catalog.services ?? []).filter((s: any) => s.category_id === svc.category_id && s.id !== svc.id) as unknown as ServiceSummary[],
+    addons: [],
+  };
 }
 
-export function getCategory(slug: string) {
-  return get<{
-    category: CategorySummary;
-    services: ServiceSummary[];
-  } | null>(`/categories/${encodeURIComponent(slug)}`, { skipAuth: true });
+export async function getCategory(slug: string) {
+  try {
+    const res = await get<{
+      category: CategorySummary;
+      services: ServiceSummary[];
+    } | null>(`/categories/${encodeURIComponent(slug)}`, { skipAuth: true });
+
+    if (res && res.category) return res;
+  } catch (err) {
+    console.warn("[getCategory] Remote fetch fallback to local store:", err);
+  }
+
+  const catalog = AdminDataStore.getCatalog();
+  const cat = (catalog.categories ?? []).find((c: any) => c.slug === slug || c.id === slug) as any;
+  if (!cat) return null;
+
+  const svcs = (catalog.services ?? []).filter((s: any) => s.category_id === cat.id) as unknown as ServiceSummary[];
+  return {
+    category: cat as CategorySummary,
+    services: svcs,
+  };
 }
 
-export function searchServices(q: string) {
-  return get<{ services: ServiceSummary[]; categories: CategorySummary[] }>(
-    `/services/search?q=${encodeURIComponent(q)}`,
-    { skipAuth: true },
-  );
+export async function searchServices(q: string) {
+  try {
+    const res = await get<{ services: ServiceSummary[]; categories: CategorySummary[] }>(
+      `/services/search?q=${encodeURIComponent(q)}`,
+      { skipAuth: true },
+    );
+    if (res) return res;
+  } catch (err) {
+    console.warn("[searchServices] Remote fetch fallback to local store:", err);
+  }
+
+  const catalog = AdminDataStore.getCatalog();
+  const lower = q.toLowerCase();
+  const svcs = (catalog.services ?? []).filter((s: any) =>
+    String(s.name ?? "").toLowerCase().includes(lower) ||
+    String(s.description ?? "").toLowerCase().includes(lower)
+  ) as unknown as ServiceSummary[];
+
+  const cats = (catalog.categories ?? []).filter((c: any) =>
+    String(c.name ?? "").toLowerCase().includes(lower)
+  ) as unknown as CategorySummary[];
+
+  return {
+    services: svcs,
+    categories: cats,
+  };
 }
 
 export function getCities() {
@@ -199,8 +266,6 @@ export function createAddress(data: { label: string; street: string; building?: 
 export function cancelBooking(bookingId: string) {
   return post<{ ok: boolean }>(`/booking/${encodeURIComponent(bookingId)}/cancel`);
 }
-
-import { AdminDataStore, type AdminUser, type AdminStaff, type AdminRole, type AdminCompany, type AdminProfessional, type AdminTeamLead, type AdminSupervisor, type ComplianceDocument, type AdminMaterial, type AdminMaterialRequest, type AdminPlan } from "./admin-mock-data";
 
 /* ============================================================ ADMIN */
 

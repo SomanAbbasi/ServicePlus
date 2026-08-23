@@ -52,7 +52,7 @@ export interface StatusStyle {
  * Danger/Failed  → rose/red
  * Neutral/Draft  → slate
  */
-export const STATUS_COLORS: Record<string, StatusStyle> = {
+export const STATUS_COLORS = {
   // ── Completed / Success ──
   COMPLETED:    { badge: "bg-violet-100/70 text-violet-700",   chart: "#8b5cf6" },
   CONFIRMED:    { badge: "bg-violet-100/70 text-violet-700",   chart: "#8b5cf6" },
@@ -94,7 +94,7 @@ export const STATUS_COLORS: Record<string, StatusStyle> = {
   DRAFT:        { badge: "bg-slate-100 text-slate-600",        chart: "#64748b" },
   OFFLINE:      { badge: "bg-slate-100 text-slate-600",        chart: "#64748b" },
   ON_LEAVE:     { badge: "bg-slate-100 text-slate-600",        chart: "#64748b" },
-};
+} as Record<string, StatusStyle>;
 
 /** Fallback for unknown statuses */
 export const STATUS_DEFAULT: StatusStyle = {
@@ -104,10 +104,10 @@ export const STATUS_DEFAULT: StatusStyle = {
 
 /** Donut chart status mapping (canonical order) */
 export const DONUT_STATUS_COLORS: Record<string, string> = {
-  Pending:       STATUS_COLORS.PENDING.chart,
-  "In Progress": STATUS_COLORS.IN_PROGRESS.chart,
-  Completed:     STATUS_COLORS.COMPLETED.chart,
-  Cancelled:     STATUS_COLORS.CANCELLED.chart,
+  Pending:       "#f59e0b",
+  "In Progress": "#06b6d4",
+  Completed:     "#8b5cf6",
+  Cancelled:     "#22c55e",
 };
 
 /* ------------------------------------------------------------------ */

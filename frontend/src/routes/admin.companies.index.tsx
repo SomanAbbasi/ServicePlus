@@ -38,7 +38,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { downloadCsv } from "@/frontend/components/admin/shell";
+import { PageHeader, PageActions, StatusBadge, ActionIconButton, downloadCsv } from "@/frontend/components/admin/shell";
 
 export const Route = createFileRoute("/admin/companies/")({ component: AdminCompaniesPage });
 
@@ -282,14 +282,14 @@ function AdminCompaniesPage() {
                 variant="outline"
                 size="sm"
                 onClick={handleResetFilter}
-                className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
+                className="font-bold text-xs h-9 px-4 rounded-lg"
               >
                 <RotateCcw className="size-3.5 me-1.5" /> Reset
               </Button>
               <Button
                 type="submit"
                 size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
+                className="font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
               >
                 <Filter className="size-3.5 me-1.5" /> Filter
               </Button>
@@ -447,13 +447,13 @@ function AdminCompaniesPage() {
                       <td className="px-3 py-3.5 text-center align-middle">
                         <div className="flex items-center justify-center gap-1">
                           <ActionIconButton
-                            icon={undefined} 
+                            icon={isActivated ? X : Check} 
                             label={isActivated ? "Deactivate" : "Activate"}
                             action="toggle_status"
                             onClick={() => handleOpenAction(comp, "toggle_status")}
                           />
                           <ActionIconButton
-                            icon={undefined}
+                            icon={Sliders}
                             label="Edit"
                             action="edit"
                             to="/admin/companies/edit"

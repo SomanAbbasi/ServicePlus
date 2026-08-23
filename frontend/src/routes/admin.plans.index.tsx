@@ -17,6 +17,7 @@ import { Label } from "@/frontend/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
 import { Check, Edit, Plus, Sliders, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader, PageActions, StatusBadge, ActionIconButton } from "@/frontend/components/admin/shell";
 
 export const Route = createFileRoute("/admin/plans/")({ component: AdminPlansPage });
 

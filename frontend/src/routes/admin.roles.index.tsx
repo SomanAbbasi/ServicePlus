@@ -16,7 +16,7 @@ import { Card } from "@/frontend/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/frontend/components/ui/dialog";
 import { Label } from "@/frontend/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
-import { ChevronsUpDown, Filter, RotateCcw, Search, Trash2, X } from "lucide-react";
+import { Check, ChevronsUpDown, Filter, RotateCcw, Search, Sliders, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, PageActions, StatusBadge, ActionIconButton } from "@/frontend/components/admin/shell";
 
@@ -325,13 +325,13 @@ function AdminRolesPage() {
                       <td className="px-3 py-3.5 text-center align-middle">
                         <div className="flex items-center justify-center gap-1">
                           <ActionIconButton
-                            icon={undefined} 
+                            icon={isActivated ? X : Check} 
                             label={isActivated ? "Deactivate" : "Activate"}
                             action="toggle_status"
                             onClick={() => handleToggleStatus(role)}
                           />
                           <ActionIconButton
-                            icon={undefined}
+                            icon={Sliders}
                             label="Edit"
                             action="edit"
                             to="/admin/roles/edit"

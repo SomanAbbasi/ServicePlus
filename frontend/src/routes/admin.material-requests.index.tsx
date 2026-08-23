@@ -32,7 +32,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { toast } from "sonner";
-import { downloadCsv } from "@/frontend/components/admin/shell";
+import { PageHeader, PageActions, StatusBadge, ActionIconButton, downloadCsv } from "@/frontend/components/admin/shell";
 
 export const Route = createFileRoute("/admin/material-requests/")({ component: AdminMaterialRequestsPage });
 
@@ -417,35 +417,32 @@ function AdminMaterialRequestsPage() {
                       </td>
                       <td className="px-4 py-3.5 text-slate-600 font-normal text-xs whitespace-nowrap">{reqDate}</td>
                       <td className="px-3 py-3.5 text-center">
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-1">
                           {req.status === "Pending" ? (
                             <>
-                              <button
-                                type="button"
+                              <ActionIconButton
+                                icon={Check}
+                                label="Approve"
+                                action="approve"
                                 onClick={() => handleUpdateStatus(req.id, "Approved")}
-                                title="Approve Request"
-                                className="size-6 grid place-items-center rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors cursor-pointer"
-                              >
-                                <Check className="size-3.5 stroke-[2.5]" />
-                              </button>
-                              <button
-                                type="button"
+                              />
+                              <ActionIconButton
+                                icon={X}
+                                label="Reject"
+                                action="reject"
                                 onClick={() => handleUpdateStatus(req.id, "Rejected")}
-                                title="Reject Request"
-                                className="size-6 grid place-items-center rounded bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
-                              >
-                                <X className="size-3.5 stroke-[2.5]" />
-                              </button>
+                              />
                             </>
                           ) : (
-                            <button
+                            <Button
                               type="button"
+                              variant="link"
+                              size="sm"
                               onClick={() => handleUpdateStatus(req.id, "Pending")}
-                              title="Reset to Pending"
-                              className="text-[11px] font-semibold text-[#0088cc] hover:underline cursor-pointer"
+                              className="text-[11px] font-semibold h-auto p-0"
                             >
                               Edit
-                            </button>
+                            </Button>
                           )}
                         </div>
                       </td>
@@ -482,7 +479,7 @@ function AdminMaterialRequestsPage() {
                 size="sm"
                 onClick={() => setCurrentPage(p)}
                 className={`h-8 w-8 p-0 text-xs font-bold ${
-                  p === currentPage ? "bg-[#0088cc] text-white hover:bg-[#0077b5]" : "text-slate-600"
+                  p === currentPage ? "bg-primary text-primary-foreground" : "text-slate-600"
                 }`}
               >
                 {p}

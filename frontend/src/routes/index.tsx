@@ -60,11 +60,26 @@ export const Route = createFileRoute("/")({
     links: [{ rel: "canonical", href: "/" }],
   }),
   component: Home,
+  errorComponent: () => (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center p-8 text-center bg-slate-50">
+      <div className="max-w-md rounded-2xl bg-white p-6 shadow-md border border-slate-200">
+        <h2 className="text-lg font-bold text-slate-900">Services Catalog</h2>
+        <p className="mt-2 text-xs text-slate-500">Please refresh the page to reload the catalog.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          Refresh Page
+        </button>
+      </div>
+    </div>
+  ),
 });
 
 function Home() {
   const { data } = useSuspenseQuery(homeQuery);
-  const { services, categories } = data;
+  const services = data?.services ?? [];
+  const categories = data?.categories ?? [];
   const navigate = useNavigate();
   const { t, locale } = useLocale();
   const { location, save } = useSavedLocation();

@@ -41,7 +41,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { downloadCsv } from "@/frontend/components/admin/shell";
+import { PageHeader, PageActions, StatusBadge, ActionIconButton, downloadCsv } from "@/frontend/components/admin/shell";
 
 export const Route = createFileRoute("/admin/professionals/")({ component: AdminProfessionalsPage });
 
@@ -530,15 +530,7 @@ function AdminProfessionalsPage() {
 
                       {/* 7. Status */}
                       <td className="px-3 py-3.5 text-center whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                            isActivated
-                              ? "bg-emerald-100/70 text-emerald-700"
-                              : "bg-rose-100/70 text-rose-700"
-                          }`}
-                        >
-                          {isActivated ? "Activated" : "Deactivated"}
-                        </span>
+                        <StatusBadge status={isActivated ? "Activated" : "Deactivated"} />
                       </td>
 
                       {/* 8. Registered On */}

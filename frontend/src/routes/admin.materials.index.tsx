@@ -29,7 +29,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { toast } from "sonner";
-import { downloadCsv } from "@/frontend/components/admin/shell";
+import { PageHeader, PageActions, StatusBadge, ActionIconButton, downloadCsv } from "@/frontend/components/admin/shell";
 
 export const Route = createFileRoute("/admin/materials/")({ component: AdminMaterialsPage });
 
@@ -364,38 +364,27 @@ function AdminMaterialsPage() {
                         {mat.createdOn || "09-01-2026 12:10 PM"}
                       </td>
 
-                      {/* Actions: Red Power/Cross, Blue Edit Pen, Red Trash */}
+                      {/* Actions */}
                       <td className="px-4 py-3.5 text-center">
-                        <div className="flex items-center justify-center gap-2.5">
-                          {/* Toggle Status (Red X / Power icon) */}
-                          <button
-                            type="button"
+                        <div className="flex items-center justify-center gap-1">
+                          <ActionIconButton
+                            icon={isActivated ? X : Power}
+                            label={isActivated ? "Deactivate" : "Activate"}
+                            action="delete"
                             onClick={() => handleToggleStatus(mat)}
-                            title={isActivated ? "Deactivate Material" : "Activate Material"}
-                            className="text-rose-500 hover:text-rose-700 transition-colors p-1 cursor-pointer"
-                          >
-                            <X className="size-4 stroke-[2.5]" />
-                          </button>
-
-                          {/* Edit Pen */}
-                          <button
-                            type="button"
+                          />
+                          <ActionIconButton
+                            icon={Edit2}
+                            label="Edit"
+                            action="edit"
                             onClick={() => handleOpenEdit(mat)}
-                            title="Edit Material"
-                            className="text-[#0088cc] hover:text-[#006699] transition-colors p-1 cursor-pointer"
-                          >
-                            <Edit2 className="size-4 stroke-[2.2]" />
-                          </button>
-
-                          {/* Delete Trash */}
-                          <button
-                            type="button"
+                          />
+                          <ActionIconButton
+                            icon={Trash2}
+                            label="Delete"
+                            action="delete"
                             onClick={() => handleDelete(mat.id, mat.name)}
-                            title="Delete Material"
-                            className="text-rose-500 hover:text-rose-700 transition-colors p-1 cursor-pointer"
-                          >
-                            <Trash2 className="size-4 stroke-[2.2]" />
-                          </button>
+                          />
                         </div>
                       </td>
                     </tr>
@@ -431,7 +420,7 @@ function AdminMaterialsPage() {
                 size="sm"
                 onClick={() => setCurrentPage(p)}
                 className={`h-8 w-8 p-0 text-xs font-bold ${
-                  p === currentPage ? "bg-[#0088cc] text-white hover:bg-[#0077b5]" : "text-slate-600"
+                  p === currentPage ? "bg-primary text-primary-foreground" : "text-slate-600"
                 }`}
               >
                 {p}

@@ -1,12 +1,30 @@
 import * as React from "react";
-import { Button } from "@/frontend/components/ui/button";
 import { Link } from "@tanstack/react-router";
-import { Search, Download, Plus } from "lucide-react";
-
 import { Card } from "@/frontend/components/ui/card";
+import { Button } from "@/frontend/components/ui/button";
 import { Skeleton } from "@/frontend/components/ui/skeleton";
 import { cn } from "@/frontend/lib/utils";
-import type { LucideIcon } from "lucide-react";
+import {
+  STATUS_COLORS,
+  STATUS_DEFAULT,
+  STAT_CARD_ACCENTS,
+  ACTION_ICON_STYLES,
+  ICON,
+  type StatAccent,
+  type ActionType,
+} from "@/frontend/lib/design-tokens";
+import {
+  Download,
+  Plus,
+  Search,
+  TrendingDown,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react";
+
+/* ------------------------------------------------------------------ */
+/*  PageHeader                                                         */
+/* ------------------------------------------------------------------ */
 
 export function PageHeader({
   title,
@@ -20,50 +38,136 @@ export function PageHeader({
   breadcrumbs?: { label: string; to?: string }[];
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div className="mb-4">
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <div className="w-full text-sm text-muted-foreground mb-1">
-          {breadcrumbs.map((b, i) => (
-            <span key={i}>
-              {b.to ? <a href={b.to} className="hover:underline">{b.label}</a> : b.label}
-              {i < breadcrumbs.length - 1 && " / "}
-            </span>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium mb-1">
+          {breadcrumbs.map((crumb, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <span>/</span>}
+              {crumb.to ? (
+                <Link to={crumb.to as any} className="text-primary hover:underline font-semibold">
+                  {crumb.label}
+                </Link>
+              ) : (
+                <span className="text-foreground">{crumb.label}</span>
+              )}
+            </React.Fragment>
           ))}
         </div>
       )}
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-        {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">{title}</h1>
+          {description ? (
+            <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+          ) : null}
+        </div>
+        {actions ? (
+          <div className="flex flex-wrap items-center gap-2">{actions}</div>
+        ) : null}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  PageActions — standardized Search / Export / Add buttons            */
+/* ------------------------------------------------------------------ */
+
+export function PageActions({
+  onSearchToggle,
+  isSearchOpen,
+  onExport,
+  addNewLabel,
+  addNewTo,
+  children,
+}: {
+  onSearchToggle?: () => void;
+  isSearchOpen?: boolean;
+  onExport?: () => void;
+  addNewLabel?: string;
+  addNewTo?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      {onSearchToggle && (
+        <Button
+          type="button"
+          variant={isSearchOpen ? "default" : "outline"}
+          size="sm"
+          onClick={onSearchToggle}
+          className="h-9 px-4 text-xs font-semibold"
+        >
+          <Search className={cn(ICON.inline, "me-1.5")} />
+          Search
+        </Button>
+      )}
+      {onExport && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onExport}
+          className="h-9 px-4 text-xs font-semibold"
+        >
+          <Download className={cn(ICON.inline, "me-1.5")} />
+          Export CSV
+        </Button>
+      )}
+      {addNewLabel && addNewTo && (
+        <Button asChild size="sm" className="h-9 px-4 text-xs font-semibold">
+          <Link to={addNewTo as any}>
+            <Plus className={cn(ICON.inline, "me-1.5")} />
+            {addNewLabel}
+          </Link>
+        </Button>
+      )}
+      {children}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  StatsCard                                                          */
+/* ------------------------------------------------------------------ */
 
 export function StatsCard({
   label,
   value,
   hint,
   icon: Icon,
+  accent = "primary",
 }: {
   label: string;
   value: React.ReactNode;
   hint?: string;
-  icon?: LucideIcon;
+  icon?: LucideIcon | React.ComponentType<{ className?: string }>;
+  accent?: StatAccent;
 }) {
+  const palette = STAT_CARD_ACCENTS[accent] ?? STAT_CARD_ACCENTS.primary;
   return (
-    <Card className="p-4">
+    <Card className="p-4 bg-card border-border shadow-xs hover:border-primary/40 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <p className="truncate text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
             {label}
           </p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
-          {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
+          <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{value}</p>
+          {hint ? (
+            <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+          ) : null}
         </div>
         {Icon ? (
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-            <Icon className="size-4" aria-hidden />
+          <span
+            className={cn(
+              "grid shrink-0 place-items-center rounded-lg",
+              ICON.statContainer,
+              palette.bg,
+              palette.text,
+            )}
+          >
+            <Icon className={ICON.statCard} />
           </span>
         ) : null}
       </div>
@@ -71,32 +175,57 @@ export function StatsCard({
   );
 }
 
-const STATUS_TONES: Record<string, string> = {
-  COMPLETED: "bg-emerald-100/70 text-emerald-600",
-  CONFIRMED: "bg-emerald-100/70 text-emerald-600",
-  PAID: "bg-emerald-100/70 text-emerald-600",
-  AVAILABLE: "bg-emerald-100/70 text-emerald-600",
-  ACTIVE: "bg-emerald-100/70 text-emerald-600",
-  ACTIVATED: "bg-emerald-100/70 text-emerald-600",
-  INACTIVE: "bg-rose-100/70 text-rose-600",
-  DEACTIVATED: "bg-rose-100/70 text-rose-600",
-  PENDING: "bg-amber-100/70 text-amber-600",
-  DRAFT: "bg-slate-100 text-slate-600",
-  ASSIGNING: "bg-amber-100/70 text-amber-600",
-  ASSIGNED: "bg-sky-100/70 text-sky-600",
-  EN_ROUTE: "bg-sky-100/70 text-sky-600",
-  ARRIVED: "bg-sky-100/70 text-sky-600",
-  IN_PROGRESS: "bg-sky-100/70 text-sky-600",
-  BUSY: "bg-sky-100/70 text-sky-600",
-  RESCHEDULED: "bg-violet-100/70 text-violet-600",
-  CANCELLED: "bg-rose-100/70 text-rose-600",
-  FAILED: "bg-rose-100/70 text-rose-600",
-  PAYMENT_FAILED: "bg-rose-100/70 text-rose-600",
-  SUSPENDED: "bg-rose-100/70 text-rose-600",
-  REFUNDED: "bg-violet-100/70 text-violet-600",
-  OFFLINE: "bg-slate-100 text-slate-600",
-  ON_LEAVE: "bg-slate-100 text-slate-600",
-};
+/* ------------------------------------------------------------------ */
+/*  ComparisonCard                                                     */
+/* ------------------------------------------------------------------ */
+
+export function ComparisonCard({
+  title,
+  current,
+  previous,
+  percentChange,
+  previousLabel = "Previous",
+}: {
+  title: string;
+  current: number | string;
+  previous: number | string;
+  percentChange: number;
+  previousLabel?: string;
+}) {
+  const isPositive = percentChange >= 0;
+  return (
+    <Card className="p-4 bg-card border-border shadow-xs">
+      <p className="text-xs font-semibold text-muted-foreground">{title}</p>
+      <div className="mt-2 flex items-center justify-between">
+        <div>
+          <span className="text-2xl font-bold tracking-tight text-foreground">{current}</span>
+          <p className="text-xs text-muted-foreground mt-0.5 font-medium">
+            {previousLabel}: {previous}
+          </p>
+        </div>
+        <div
+          className={cn(
+            "flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-bold",
+            isPositive
+              ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+              : "bg-rose-50 border-rose-200 text-rose-700",
+          )}
+        >
+          {isPositive ? (
+            <TrendingUp className={ICON.inline} />
+          ) : (
+            <TrendingDown className={ICON.inline} />
+          )}
+          <span>{percentChange}%</span>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  StatusBadge                                                        */
+/* ------------------------------------------------------------------ */
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {
   const key = String(status ?? "").toUpperCase();
@@ -108,11 +237,14 @@ export function StatusBadge({ status }: { status: string | null | undefined }) {
         : key
           ? key.replaceAll("_", " ").toLowerCase()
           : "—";
+
+  const style = STATUS_COLORS[key] ?? STATUS_DEFAULT;
+
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
-        STATUS_TONES[key] ?? "bg-slate-100 text-slate-600",
+        "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold capitalize",
+        style.badge,
       )}
     >
       {label}
@@ -120,14 +252,89 @@ export function StatusBadge({ status }: { status: string | null | undefined }) {
   );
 }
 
-export function EmptyState({ title, description }: { title: string; description?: string }) {
+/* ------------------------------------------------------------------ */
+/*  ActionIconButton                                                   */
+/* ------------------------------------------------------------------ */
+
+export function ActionIconButton({
+  icon: Icon,
+  label,
+  action = "view",
+  onClick,
+  to,
+  search,
+  disabled,
+}: {
+  icon?: LucideIcon | React.ComponentType<{ className?: string }>;
+  label: string;
+  action?: ActionType | string;
+  onClick?: () => void;
+  to?: string;
+  search?: Record<string, any>;
+  disabled?: boolean;
+}) {
+  const style = (ACTION_ICON_STYLES as Record<string, string>)[action] ??
+    (action === "delete" || action === "reject" ? "text-rose-500 hover:bg-rose-50" :
+     action === "edit" ? "text-primary hover:bg-primary/10" :
+     action === "view" || action === "info" ? "text-blue-600 hover:bg-blue-50" :
+     action === "toggle_on" ? "text-emerald-600 hover:bg-emerald-50" :
+     action === "toggle_off" || action === "toggle_status" ? "text-rose-500 hover:bg-rose-50" :
+     "text-slate-600 hover:bg-slate-100");
+
+  const classes = cn(
+    "inline-flex items-center justify-center size-8 rounded-md transition-colors cursor-pointer",
+    style,
+    disabled && "opacity-40 pointer-events-none",
+  );
+
+  const iconElement = Icon ? <Icon className={cn(ICON.inline, "stroke-[2]")} /> : null;
+
+  if (to) {
+    return (
+      <Link to={to as any} search={search as any} title={label} aria-label={label} className={classes}>
+        {iconElement}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      disabled={disabled}
+      className={classes}
+    >
+      {iconElement}
+    </button>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  EmptyState                                                         */
+/* ------------------------------------------------------------------ */
+
+export function EmptyState({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
   return (
     <div className="rounded-xl border border-dashed border-border p-10 text-center">
-      <p className="text-sm font-medium">{title}</p>
-      {description ? <p className="mt-1 text-xs text-muted-foreground">{description}</p> : null}
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      {description ? (
+        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+      ) : null}
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  ErrorState                                                         */
+/* ------------------------------------------------------------------ */
 
 export function ErrorState({ message }: { message?: string }) {
   return (
@@ -136,6 +343,10 @@ export function ErrorState({ message }: { message?: string }) {
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  TableSkeleton                                                      */
+/* ------------------------------------------------------------------ */
 
 export function TableSkeleton({ rows = 6 }: { rows?: number }) {
   return (
@@ -146,6 +357,10 @@ export function TableSkeleton({ rows = 6 }: { rows?: number }) {
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  SectionCard                                                        */
+/* ------------------------------------------------------------------ */
 
 export function SectionCard({
   title,
@@ -159,9 +374,9 @@ export function SectionCard({
   className?: string;
 }) {
   return (
-    <Card className={cn("p-4", className)}>
+    <Card className={cn("p-4 bg-card border-border shadow-xs", className)}>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold">{title}</h2>
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
         {action}
       </div>
       {children}
@@ -169,16 +384,24 @@ export function SectionCard({
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  CSV Utilities                                                      */
+/* ------------------------------------------------------------------ */
+
 export function toCsv(rows: Record<string, unknown>[]): string {
   if (!rows.length) return "";
   const headers = Object.keys(rows[0]!);
   const escape = (v: unknown) => `"${String(v ?? "").replaceAll('"', '""')}"`;
-  return [headers.join(","), ...rows.map((r) => headers.map((h) => escape(r[h])).join(","))].join(
-    "\n",
-  );
+  return [
+    headers.join(","),
+    ...rows.map((r) => headers.map((h) => escape(r[h])).join(",")),
+  ].join("\n");
 }
 
-export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
+export function downloadCsv(
+  filename: string,
+  rows: Record<string, unknown>[],
+) {
   const blob = new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -186,96 +409,4 @@ export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-export function PageActions({
-  onSearchToggle,
-  isSearchOpen,
-  onExport,
-  addNewLabel,
-  addNewTo,
-}: {
-  onSearchToggle?: () => void;
-  isSearchOpen?: boolean;
-  onExport?: () => void;
-  addNewLabel?: string;
-  addNewTo?: string;
-}) {
-  return (
-    <div className="flex items-center gap-2.5">
-      {onSearchToggle && (
-        <Button
-          type="button"
-          variant={isSearchOpen ? "default" : "outline"}
-          onClick={onSearchToggle}
-          className={`font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs transition-all ${
-            isSearchOpen
-              ? "bg-primary text-primary-foreground"
-              : "border-border text-foreground hover:bg-muted"
-          }`}
-        >
-          <Search className="size-3.5 me-1.5" /> Search
-        </Button>
-      )}
-      {onExport && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onExport}
-          className="border-border text-foreground hover:bg-muted font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs"
-        >
-          <Download className="size-3.5 me-1.5" /> Export
-        </Button>
-      )}
-      {addNewLabel && addNewTo && (
-        <Button
-          asChild
-          className="font-bold text-xs h-9 sm:h-10 px-5 rounded-xl shadow-sm"
-        >
-          <Link to={addNewTo as any}>
-            <Plus className="size-3.5 me-1.5" /> {addNewLabel}
-          </Link>
-        </Button>
-      )}
-    </div>
-  );
-}
-
-export function ActionIconButton({
-  icon: Icon,
-  label,
-  action,
-  onClick,
-  to,
-  search,
-}: {
-  icon: LucideIcon;
-  label: string;
-  action: string;
-  onClick?: () => void;
-  to?: string;
-  search?: any;
-}) {
-  const content = (
-    <Icon className="size-4 stroke-[2.5]" />
-  );
-  const className = `hover:scale-125 transition-transform inline-flex items-center justify-center p-1 ` + (
-    action === 'delete' ? 'text-destructive' : 
-    action === 'edit' ? 'text-primary' : 
-    action === 'view' ? 'text-blue-500' :
-    'text-muted-foreground hover:text-foreground'
-  );
-
-  if (to) {
-    return (
-      <Link to={to as any} search={search} title={label} className={className}>
-        {content}
-      </Link>
-    );
-  }
-  return (
-    <button type="button" onClick={onClick} title={label} className={className}>
-      {content}
-    </button>
-  );
 }
