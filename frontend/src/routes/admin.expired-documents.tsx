@@ -13,26 +13,31 @@ import { Input } from "@/frontend/components/ui/input";
 import { Card } from "@/frontend/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
 import {
-  AlertCircle,
   AlertTriangle,
   BellRing,
-  CheckCircle2,
   Clock,
   Download,
   Eye,
-  FileCheck,
   FileText,
-  FileWarning,
   RefreshCw,
   Search,
   ShieldAlert,
   ShieldCheck,
   Filter,
   ArrowUpDown,
+  MessageSquare,
+  Copy,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { downloadCsv } from "@/frontend/components/admin/shell";
 import { AdminDateInput } from "@/frontend/components/admin/AdminDateInput";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/frontend/components/ui/dialog";
 
 export const Route = createFileRoute("/admin/expired-documents")({ component: AdminExpiredDocumentsPage });
 
@@ -41,7 +46,8 @@ function AdminExpiredDocumentsPage() {
   const { data: docsData } = useAdminQuery("compliance_documents", getAdminComplianceDocuments);
   const documents: ComplianceDocument[] = (docsData as ComplianceDocument[]) ?? [];
 
-  const [showFilters, setShowFilters] = useState(true);
+  // Search box closed by default for clean and clear view
+  const [showFilters, setShowFilters] = useState(false);
 
   // Filters State
   const [roleFilter, setRoleFilter] = useState("ALL");
@@ -60,7 +66,21 @@ function AdminExpiredDocumentsPage() {
   const [selectedDoc, setSelectedDoc] = useState<ComplianceDocument | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
+  // Full Remarks Modal State
+  const [remarksModalDoc, setRemarksModalDoc] = useState<ComplianceDocument | null>(null);
+
   const now = new Date();
+
+  const hasActiveFilters = Boolean(
+    roleFilter !== "ALL" ||
+    staffName.trim() ||
+    docType.trim() ||
+    docNumber.trim() ||
+    expiryDate ||
+    statusFilter !== "ALL" ||
+    createdFrom ||
+    createdTo
+  );
 
   // Filter logic
   const filteredDocs = useMemo(() => {
@@ -161,6 +181,7 @@ function AdminExpiredDocumentsPage() {
         "Issue Date": d.issueDate,
         "Expiry Date": d.expiryDate,
         Status: d.status,
+        Remarks: d.remarks || "—",
       })),
     );
   };
@@ -184,20 +205,28 @@ function AdminExpiredDocumentsPage() {
         <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
           <span className="text-cyan-600 font-semibold">Dashboard</span>
           <span>/</span>
-          <span>Expired Documents Compliance Hub</span>
+          <span>Expired Documents</span>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Document Compliance Hub</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Expired Documents</h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
               Monitor, renew, and audit official licenses, visas, IDs, and permits across all registered entities.
             </p>
           </div>
           <Button
             onClick={() => setShowFilters(!showFilters)}
-            className="bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-xs h-9 px-4 rounded-full shadow-sm"
+            className={`font-semibold text-xs h-9 px-4 rounded-full shadow-sm transition-all gap-1.5 ${
+              showFilters
+                ? "bg-slate-800 hover:bg-slate-900 text-white"
+                : "bg-cyan-500 hover:bg-cyan-600 text-white"
+            }`}
           >
-            <Search className="size-4 mr-1.5" /> Search
+            <Search className="size-3.5" />
+            <span>Search</span>
+            {hasActiveFilters && (
+              <span className="size-2 rounded-full bg-amber-400" />
+            )}
           </Button>
         </div>
       </div>
@@ -267,9 +296,9 @@ function AdminExpiredDocumentsPage() {
 
       {/* Main Table Card */}
       <Card className="p-4 bg-white border-slate-200 shadow-xs">
-        {/* Filters Toolbar */}
+        {/* Filters Toolbar (Closed by default) */}
         {showFilters && (
-          <div className="flex flex-col gap-3 pb-4 border-b border-slate-100 mb-4 bg-slate-50 p-3 rounded-lg">
+          <div className="flex flex-col gap-3 pb-4 border-b border-slate-100 mb-4 bg-slate-50/90 p-3.5 rounded-xl border border-slate-200/80 animate-in fade-in-50 duration-200">
             {/* Row 1 */}
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div>
@@ -281,7 +310,7 @@ function AdminExpiredDocumentsPage() {
                     <SelectItem value="ALL" className="text-xs">All Roles</SelectItem>
                     <SelectItem value="Company" className="text-xs">Company</SelectItem>
                     <SelectItem value="Professional" className="text-xs">Professional</SelectItem>
-                    <SelectItem value="TeamLead" className="text-xs">Team Lead</SelectItem>
+                    <SelectItem value="TeamLead" className="text-xs">Team Leader</SelectItem>
                     <SelectItem value="Supervisor" className="text-xs">Supervisor</SelectItem>
                   </SelectContent>
                 </Select>
@@ -377,18 +406,19 @@ function AdminExpiredDocumentsPage() {
                 </Button>
                 <Button
                   size="sm"
-                  className="h-8 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-full px-4"
+                  onClick={() => setCurrentPage(1)}
+                  className="h-8 text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white rounded-full px-4"
                 >
                   <Filter className="size-3.5 mr-1.5" />
-                  Filter
+                  Apply Filter
                 </Button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Page Size & Table Header */}
-        <div className="flex justify-between items-center mb-2">
+        {/* Page Size & Table Count Header */}
+        <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
             <span>Show</span>
             <Select
@@ -409,75 +439,35 @@ function AdminExpiredDocumentsPage() {
             </Select>
             <span>entries</span>
           </div>
+
+          <div className="text-xs text-slate-400 font-medium">
+            Total {filteredDocs.length} {filteredDocs.length === 1 ? "document" : "documents"}
+          </div>
         </div>
 
-        {/* Documents Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs whitespace-nowrap">
-            <thead className="text-slate-500 font-semibold border-b border-slate-200">
+        {/* Documents Table - Single Consistent Page UI */}
+        <div className="overflow-x-auto rounded-xl border border-slate-100">
+          <table className="w-full text-left text-xs">
+            <thead className="text-slate-500 font-semibold bg-slate-50/70 border-b border-slate-200">
               <tr>
                 <th className="px-3 py-3 w-10 text-center">#</th>
-                <th className="px-4 py-3 min-w-[120px]">
-                  <div className="flex items-center gap-1">
-                    Staff Role <ArrowUpDown className="size-3 text-slate-400 shrink-0" />
-                  </div>
-                </th>
-                <th className="px-4 py-3 min-w-[160px]">
-                  <div className="flex items-center gap-1">
-                    Staff Name <ArrowUpDown className="size-3 text-slate-400 shrink-0" />
-                  </div>
-                </th>
-                <th className="px-4 py-3 min-w-[160px]">
-                  <div className="flex items-center gap-1">
-                    Document Type <ArrowUpDown className="size-3 text-slate-400 shrink-0" />
-                  </div>
-                </th>
-                <th className="px-4 py-3 min-w-[140px]">
-                  <div className="flex items-center gap-1">
-                    Document Number <ArrowUpDown className="size-3 text-slate-400 shrink-0" />
-                  </div>
-                </th>
-                <th className="px-3 py-3 min-w-[110px]">
-                  <div className="flex items-center gap-1">
-                    Issue Date <ArrowUpDown className="size-3 text-slate-400 shrink-0" />
-                  </div>
-                </th>
-                <th className="px-3 py-3 min-w-[110px]">
-                  <div className="flex items-center gap-1">
-                    Expiry Date <ArrowUpDown className="size-3 text-slate-400 shrink-0" />
-                  </div>
-                </th>
-                <th className="px-3 py-3 text-center min-w-[130px]">
-                  <div className="flex items-center justify-center gap-1">
-                    Document Status <ArrowUpDown className="size-3 text-slate-400 shrink-0" />
-                  </div>
-                </th>
-                <th className="px-3 py-3 min-w-[120px]">
-                  <div className="flex items-center gap-1">
-                    Document File <ArrowUpDown className="size-3 text-slate-400 shrink-0" />
-                  </div>
-                </th>
-                <th className="px-3 py-3 min-w-[120px]">
-                  <div className="flex items-center gap-1">
-                    Remarks <ArrowUpDown className="size-3 text-slate-400 shrink-0" />
-                  </div>
-                </th>
-                <th className="px-3 py-3 min-w-[150px]">
-                  <div className="flex items-center gap-1">
-                    Created At <ArrowUpDown className="size-3 text-slate-400 shrink-0" />
-                  </div>
-                </th>
-                <th className="px-3 py-3 text-center w-24 sticky right-0 bg-white">
-                  <div className="flex items-center justify-center gap-1 text-slate-600 font-bold">
-                    Action
-                  </div>
-                </th>
+                <th className="px-3.5 py-3">Staff Role</th>
+                <th className="px-3.5 py-3">Staff Name</th>
+                <th className="px-3.5 py-3">Document Type</th>
+                <th className="px-3.5 py-3">Document Number</th>
+                <th className="px-3 py-3">Issue Date</th>
+                <th className="px-3 py-3">Expiry Date</th>
+                <th className="px-3 py-3 text-center">Document Status</th>
+                <th className="px-3 py-3 text-center">Document File</th>
+                <th className="px-3.5 py-3">Remarks</th>
+                <th className="px-3 py-3">Created At</th>
+                <th className="px-3 py-3 text-center w-20">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+            <tbody className="divide-y divide-slate-100 font-medium text-slate-700 bg-white">
               {paginatedDocs.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="py-8 text-center text-slate-400">
+                  <td colSpan={12} className="py-12 text-center text-slate-400 font-medium">
                     No compliance documents match your selected criteria.
                   </td>
                 </tr>
@@ -488,66 +478,111 @@ function AdminExpiredDocumentsPage() {
                   const diffDays = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
                   const isExpired = diffDays < 0;
 
+                  const roleBadgeColor =
+                    doc.entityType === "Company"
+                      ? "bg-slate-100 text-slate-800 border-slate-200"
+                      : doc.entityType === "TeamLead"
+                      ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                      : doc.entityType === "Supervisor"
+                      ? "bg-purple-50 text-purple-700 border-purple-200"
+                      : "bg-cyan-50 text-cyan-800 border-cyan-200";
+
+                  const roleLabel =
+                    doc.entityType === "TeamLead" ? "Team Leader" : doc.entityType;
+
                   return (
-                    <tr key={doc.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="px-3 py-3 text-center font-bold text-slate-400">{globalIdx}</td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-semibold">
-                          {doc.entityType}
+                    <tr key={doc.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="px-3 py-3.5 text-center font-bold text-slate-400">
+                        {globalIdx}
+                      </td>
+                      <td className="px-3.5 py-3.5">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold border ${roleBadgeColor}`}>
+                          {roleLabel}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3.5 py-3.5">
                         <div>
-                          <p className="font-bold text-slate-900">{doc.entityName}</p>
+                          <p className="font-bold text-slate-900 leading-snug">{doc.entityName}</p>
                           {doc.companyName && doc.companyName !== doc.entityName && (
-                            <p className="text-[11px] text-slate-400">{doc.companyName}</p>
+                            <p className="text-[11px] text-slate-400 font-normal">{doc.companyName}</p>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 font-semibold text-slate-800 flex items-center gap-1.5 pt-3.5">
-                        <FileText className="size-3.5 text-cyan-600 shrink-0" />
-                        <span>{doc.documentType}</span>
+                      <td className="px-3.5 py-3.5 font-semibold text-slate-800">
+                        <div className="flex items-center gap-1.5">
+                          <FileText className="size-3.5 text-cyan-600 shrink-0" />
+                          <span>{doc.documentType}</span>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 font-mono text-slate-600">{doc.documentNumber || "—"}</td>
-                      <td className="px-3 py-3 font-semibold text-slate-800">{doc.issueDate || "—"}</td>
-                      <td className="px-3 py-3 font-semibold text-slate-800">{doc.expiryDate}</td>
-                      <td className="px-3 py-3 text-center">
+                      <td className="px-3.5 py-3.5 font-mono text-slate-600 text-[11px]">
+                        {doc.documentNumber || "—"}
+                      </td>
+                      <td className="px-3 py-3.5 text-slate-700 font-medium whitespace-nowrap">
+                        {doc.issueDate || "—"}
+                      </td>
+                      <td className="px-3 py-3.5 text-slate-700 font-medium whitespace-nowrap">
+                        {doc.expiryDate}
+                      </td>
+                      <td className="px-3 py-3.5 text-center">
                         {isExpired ? (
-                          <span className="inline-block px-3 py-1 rounded text-xs font-semibold bg-rose-500 text-white shadow-sm">
+                          <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-rose-500 text-white shadow-2xs">
                             Expired
                           </span>
                         ) : diffDays <= 30 ? (
-                          <span className="inline-block px-3 py-1 rounded text-xs font-semibold bg-amber-500 text-white shadow-sm">
+                          <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-500 text-white shadow-2xs">
                             Expiring ({diffDays}d)
                           </span>
                         ) : (
-                          <span className="inline-block px-3 py-1 rounded text-xs font-semibold bg-emerald-500 text-white shadow-sm">
+                          <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-emerald-500 text-white shadow-2xs">
                             Valid
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3.5 text-center">
                         <button
                           type="button"
                           onClick={() => handleOpenViewer(doc)}
-                          className="text-blue-600 hover:text-blue-800 font-semibold text-xs flex items-center gap-1"
+                          className="text-cyan-600 hover:text-cyan-800 font-bold text-xs hover:underline cursor-pointer"
                         >
                           View File
                         </button>
                       </td>
-                      <td className="px-3 py-3 truncate max-w-[150px]" title={doc.remarks || "—"}>
-                        {doc.remarks || "—"}
+
+                      {/* Remarks Column with View modal if large text */}
+                      <td className="px-3.5 py-3.5 max-w-[170px]">
+                        {!doc.remarks || doc.remarks.trim() === "-" ? (
+                          <span className="text-slate-400 font-mono">—</span>
+                        ) : doc.remarks.length <= 25 ? (
+                          <span className="text-slate-700 text-xs block leading-tight">{doc.remarks}</span>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <span className="text-slate-700 text-xs truncate max-w-[110px]" title={doc.remarks}>
+                              {doc.remarks.slice(0, 20)}...
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setRemarksModalDoc(doc)}
+                              className="text-cyan-600 hover:text-cyan-800 font-extrabold text-[11px] underline shrink-0 cursor-pointer"
+                              title="Click to view full remarks"
+                            >
+                              View
+                            </button>
+                          </div>
+                        )}
                       </td>
-                      <td className="px-3 py-3 text-slate-500">
-                        {(doc as any).createdAt ? new Date((doc as any).createdAt).toLocaleString() : new Date(doc.issueDate || now).toLocaleString()}
+
+                      <td className="px-3 py-3.5 text-slate-500 text-[11px] whitespace-nowrap">
+                        {(doc as any).createdAt
+                          ? new Date((doc as any).createdAt).toLocaleDateString([], { month: "2-digit", day: "2-digit", year: "numeric" })
+                          : doc.issueDate || "—"}
                       </td>
-                      <td className="px-4 py-3 text-center sticky right-0 bg-white">
-                        <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100/70 border border-slate-200/60 shadow-xs">
+                      <td className="px-3 py-3.5 text-center">
+                        <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100/70 border border-slate-200/60 shadow-2xs">
                           <button
                             type="button"
                             onClick={() => handleOpenViewer(doc)}
                             title="Preview & Renew Document"
-                            className="p-1.5 rounded-lg text-cyan-700 hover:bg-cyan-100/80 transition-colors"
+                            className="p-1 rounded-lg text-cyan-700 hover:bg-cyan-100 transition-colors cursor-pointer"
                           >
                             <Eye className="size-3.5" />
                           </button>
@@ -555,7 +590,7 @@ function AdminExpiredDocumentsPage() {
                             type="button"
                             onClick={() => handleSendReminder(doc)}
                             title="Send Expiry Reminder Notification"
-                            className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-100/80 transition-colors"
+                            className="p-1 rounded-lg text-amber-600 hover:bg-amber-100 transition-colors cursor-pointer"
                           >
                             <BellRing className="size-3.5" />
                           </button>
@@ -569,10 +604,10 @@ function AdminExpiredDocumentsPage() {
           </table>
         </div>
 
-        {/* Footer */}
+        {/* Footer Pagination */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100 text-xs text-slate-500 font-medium">
           <div>
-            Showing {(currentPage - 1) * pageSize + 1} to{" "}
+            Showing {filteredDocs.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} to{" "}
             {Math.min(currentPage * pageSize, filteredDocs.length)} of {filteredDocs.length} entries
           </div>
           <div className="flex items-center gap-1">
@@ -614,6 +649,65 @@ function AdminExpiredDocumentsPage() {
         </div>
       </Card>
 
+      {/* Full Remarks Detail Dialog */}
+      <Dialog open={Boolean(remarksModalDoc)} onOpenChange={(open) => !open && setRemarksModalDoc(null)}>
+        <DialogContent className="max-w-md p-6 rounded-3xl bg-white shadow-2xl border border-slate-200">
+          <DialogHeader className="pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2 text-cyan-600 mb-1">
+              <MessageSquare className="size-4" />
+              <span className="text-[11px] font-extrabold uppercase tracking-wider">Document Remarks</span>
+            </div>
+            <DialogTitle className="text-base font-extrabold text-slate-900">
+              {remarksModalDoc?.documentType}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+              <span className="font-bold text-slate-900">{remarksModalDoc?.entityName}</span>
+              <span>•</span>
+              <span className="rounded-md bg-slate-100 px-2 py-0.5 font-bold text-slate-700">
+                {remarksModalDoc?.entityType === "TeamLead" ? "Team Leader" : remarksModalDoc?.entityType}
+              </span>
+              <span>•</span>
+              <span className="font-mono text-slate-600">
+                Doc #{remarksModalDoc?.documentNumber || "—"}
+              </span>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/90 p-4 text-xs font-medium text-slate-800 leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto">
+              {remarksModalDoc?.remarks || "No remarks provided."}
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (remarksModalDoc?.remarks) {
+                  navigator.clipboard.writeText(remarksModalDoc.remarks);
+                  toast.success("Remarks copied to clipboard!");
+                }
+              }}
+              className="text-xs font-bold text-slate-700 rounded-full gap-1.5"
+            >
+              <Copy className="size-3.5 text-slate-500" />
+              <span>Copy</span>
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setRemarksModalDoc(null)}
+              className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-full px-5"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Document Viewer & Renewal Modal */}
       <DocumentViewerModal
         document={selectedDoc}
@@ -627,3 +721,4 @@ function AdminExpiredDocumentsPage() {
     </div>
   );
 }
+

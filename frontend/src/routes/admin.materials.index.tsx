@@ -16,20 +16,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/frontend/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
 import {
-  AlertTriangle,
-  Boxes,
-  CheckCircle2,
   ChevronsUpDown,
   Download,
-  Edit,
+  Edit2,
   Package,
-  PackagePlus,
   Plus,
+  Power,
+  RefreshCw,
   Search,
-  Sliders,
-  Sparkles,
   Trash2,
-  XCircle,
+  X,
+  ArrowUpDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { downloadCsv } from "@/frontend/components/admin/shell";
@@ -41,40 +38,41 @@ function AdminMaterialsPage() {
   const { data: matsData } = useAdminQuery("materials", getAdminMaterials);
   const materials: AdminMaterial[] = (matsData as AdminMaterial[]) ?? [];
 
+  // Search box closed by default
+  const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Add / Edit Modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState<AdminMaterial["category"]>("Chemicals");
-  const [sku, setSku] = useState("");
-  const [stock, setStock] = useState("50");
-  const [unit, setUnit] = useState("bottles (1L)");
-  const [minAlert, setMinAlert] = useState("20");
-  const [unitPrice, setUnitPrice] = useState("25");
+  // Quick Edit Modal
+  const [editModalMat, setEditModalMat] = useState<AdminMaterial | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editNameAr, setEditNameAr] = useState("");
+  const [editNameUr, setEditNameUr] = useState("");
+  const [editStatus, setEditStatus] = useState<"Activated" | "Deactivated">("Activated");
 
-  // Adjust Stock Modal
-  const [adjustMat, setAdjustMat] = useState<AdminMaterial | null>(null);
-  const [adjustAmount, setAdjustAmount] = useState("10");
+  const hasActiveFilters = Boolean(searchTerm.trim() || statusFilter !== "ALL");
 
   const filteredMaterials = useMemo(() => {
     return materials.filter((m) => {
-      if (categoryFilter !== "ALL" && m.category !== categoryFilter) return false;
+      if (statusFilter !== "ALL") {
+        const isAct = m.status === "Activated" || m.isActive;
+        if (statusFilter === "Activated" && !isAct) return false;
+        if (statusFilter === "Deactivated" && isAct) return false;
+      }
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase().trim();
         const matches =
           (m.name || "").toLowerCase().includes(q) ||
-          (m.sku || "").toLowerCase().includes(q) ||
-          (m.category || "").toLowerCase().includes(q);
+          (m.nameAr || "").toLowerCase().includes(q) ||
+          (m.nameUr || "").toLowerCase().includes(q) ||
+          (m.sku || "").toLowerCase().includes(q);
         if (!matches) return false;
       }
       return true;
     });
-  }, [materials, categoryFilter, searchTerm]);
+  }, [materials, statusFilter, searchTerm]);
 
   const totalPages = Math.ceil(filteredMaterials.length / pageSize) || 1;
   const paginatedMaterials = useMemo(() => {
@@ -82,110 +80,71 @@ function AdminMaterialsPage() {
     return filteredMaterials.slice(start, start + pageSize);
   }, [filteredMaterials, currentPage, pageSize]);
 
-  const handleOpenAdd = () => {
-    setEditingId(null);
-    setName("");
-    setCategory("Chemicals");
-    setSku(`CHEM-${Math.floor(100 + Math.random() * 900)}`);
-    setStock("50");
-    setUnit("bottles (1L)");
-    setMinAlert("20");
-    setUnitPrice("25.00");
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = (m: AdminMaterial) => {
-    setEditingId(m.id);
-    setName(m.name);
-    setCategory(m.category);
-    setSku(m.sku);
-    setStock(m.stock.toString());
-    setUnit(m.unit);
-    setMinAlert(m.minStockAlert.toString());
-    setUnitPrice(m.unitPrice.toString());
-    setIsModalOpen(true);
-  };
-
-  const handleSaveMaterial = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) {
-      toast.error("Item Name is required.");
-      return;
-    }
-
-    const stockNum = parseInt(stock) || 0;
-    const minAlertNum = parseInt(minAlert) || 0;
-    let status: AdminMaterial["status"] = "In Stock";
-    if (stockNum <= 0) status = "Out of Stock";
-    else if (stockNum <= minAlertNum) status = "Low Stock";
-
-    if (editingId) {
-      await updateAdminMaterial(editingId, {
-        name,
-        category,
-        sku,
-        stock: stockNum,
-        unit,
-        minStockAlert: minAlertNum,
-        unitPrice: parseFloat(unitPrice) || 0,
-        status,
-      });
-      toast.success(`Material ${name} updated!`);
-    } else {
-      await createAdminMaterial({
-        name,
-        category,
-        sku,
-        stock: stockNum,
-        unit,
-        minStockAlert: minAlertNum,
-        unitPrice: parseFloat(unitPrice) || 0,
-        status,
-      });
-      toast.success(`Material ${name} added to inventory!`);
-    }
-
-    setIsModalOpen(false);
+  const handleToggleStatus = async (mat: AdminMaterial) => {
+    const isCurrentlyActive = mat.status === "Activated" || mat.isActive !== false;
+    const newStatus = isCurrentlyActive ? "Deactivated" : "Activated";
+    await updateAdminMaterial(mat.id, {
+      status: newStatus,
+      isActive: !isCurrentlyActive,
+    });
+    toast.success(`Material ${mat.name} marked as ${newStatus}`);
     queryClient.invalidateQueries({ queryKey: ["admin", "materials"] });
   };
 
-  const handleConfirmAdjustStock = async () => {
-    if (!adjustMat) return;
-    const delta = parseInt(adjustAmount) || 0;
-    const newStock = Math.max(0, adjustMat.stock + delta);
-    await updateAdminMaterial(adjustMat.id, { stock: newStock });
-    toast.success(`Stock for ${adjustMat.name} adjusted to ${newStock} ${adjustMat.unit}`);
-    setAdjustMat(null);
+  const handleOpenEdit = (m: AdminMaterial) => {
+    setEditModalMat(m);
+    setEditName(m.name);
+    setEditNameAr(m.nameAr || "");
+    setEditNameUr(m.nameUr || "");
+    setEditStatus((m.status === "Deactivated" ? "Deactivated" : "Activated") as any);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editModalMat) return;
+    if (!editName.trim()) {
+      toast.error("Material Name is required.");
+      return;
+    }
+
+    await updateAdminMaterial(editModalMat.id, {
+      name: editName.trim(),
+      nameAr: editNameAr.trim(),
+      nameUr: editNameUr.trim(),
+      status: editStatus,
+      isActive: editStatus === "Activated",
+    });
+
+    toast.success(`Material ${editName} updated!`);
+    setEditModalMat(null);
     queryClient.invalidateQueries({ queryKey: ["admin", "materials"] });
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (confirm(`Remove inventory item "${name}"?`)) {
+    if (confirm(`Are you sure you want to delete "${name}"?`)) {
       await deleteAdminMaterial(id);
-      toast.success(`${name} removed.`);
+      toast.success(`${name} deleted successfully.`);
       queryClient.invalidateQueries({ queryKey: ["admin", "materials"] });
     }
   };
 
   const handleExport = () => {
     downloadCsv(
-      "serviceplus_inventory_materials.csv",
+      "serviceplus_materials.csv",
       filteredMaterials.map((m, i) => ({
         "#": i + 1,
-        "Item Name": m.name,
-        Category: m.category,
-        SKU: m.sku,
-        Stock: m.stock,
-        Unit: m.unit,
-        "Min Reorder Level": m.minStockAlert,
-        "Unit Price (AED)": m.unitPrice.toFixed(2),
-        Status: m.status,
+        Name: m.name,
+        "Name (Arabic)": m.nameAr || "—",
+        "Name (Urdu)": m.nameUr || "—",
+        Status: m.status || "Activated",
+        "Created On": m.createdOn || "09-01-2026 12:00 PM",
       })),
     );
   };
 
   return (
     <div className="space-y-5 text-slate-800">
+      {/* Breadcrumbs & Header */}
       <div>
         <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
           <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
@@ -193,70 +152,101 @@ function AdminMaterialsPage() {
           </Link>
           <span>/</span>
           <span className="text-slate-600">Material Management</span>
-          <span>/</span>
-          <span className="text-slate-600">Material Inventory</span>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Material Management</h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Manage stock levels, cleaning supplies, disinfectants, and specialized cleaning equipment.
+              Manage equipment, cleaning chemicals, disposables, and supplies.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-              className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs"
+              onClick={() => setShowFilters(!showFilters)}
+              className={`font-semibold text-xs h-9 px-4 rounded-lg shadow-sm transition-all gap-1.5 ${
+                showFilters
+                  ? "bg-slate-800 hover:bg-slate-900 text-white"
+                  : "bg-[#0088cc] hover:bg-[#0077b5] text-white"
+              }`}
             >
-              <Download className="size-3.5 me-1.5 text-slate-500" /> Export Inventory
+              <Search className="size-3.5" />
+              <span>Search</span>
+              {hasActiveFilters && <span className="size-2 rounded-full bg-amber-400" />}
             </Button>
             <Link to="/admin/materials/create">
               <Button
                 type="button"
-                size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs shadow-sm"
+                className="bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
               >
-                <Plus className="size-3.5 me-1.5" /> Add New Material
+                <Plus className="size-4 me-1" /> Add Material
               </Button>
             </Link>
           </div>
         </div>
       </div>
 
+      {/* Main Table Card */}
       <Card className="p-4 bg-white border-slate-200 shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
-          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-            <div className="relative w-full sm:w-72">
-              <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="Search materials by name or SKU…"
-                className="ps-9 h-9 text-xs bg-slate-50/50"
-              />
+        {/* Search / Filter Drawer (Closed by default) */}
+        {showFilters && (
+          <div className="flex flex-col gap-3 pb-4 border-b border-slate-100 mb-4 bg-slate-50/90 p-3.5 rounded-xl border border-slate-200/80 animate-in fade-in-50 duration-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Search by Material Name…"
+                  className="h-9 text-xs bg-white"
+                />
+              </div>
+              <div>
+                <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}>
+                  <SelectTrigger className="h-9 text-xs bg-white">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL" className="text-xs">All Statuses</SelectItem>
+                    <SelectItem value="Activated" className="text-xs text-emerald-700 font-bold">Activated</SelectItem>
+                    <SelectItem value="Deactivated" className="text-xs text-slate-500 font-bold">Deactivated</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setStatusFilter("ALL");
+                    setCurrentPage(1);
+                  }}
+                  className="h-9 text-xs font-semibold text-slate-600"
+                >
+                  <RefreshCw className="size-3.5 mr-1.5" />
+                  Reset
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExport}
+                  className="h-9 text-xs font-semibold border-slate-300 text-slate-700 hover:bg-slate-100"
+                >
+                  <Download className="size-3.5 mr-1.5 text-slate-500" />
+                  Export CSV
+                </Button>
+              </div>
             </div>
-
-            <Select value={categoryFilter} onValueChange={(val) => { setCategoryFilter(val); setCurrentPage(1); }}>
-              <SelectTrigger className="h-9 text-xs w-40 bg-slate-50">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL" className="text-xs">All Categories</SelectItem>
-                <SelectItem value="Chemicals" className="text-xs">Chemicals</SelectItem>
-                <SelectItem value="Equipment" className="text-xs">Equipment</SelectItem>
-                <SelectItem value="Disposables" className="text-xs">Disposables</SelectItem>
-                <SelectItem value="PPE" className="text-xs">PPE</SelectItem>
-                <SelectItem value="Tools" className="text-xs">Tools</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
+        )}
 
+        {/* Page Size & Table Header */}
+        <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
             <span>Show</span>
             <Select
@@ -277,124 +267,134 @@ function AdminMaterialsPage() {
             </Select>
             <span>entries</span>
           </div>
+
+          <div className="text-xs text-slate-400 font-medium">
+            Total {filteredMaterials.length} materials
+          </div>
         </div>
 
-        <div className="overflow-x-auto mt-2">
+        {/* Table Matching Reference Screenshot 1 */}
+        <div className="overflow-x-auto rounded-xl border border-slate-100">
           <table className="w-full text-left text-xs">
-            <thead className="text-slate-500 font-semibold border-b border-slate-200">
+            <thead className="text-slate-500 font-semibold bg-slate-50/70 border-b border-slate-200">
               <tr>
-                <th className="px-3 py-3 w-10 text-center text-slate-400">#</th>
-                <th className="px-4 py-3 min-w-[220px]">
+                <th className="px-3 py-3 w-12 text-center text-slate-400">#</th>
+                <th className="px-4 py-3 w-20 text-center">Image</th>
+                <th className="px-4 py-3">
                   <div className="flex items-center gap-1">
-                    Item / Material Name <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                    Name <ArrowUpDown className="size-3 text-slate-400 shrink-0" />
                   </div>
                 </th>
-                <th className="px-3 py-3 min-w-[120px]">
-                  <div className="flex items-center gap-1">
-                    Category <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
-                  </div>
-                </th>
-                <th className="px-4 py-3 min-w-[120px]">
-                  <div className="flex items-center gap-1">
-                    SKU <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
-                  </div>
-                </th>
-                <th className="px-4 py-3 min-w-[130px]">
-                  <div className="flex items-center gap-1">
-                    Current Stock <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
-                  </div>
-                </th>
-                <th className="px-4 py-3 min-w-[110px]">
-                  <div className="flex items-center gap-1">
-                    Unit Price <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
-                  </div>
-                </th>
-                <th className="px-3 py-3 text-center min-w-[110px]">
+                <th className="px-4 py-3 text-center w-32">
                   <div className="flex items-center justify-center gap-1">
-                    Status <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                    Status <ArrowUpDown className="size-3 text-slate-400 shrink-0" />
                   </div>
                 </th>
-                <th className="px-3 py-3 text-center w-24">
+                <th className="px-4 py-3 w-48">
+                  <div className="flex items-center gap-1">
+                    Created On <ArrowUpDown className="size-3 text-slate-400 shrink-0" />
+                  </div>
+                </th>
+                <th className="px-4 py-3 text-center w-28">
                   <div className="flex items-center justify-center gap-1 text-slate-600 font-bold">
-                    Action <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                    Action
                   </div>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+            <tbody className="divide-y divide-slate-100 font-medium text-slate-700 bg-white">
               {paginatedMaterials.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-400">
-                    No material supplies found in inventory.
+                  <td colSpan={6} className="py-12 text-center text-slate-400 font-medium">
+                    No material supplies found.
                   </td>
                 </tr>
               ) : (
                 paginatedMaterials.map((mat, idx) => {
                   const globalIdx = (currentPage - 1) * pageSize + idx + 1;
+                  const isActivated = mat.status === "Activated" || mat.isActive !== false;
 
                   return (
-                    <tr key={mat.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="px-3 py-3 text-center font-bold text-slate-400">{globalIdx}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <Package className="size-4 text-cyan-600 shrink-0" />
-                          <span className="font-bold text-slate-900">{mat.name}</span>
+                    <tr key={mat.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="px-3 py-3.5 text-center font-bold text-slate-400">{globalIdx}</td>
+                      
+                      {/* Material Image Thumbnail */}
+                      <td className="px-4 py-3.5 text-center">
+                        <div className="inline-block size-10 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
+                          {mat.imageUrl ? (
+                            <img
+                              src={mat.imageUrl}
+                              alt={mat.name}
+                              className="size-full object-cover"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <div className="size-full grid place-items-center text-cyan-600">
+                              <Package className="size-5" />
+                            </div>
+                          )}
                         </div>
                       </td>
-                      <td className="px-3 py-3">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-semibold">
-                          {mat.category}
-                        </span>
+
+                      {/* Material Name */}
+                      <td className="px-4 py-3.5">
+                        <p className="font-bold text-slate-900 text-xs">{mat.name}</p>
+                        {mat.nameUr && (
+                          <p className="text-[11px] text-slate-400 font-normal">{mat.nameUr}</p>
+                        )}
                       </td>
-                      <td className="px-4 py-3 font-mono text-slate-600">{mat.sku}</td>
-                      <td className="px-4 py-3">
-                        <span className="font-extrabold text-slate-900">{mat.stock}</span>{" "}
-                        <span className="text-slate-400 text-[11px]">{mat.unit}</span>
-                      </td>
-                      <td className="px-4 py-3 font-bold text-slate-900">AED {mat.unitPrice.toFixed(2)}</td>
-                      <td className="px-3 py-3 text-center whitespace-nowrap">
-                        {mat.status === "In Stock" ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100/70 text-emerald-700">
-                            In Stock
-                          </span>
-                        ) : mat.status === "Low Stock" ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100/70 text-amber-800 animate-pulse">
-                            Low Stock
+
+                      {/* Status Badge */}
+                      <td className="px-4 py-3.5 text-center">
+                        {isActivated ? (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold bg-[#e8f8f0] text-[#1bb366]">
+                            Activated
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100/70 text-rose-700">
-                            Out of Stock
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500">
+                            Deactivated
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-3.5 text-center align-middle">
-                        <div className="flex items-center justify-center gap-2">
+
+                      {/* Created On Date */}
+                      <td className="px-4 py-3.5 text-slate-600 font-normal text-xs whitespace-nowrap">
+                        {mat.createdOn || "09-01-2026 12:10 PM"}
+                      </td>
+
+                      {/* Actions: Red Power/Cross, Blue Edit Pen, Red Trash */}
+                      <td className="px-4 py-3.5 text-center">
+                        <div className="flex items-center justify-center gap-2.5">
+                          {/* Toggle Status (Red X / Power icon) */}
                           <button
                             type="button"
-                            onClick={() => {
-                              setAdjustMat(mat);
-                              setAdjustAmount("10");
-                            }}
-                            title="Quick Adjust Stock"
-                            className="text-emerald-600 hover:scale-125 transition-transform"
+                            onClick={() => handleToggleStatus(mat)}
+                            title={isActivated ? "Deactivate Material" : "Activate Material"}
+                            className="text-rose-500 hover:text-rose-700 transition-colors p-1 cursor-pointer"
                           >
-                            <PackagePlus className="size-4 text-emerald-600 stroke-[2.5]" />
+                            <X className="size-4 stroke-[2.5]" />
                           </button>
-                          <Link
-                            to="/admin/materials/edit"
-                            search={{ id: mat.id }}
+
+                          {/* Edit Pen */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(mat)}
                             title="Edit Material"
-                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
+                            className="text-[#0088cc] hover:text-[#006699] transition-colors p-1 cursor-pointer"
                           >
-                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
-                          </Link>
+                            <Edit2 className="size-4 stroke-[2.2]" />
+                          </button>
+
+                          {/* Delete Trash */}
                           <button
                             type="button"
                             onClick={() => handleDelete(mat.id, mat.name)}
                             title="Delete Material"
-                            className="text-rose-500 hover:scale-125 transition-transform"
+                            className="text-rose-500 hover:text-rose-700 transition-colors p-1 cursor-pointer"
                           >
-                            <Trash2 className="size-4 text-rose-500 stroke-[2.5]" />
+                            <Trash2 className="size-4 stroke-[2.2]" />
                           </button>
                         </div>
                       </td>
@@ -406,9 +406,10 @@ function AdminMaterialsPage() {
           </table>
         </div>
 
+        {/* Footer Pagination */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100 text-xs text-slate-500 font-medium">
           <div>
-            Showing {(currentPage - 1) * pageSize + 1} to{" "}
+            Showing {filteredMaterials.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} to{" "}
             {Math.min(currentPage * pageSize, filteredMaterials.length)} of {filteredMaterials.length} entries
           </div>
           <div className="flex items-center gap-1">
@@ -430,7 +431,7 @@ function AdminMaterialsPage() {
                 size="sm"
                 onClick={() => setCurrentPage(p)}
                 className={`h-8 w-8 p-0 text-xs font-bold ${
-                  p === currentPage ? "bg-cyan-600 text-white hover:bg-cyan-700" : "text-slate-600"
+                  p === currentPage ? "bg-[#0088cc] text-white hover:bg-[#0077b5]" : "text-slate-600"
                 }`}
               >
                 {p}
@@ -450,164 +451,82 @@ function AdminMaterialsPage() {
         </div>
       </Card>
 
-      {/* Add/Edit Material Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-md">
+      {/* Quick Edit Material Modal */}
+      <Dialog open={Boolean(editModalMat)} onOpenChange={(o) => !o && setEditModalMat(null)}>
+        <DialogContent className="sm:max-w-md bg-white rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-slate-900">
-              <Boxes className="size-5 text-cyan-600" />
-              {editingId ? "Edit Inventory Material" : "Add New Cleaning Supply / Material"}
+            <DialogTitle className="text-base font-extrabold text-slate-900">
+              Edit Material
             </DialogTitle>
-            <DialogDescription className="text-xs">
-              Configure inventory SKU, stock quantities, and replenish alert thresholds.
-            </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSaveMaterial} autoComplete="off" className="space-y-3 py-2 text-xs">
+          <form onSubmit={handleSaveEdit} className="space-y-4 py-2 text-xs">
             <div className="space-y-1">
-              <Label className="text-xs font-bold text-slate-700">Material / Product Name *</Label>
+              <Label className="text-xs font-bold text-slate-700">Material Name (English) *</Label>
               <Input
-                placeholder="Enter material or product name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="e.g. Sanitizers"
                 required
-                autoComplete="off"
-                name="mat_name_field"
-                data-lpignore="true"
+                className="h-9 text-xs"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-slate-700">Category</Label>
-                <Select value={category} onValueChange={(v: any) => setCategory(v)}>
-                  <SelectTrigger className="h-9 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Chemicals" className="text-xs">Chemicals</SelectItem>
-                    <SelectItem value="Equipment" className="text-xs">Equipment</SelectItem>
-                    <SelectItem value="Disposables" className="text-xs">Disposables</SelectItem>
-                    <SelectItem value="PPE" className="text-xs">PPE</SelectItem>
-                    <SelectItem value="Tools" className="text-xs">Tools</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-slate-700">SKU Code</Label>
-                <Input
-                  placeholder="Enter SKU code"
-                  value={sku}
-                  onChange={(e) => setSku(e.target.value)}
-                  autoComplete="off"
-                  name="mat_sku_field"
-                  data-lpignore="true"
-                />
-              </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-slate-700">Material Name (Arabic / عربي)</Label>
+              <Input
+                value={editNameAr}
+                onChange={(e) => setEditNameAr(e.target.value)}
+                placeholder="e.g. معقمات"
+                className="h-9 text-xs"
+              />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-slate-700">Current Stock</Label>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  value={stock}
-                  onChange={(e) => setStock(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-slate-700">Unit Description</Label>
-                <Input
-                  placeholder="Enter packaging unit (e.g. bottles, pcs, boxes)"
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
-                  autoComplete="off"
-                  name="mat_unit_field"
-                  data-lpignore="true"
-                />
-              </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-slate-700">Material Name (Urdu / اردو)</Label>
+              <Input
+                value={editNameUr}
+                onChange={(e) => setEditNameUr(e.target.value)}
+                placeholder="e.g. سینیٹائزرز"
+                className="h-9 text-xs"
+              />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-slate-700">Min. Alert Level</Label>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  value={minAlert}
-                  onChange={(e) => setMinAlert(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-slate-700">Unit Price (AED)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={unitPrice}
-                  onChange={(e) => setUnitPrice(e.target.value)}
-                />
-              </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-slate-700">Status</Label>
+              <Select value={editStatus} onValueChange={(val: any) => setEditStatus(val)}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Activated" className="text-xs">Activated</SelectItem>
+                  <SelectItem value="Deactivated" className="text-xs">Deactivated</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} size="sm">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditModalMat(null)}
+                size="sm"
+                className="text-xs"
+              >
                 Cancel
               </Button>
-              <Button type="submit" size="sm" className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold">
-                Save Material
+              <Button
+                type="submit"
+                size="sm"
+                className="bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold text-xs"
+              >
+                Save Changes
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-
-      {/* Adjust Stock Quick Modal */}
-      <Dialog open={Boolean(adjustMat)} onOpenChange={(o) => !o && setAdjustMat(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <PackagePlus className="size-4 text-emerald-600" /> Adjust Stock Count
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Add restocked inventory for <span className="font-bold text-slate-800">{adjustMat?.name}</span>.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3 py-2 text-xs">
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-              <p><span className="text-slate-500 font-medium">Current Stock:</span> <span className="font-bold text-slate-900">{adjustMat?.stock} {adjustMat?.unit}</span></p>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-slate-700">Units to Add / Subtract</Label>
-              <Input
-                type="number"
-                value={adjustAmount}
-                onChange={(e) => setAdjustAmount(e.target.value)}
-                placeholder="+10 or -5"
-                className="h-9 text-xs"
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="pt-2">
-            <Button type="button" variant="outline" onClick={() => setAdjustMat(null)} size="sm">
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleConfirmAdjustStock}
-              size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-            >
-              Update Stock
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
+

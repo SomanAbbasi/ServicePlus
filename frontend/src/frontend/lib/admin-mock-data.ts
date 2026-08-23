@@ -125,25 +125,37 @@ export interface AdminSupervisor {
 export interface AdminMaterial {
   id: string;
   name: string;
-  category: "Chemicals" | "Equipment" | "Disposables" | "PPE" | "Tools";
-  sku: string;
-  stock: number;
-  unit: string;
-  minStockAlert: number;
-  unitPrice: number;
-  status: "In Stock" | "Low Stock" | "Out of Stock";
+  nameAr?: string;
+  nameUr?: string;
+  category?: "Chemicals" | "Equipment" | "Disposables" | "PPE" | "Tools";
+  sku?: string;
+  stock?: number;
+  unit?: string;
+  minStockAlert?: number;
+  unitPrice?: number;
+  status?: "Activated" | "Deactivated" | "In Stock" | "Low Stock" | "Out of Stock";
+  isActive?: boolean;
   imageUrl?: string;
+  createdOn?: string;
 }
 
 export interface AdminMaterialRequest {
   id: string;
   requestId: string;
-  requestedBy: string;
-  requesterRole: "Professional" | "TeamLead" | "Supervisor";
-  companyName: string;
-  items: { materialId: string; materialName: string; quantity: number }[];
-  urgency: "Normal" | "Urgent";
-  requestDate: string;
+  serviceProviderName?: string;
+  serviceProviderId?: string;
+  teamLeaderName?: string;
+  teamLeaderId?: string;
+  materialName?: string;
+  materialId?: string;
+  quantity?: number;
+  requestedBy?: string;
+  requesterRole?: "Professional" | "TeamLead" | "Supervisor";
+  companyName?: string;
+  items?: { materialId: string; materialName: string; quantity: number }[];
+  urgency?: "Normal" | "Urgent";
+  requestOn?: string;
+  requestDate?: string;
   status: "Pending" | "Approved" | "Dispatched" | "Rejected";
   notes?: string;
 }
@@ -501,53 +513,7 @@ export const INITIAL_LISTINGS: AdminListing[] = [
 ];
 
 const INITIAL_COMPANIES: AdminCompany[] = [];
-const INITIAL_PROFESSIONALS: AdminProfessional[] = [
-  {
-    id: "pro-101",
-    name: "Tasha Mcdonald",
-    fullName: "Tasha Mcdonald",
-    email: "kucarubog@yopmail.com",
-    phone: "4545454545",
-    companyId: "comp-dabas",
-    companyName: "Dabas Beauty Center",
-    city: "Dubai",
-    status: "Activated",
-    isPreferred: true,
-    rating: 4.9,
-    registeredOn: "08-04-2026 6:38 PM",
-    documents: [],
-  },
-  {
-    id: "pro-102",
-    name: "Karim Al-Mansoor",
-    fullName: "Karim Al-Mansoor",
-    email: "karim.m@serviceplus.ae",
-    phone: "+971 50 987 6543",
-    companyId: "comp-dabas",
-    companyName: "Dabas Beauty Center",
-    city: "Abu Dhabi",
-    status: "Activated",
-    isPreferred: false,
-    rating: 4.8,
-    registeredOn: "08-04-2026 6:38 PM",
-    documents: [],
-  },
-  {
-    id: "pro-103",
-    name: "Elena Rostova",
-    fullName: "Elena Rostova",
-    email: "elena.r@serviceplus.ae",
-    phone: "+971 52 445 6789",
-    companyId: "comp-1",
-    companyName: "ServicePlus Network",
-    city: "Dubai",
-    status: "Activated",
-    isPreferred: false,
-    rating: 5.0,
-    registeredOn: "08-02-2026 11:20 AM",
-    documents: [],
-  },
-];
+const INITIAL_PROFESSIONALS: AdminProfessional[] = [];
 const INITIAL_TEAM_LEADS: AdminTeamLead[] = [];
 const INITIAL_SUPERVISORS: AdminSupervisor[] = [];
 const INITIAL_USERS: AdminUser[] = [];
@@ -624,7 +590,7 @@ const INITIAL_ROLES: AdminRole[] = [
    STORAGE ENGINE & CACHE CLEANSING
    ========================================================================== */
 
-const STORAGE_VERSION = "v3_real_catalog_data";
+const STORAGE_VERSION = "v4_clean_dashboard";
 
 function getFromStorage<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -642,9 +608,6 @@ function getFromStorage<T>(key: string, fallback: T): T {
         "serviceplus_admin_material_requests",
         "serviceplus_admin_plans",
         "serviceplus_admin_staff",
-        "serviceplus_admin_categories",
-        "serviceplus_admin_services",
-        "serviceplus_admin_listings",
       ];
       keysToClear.forEach((k) => localStorage.removeItem(k));
       localStorage.setItem("serviceplus_admin_data_version", STORAGE_VERSION);
@@ -996,9 +959,11 @@ export const AdminDataStore = {
     if (idx === -1 || !list[idx]) return null;
     const existing = list[idx]!;
     const updated: AdminMaterial = { ...existing, ...patch, id: existing.id };
-    if (updated.stock <= 0) updated.status = "Out of Stock";
-    else if (updated.stock <= updated.minStockAlert) updated.status = "Low Stock";
-    else updated.status = "In Stock";
+    if (updated.stock !== undefined && updated.minStockAlert !== undefined) {
+      if (updated.stock <= 0) updated.status = "Out of Stock";
+      else if (updated.stock <= updated.minStockAlert) updated.status = "Low Stock";
+      else updated.status = "Activated";
+    }
     list[idx] = updated;
     AdminDataStore.saveMaterials(list);
     return updated;

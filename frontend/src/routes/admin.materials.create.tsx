@@ -6,8 +6,7 @@ import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { Card } from "@/frontend/components/ui/card";
 import { Label } from "@/frontend/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
-import { Send, X } from "lucide-react";
+import { Save, X, Upload, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/materials/create")({ component: AddMaterialPage });
@@ -16,40 +15,57 @@ function AddMaterialPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState<"Chemicals" | "Equipment" | "Disposables" | "PPE" | "Tools">("Chemicals");
-  const [sku, setSku] = useState("");
-  const [stock, setStock] = useState("0");
-  const [unit, setUnit] = useState("bottles (1L)");
-  const [minAlert, setMinAlert] = useState("10");
-  const [unitPrice, setUnitPrice] = useState("25.00");
+  const [activeTab, setActiveTab] = useState<"en" | "ar" | "ur">("en");
+  const [nameEn, setNameEn] = useState("");
+  const [nameAr, setNameAr] = useState("");
+  const [nameUr, setNameUr] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [fileName, setFileName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFileName(file.name);
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          setImageUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
+    if (!nameEn.trim() && !nameAr.trim() && !nameUr.trim()) {
       toast.error("Please enter a material name (*)");
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const currentStock = parseInt(stock) || 0;
-      const minStockAlert = parseInt(minAlert) || 5;
-      const status: "In Stock" | "Low Stock" | "Out of Stock" =
-        currentStock === 0 ? "Out of Stock" : currentStock <= minStockAlert ? "Low Stock" : "In Stock";
+      const now = new Date();
+      const createdOnStr = `${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}-${now.getFullYear()} ${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+
       await createAdminMaterial({
-        name: name.trim(),
-        category: category,
-        sku: sku.trim() || `MAT-${Math.floor(1000 + Math.random() * 9000)}`,
-        stock: currentStock,
-        unit: unit.trim() || "pcs",
-        minStockAlert: minStockAlert,
-        unitPrice: parseFloat(unitPrice) || 0,
-        status: status,
+        name: nameEn.trim() || nameAr.trim() || nameUr.trim(),
+        nameAr: nameAr.trim(),
+        nameUr: nameUr.trim(),
+        imageUrl: imageUrl || "https://images.unsplash.com/photo-1584744982491-665216d95f8b?w=400&q=80",
+        status: "Activated",
+        isActive: true,
+        createdOn: createdOnStr,
+        category: "Chemicals",
+        sku: `MAT-${Math.floor(1000 + Math.random() * 9000)}`,
+        stock: 100,
+        unit: "pcs",
+        minStockAlert: 15,
+        unitPrice: 15.0,
       });
 
-      toast.success(`Material ${name} added to inventory!`);
+      toast.success(`Material "${nameEn || nameAr || nameUr}" added successfully!`);
       queryClient.invalidateQueries({ queryKey: ["admin", "materials"] });
       navigate({ to: "/admin/materials" });
     } catch {
@@ -69,134 +85,181 @@ function AddMaterialPage() {
           </Link>
           <span>/</span>
           <Link to="/admin/materials" className="text-cyan-600 hover:underline font-semibold">
-            Material Inventory
+            Material Management
           </Link>
           <span>/</span>
           <span className="text-slate-600">Add New Material</span>
         </div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Add New Cleaning Supply / Material</h1>
       </div>
 
-      {/* Main Creation Card */}
-      <Card className="p-6 sm:p-8 bg-white border-slate-200/80 rounded-2xl shadow-xs">
-        <form onSubmit={handleSubmit} autoComplete="off" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Material Name */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-slate-700">
-                Material / Product Name <span className="text-red-500">*</span>
+      {/* Main Creation Card matching Screenshot 2 */}
+      <Card className="bg-white border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
+        {/* Card Header Title */}
+        <div className="px-6 py-5 border-b border-slate-100">
+          <h1 className="text-xl font-extrabold tracking-tight text-slate-900">Add New Material</h1>
+        </div>
+
+        <form onSubmit={handleSubmit} autoComplete="off" className="p-6 sm:p-8 space-y-6">
+          {/* Upload Image Row */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-1">
+              <Label className="text-xs font-semibold text-slate-600">
+                Upload image <span className="text-red-500">*</span>
               </Label>
-              <Input
-                placeholder="Enter material or chemical name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                autoComplete="off"
-                name="mat_name_field"
-                data-lpignore="true"
-              />
             </div>
 
-            {/* Category */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-slate-700">Category</Label>
-              <Select value={category} onValueChange={(v) => setCategory(v as any)}>
-                <SelectTrigger className="h-11 bg-white border-slate-200 rounded-lg text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Chemicals" className="text-xs">Chemicals</SelectItem>
-                  <SelectItem value="Equipment" className="text-xs">Equipment</SelectItem>
-                  <SelectItem value="Disposables" className="text-xs">Disposables</SelectItem>
-                  <SelectItem value="PPE" className="text-xs">PPE</SelectItem>
-                  <SelectItem value="Tools" className="text-xs">Tools</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="relative flex items-center w-full max-w-md rounded-lg border border-slate-200 bg-white p-1 text-xs">
+                <label className="cursor-pointer inline-flex items-center justify-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-md border border-slate-300 text-xs transition-colors shrink-0">
+                  Choose file
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="sr-only"
+                  />
+                </label>
+                <span className="ms-3 text-slate-500 truncate text-xs">
+                  {fileName || "No file chosen"}
+                </span>
+              </div>
 
-            {/* SKU Code */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-slate-700">SKU Code</Label>
-              <Input
-                placeholder="Enter SKU (e.g. SKU-CHM-001)"
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                autoComplete="off"
-                name="mat_sku_field"
-                data-lpignore="true"
-              />
-            </div>
-
-            {/* Packaging Unit */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-slate-700">Unit Description</Label>
-              <Input
-                placeholder="Enter packaging unit (e.g. bottles, pcs, boxes)"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                autoComplete="off"
-                name="mat_unit_field"
-                data-lpignore="true"
-              />
-            </div>
-
-            {/* Current Stock */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-slate-700">Initial Stock Quantity</Label>
-              <Input
-                type="number"
-                placeholder="0"
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
-                className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-              />
-            </div>
-
-            {/* Min Alert Level */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-slate-700">Low Stock Alert Threshold</Label>
-              <Input
-                type="number"
-                placeholder="10"
-                value={minAlert}
-                onChange={(e) => setMinAlert(e.target.value)}
-                className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-              />
-            </div>
-
-            {/* Unit Price */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-slate-700">Unit Price (AED)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={unitPrice}
-                onChange={(e) => setUnitPrice(e.target.value)}
-                className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-              />
+              {imageUrl && (
+                <div className="size-12 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 shadow-2xs shrink-0">
+                  <img src={imageUrl} alt="Preview" className="size-full object-cover" />
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Form Actions */}
+          {/* Bilingual Language Selection Tabs */}
+          <div className="border-b border-slate-200">
+            <div className="flex items-center gap-4">
+              {/* English Tab */}
+              <button
+                type="button"
+                onClick={() => setActiveTab("en")}
+                className={`flex items-center gap-2 pb-3 pt-2 text-xs font-bold transition-colors relative cursor-pointer ${
+                  activeTab === "en"
+                    ? "text-[#0088cc] font-extrabold"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <span className="text-base leading-none">🇺🇸</span>
+                <span>English</span>
+                {activeTab === "en" && (
+                  <span className="absolute bottom-0 inset-x-0 h-0.5 bg-[#0088cc]" />
+                )}
+              </button>
+
+              {/* Arabic Tab */}
+              <button
+                type="button"
+                onClick={() => setActiveTab("ar")}
+                className={`flex items-center gap-2 pb-3 pt-2 text-xs font-bold transition-colors relative cursor-pointer ${
+                  activeTab === "ar"
+                    ? "text-[#0088cc] font-extrabold"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <span className="text-base leading-none">🇦🇪</span>
+                <span>عربي</span>
+                {activeTab === "ar" && (
+                  <span className="absolute bottom-0 inset-x-0 h-0.5 bg-[#0088cc]" />
+                )}
+              </button>
+
+              {/* Urdu Tab */}
+              <button
+                type="button"
+                onClick={() => setActiveTab("ur")}
+                className={`flex items-center gap-2 pb-3 pt-2 text-xs font-bold transition-colors relative cursor-pointer ${
+                  activeTab === "ur"
+                    ? "text-[#0088cc] font-extrabold"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <span className="text-base leading-none">🇵🇰</span>
+                <span>اردو</span>
+                {activeTab === "ur" && (
+                  <span className="absolute bottom-0 inset-x-0 h-0.5 bg-[#0088cc]" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Tab Content: Name Input */}
+          <div className="pt-2">
+            {activeTab === "en" && (
+              <div className="space-y-1.5 max-w-md">
+                <Label className="text-xs font-semibold text-slate-700">
+                  Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  placeholder="Enter material name in English"
+                  value={nameEn}
+                  onChange={(e) => setNameEn(e.target.value)}
+                  className="h-10 bg-white border-slate-200 rounded-lg text-xs"
+                  autoComplete="off"
+                  name="mat_name_en"
+                  data-lpignore="true"
+                />
+              </div>
+            )}
+
+            {activeTab === "ar" && (
+              <div className="space-y-1.5 max-w-md">
+                <Label className="text-xs font-semibold text-slate-700">
+                  Name (عربي) <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  placeholder="أدخل اسم المادة بالعربية (مثال: معقمات)"
+                  value={nameAr}
+                  onChange={(e) => setNameAr(e.target.value)}
+                  dir="rtl"
+                  className="h-10 bg-white border-slate-200 rounded-lg text-xs"
+                  autoComplete="off"
+                  name="mat_name_ar"
+                  data-lpignore="true"
+                />
+              </div>
+            )}
+
+            {activeTab === "ur" && (
+              <div className="space-y-1.5 max-w-md">
+                <Label className="text-xs font-semibold text-slate-700">
+                  Name (اردو) <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  placeholder="مواد کا نام اردو میں درج کریں (مثال: سینیٹائزرز)"
+                  value={nameUr}
+                  onChange={(e) => setNameUr(e.target.value)}
+                  dir="rtl"
+                  className="h-10 bg-white border-slate-200 rounded-lg text-xs"
+                  autoComplete="off"
+                  name="mat_name_ur"
+                  data-lpignore="true"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Form Action Buttons: [✕ Close] and [💾 Submit] matching Screenshot 2 */}
           <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate({ to: "/admin/materials" })}
-              className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-10 px-5 rounded-lg"
+              className="border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 font-bold text-xs h-10 px-5 rounded-lg"
             >
               <X className="size-3.5 me-1.5" /> Close
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-10 px-6 rounded-lg shadow-sm"
+              className="bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold text-xs h-10 px-6 rounded-lg shadow-sm"
             >
-              <Send className="size-3.5 me-1.5" /> {isSubmitting ? "Submitting..." : "Submit"}
+              <Save className="size-3.5 me-1.5" /> {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
           </div>
         </form>
@@ -204,3 +267,4 @@ function AddMaterialPage() {
     </div>
   );
 }
+

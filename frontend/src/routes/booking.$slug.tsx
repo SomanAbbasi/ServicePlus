@@ -1226,7 +1226,7 @@ function BookingWizard() {
                 </div>
 
                 {/* Complete Order Gold Button (Image 3) */}
-                <div className="pt-2">
+                <div className="pt-2 space-y-2.5">
                   <Button
                     type="button"
                     disabled={confirm.isPending}
@@ -1236,6 +1236,34 @@ function BookingWizard() {
                     {confirm.isPending ? <Loader2 className="size-4 animate-spin me-2" /> : null}
                     {isAr ? "إتمام الحجز وتأكيد الطلب" : "Complete"}
                   </Button>
+
+                  <p className="text-[11px] text-slate-500 text-center leading-relaxed font-medium">
+                    {isAr ? (
+                      <>
+                        بإتمام طلبك، فإنك توافق على{" "}
+                        <Link to="/terms" target="_blank" className="text-cyan-700 underline font-bold hover:text-cyan-800">
+                          الشروط والأحكام
+                        </Link>{" "}
+                        و{" "}
+                        <Link to="/privacy" target="_blank" className="text-cyan-700 underline font-bold hover:text-cyan-800">
+                          سياسة الخصوصية
+                        </Link>
+                        .
+                      </>
+                    ) : (
+                      <>
+                        By completing your order, you agree to our{" "}
+                        <Link to="/terms" target="_blank" className="text-cyan-700 underline font-bold hover:text-cyan-800">
+                          Terms & Conditions
+                        </Link>{" "}
+                        and{" "}
+                        <Link to="/privacy" target="_blank" className="text-cyan-700 underline font-bold hover:text-cyan-800">
+                          Privacy Policy
+                        </Link>
+                        .
+                      </>
+                    )}
+                  </p>
                 </div>
               </section>
             )}
@@ -1491,6 +1519,19 @@ function BookingWizard() {
             <div className="space-y-1">
               <p className="font-extrabold text-slate-900 text-sm">{isAr ? "ضمان الرضا بنسبة 100%" : "100% Satisfaction Guarantee"}</p>
               <p>{isAr ? "إذا لم تكن راضيًا عن الخدمة المقدمة، تواصل معنا خلال 24 ساعة وسنرسل محترفًا لإعادة تقديم الخدمة مجانًا." : "If you are not satisfied with your service, contact us within 24 hours and we will send a top professional to re-clean free of charge."}</p>
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
+              <span>{isAr ? "للاطلاع على السياسات الكاملة:" : "Review complete policies:"}</span>
+              <div className="flex gap-2 font-bold">
+                <Link to="/terms" target="_blank" className="text-cyan-700 underline hover:text-cyan-800">
+                  {isAr ? "الشروط والأحكام" : "Terms"}
+                </Link>
+                <span>•</span>
+                <Link to="/privacy" target="_blank" className="text-cyan-700 underline hover:text-cyan-800">
+                  {isAr ? "سياسة الخصوصية" : "Privacy Policy"}
+                </Link>
+              </div>
             </div>
           </div>
 

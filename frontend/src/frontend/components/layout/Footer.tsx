@@ -88,8 +88,17 @@ export function Footer() {
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-6 sm:flex-row sm:px-6">
           <p className="text-xs text-footer-muted">
-            &copy; {new Date().getFullYear()} ServicePlus. {t("footer.rights")}
+            &copy; {new Date().getFullYear()} Service Plus FMP — A Division of Resources For Employment L.L.C. | info@serviceplus.ae
           </p>
+          <div className="flex items-center gap-4 text-xs text-footer-muted">
+            <Link to="/terms" className="hover:text-footer-foreground transition-colors">
+              {t("footer.terms")}
+            </Link>
+            <span>•</span>
+            <Link to="/privacy" className="hover:text-footer-foreground transition-colors">
+              {t("footer.privacy")}
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

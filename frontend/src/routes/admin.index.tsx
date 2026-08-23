@@ -70,12 +70,13 @@ function AdminHome() {
   const kpis: any = (data as any)?.kpis ?? {};
   const trends: any[] = (data as any)?.booking_trends_30_days ?? [];
   const byStatus: Record<string, number> = (data as any)?.by_status ?? {};
-
-  const donutData = Object.entries(byStatus).map(([name, value]) => ({
-    name,
-    value,
-    color: DONUT_COLORS_MAP[name] || "#64748b",
-  }));
+  const donutData = Object.entries(byStatus)
+    .filter(([_, value]) => typeof value === "number" && value > 0)
+    .map(([name, value]) => ({
+      name,
+      value: Number(value),
+      color: DONUT_COLORS_MAP[name] || "#64748b",
+    }));
 
   return (
     <div className="space-y-6 text-slate-800">

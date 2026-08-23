@@ -422,13 +422,26 @@ export function AccountAuthModal({
               </div>
 
               {/* Primary Continue Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-full bg-[#FFC836] hover:bg-[#f5be29] py-3.5 px-6 text-center text-sm font-extrabold text-slate-900 shadow-md transition-all active:scale-98 disabled:opacity-50"
-              >
-                {loading ? "Sending..." : "Continue"}
-              </button>
+              <div className="space-y-3">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-full bg-[#FFC836] hover:bg-[#f5be29] py-3.5 px-6 text-center text-sm font-extrabold text-slate-900 shadow-md transition-all active:scale-98 disabled:opacity-50"
+                >
+                  {loading ? "Sending..." : "Continue"}
+                </button>
+                <p className="text-[11px] text-slate-400 text-center leading-tight">
+                  By continuing, you agree to our{" "}
+                  <a href="/terms" target="_blank" rel="noreferrer" className="underline font-semibold text-slate-600 hover:text-cyan-600">
+                    Terms
+                  </a>{" "}
+                  and{" "}
+                  <a href="/privacy" target="_blank" rel="noreferrer" className="underline font-semibold text-slate-600 hover:text-cyan-600">
+                    Privacy Policy
+                  </a>
+                  .
+                </p>
+              </div>
             </form>
           </div>
         )}
