@@ -26,15 +26,13 @@ export function UserActionModals({
   onDelete,
   onToggleStatus,
 }: UserActionModalsProps) {
-  if (!user) return null;
-
   // Edit User State
-  const [name, setName] = useState(user.fullName || "");
-  const [email, setEmail] = useState(user.email || "");
-  const [phone, setPhone] = useState(user.phone || "");
-  const [wallet, setWallet] = useState((typeof user.walletBalance === "number" ? user.walletBalance : 0).toString());
-  const [status, setStatus] = useState<"Activated" | "Deactivated">(user.status || "Activated");
-  const [address, setAddress] = useState(user.address || "");
+  const [name, setName] = useState(user?.fullName || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [wallet, setWallet] = useState((typeof user?.walletBalance === "number" ? user.walletBalance : 0).toString());
+  const [status, setStatus] = useState<"Activated" | "Deactivated">(user?.status || "Activated");
+  const [address, setAddress] = useState(user?.address || "");
 
   // Change Password State
   const [newPassword, setNewPassword] = useState("");
@@ -59,6 +57,8 @@ export function UserActionModals({
       setShowConfirmPassword(false);
     }
   }, [user]);
+
+  if (!user) return null;
 
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();

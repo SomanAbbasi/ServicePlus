@@ -64,22 +64,20 @@ export function ProfessionalActionModal({
   onDelete,
   onToggleStatus,
 }: ProfessionalActionModalProps) {
-  if (!professional) return null;
-
   // Edit State
-  const [name, setName] = useState(professional.name || (professional as any).fullName || "");
-  const [email, setEmail] = useState(professional.email || "");
-  const [phone, setPhone] = useState(professional.phone || "");
-  const [companyId, setCompanyId] = useState(professional.companyId || "");
+  const [name, setName] = useState(professional?.name || (professional as any)?.fullName || "");
+  const [email, setEmail] = useState(professional?.email || "");
+  const [phone, setPhone] = useState(professional?.phone || "");
+  const [companyId, setCompanyId] = useState(professional?.companyId || "");
   const [city, setCity] = useState(
-    typeof professional.city === "object" && professional.city !== null
-      ? (professional.city as any).name
-      : (professional.city || "Abu Dhabi")
+    typeof professional?.city === "object" && professional?.city !== null
+      ? (professional?.city as any)?.name
+      : (professional?.city || "Abu Dhabi")
   );
   const [status, setStatus] = useState<"Activated" | "Deactivated">(
-    professional.status === "Activated" ? "Activated" : "Deactivated"
+    professional?.status === "Activated" ? "Activated" : "Deactivated"
   );
-  const [isPreferred, setIsPreferred] = useState(Boolean(professional.isPreferred));
+  const [isPreferred, setIsPreferred] = useState(Boolean(professional?.isPreferred));
 
   // Change Password State
   const [newPassword, setNewPassword] = useState("");
@@ -109,6 +107,8 @@ export function ProfessionalActionModal({
       setShowConfirmPassword(false);
     }
   }, [professional]);
+
+  if (!professional) return null;
 
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -251,25 +251,8 @@ function AdminServices() {
     setCurrentPage(1);
   };
 
-  if (isError) return <ErrorState />;
-  if (isPending || !data) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-primary hover:underline font-semibold">
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-slate-600">Services</span>
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Services Management</h1>
-        <TableSkeleton rows={6} />
-      </div>
-    );
-  }
-
-  const rawServices = (data.services ?? []) as Row[];
-  const categories = (data.categories ?? []) as Row[];
+  const rawServices = (data?.services ?? []) as Row[];
+  const categories = (data?.categories ?? []) as Row[];
   const activeCategories = useMemo(
     () =>
       categories.filter((c) => {
@@ -280,6 +263,19 @@ function AdminServices() {
     [categories],
   );
   const catName = (id: string) => categories.find((c) => c.id === id)?.name ?? "—";
+
+  if (isError) return <ErrorState />;
+  if (isPending || !data) {
+    return (
+      <div className="space-y-4">
+        <PageHeader
+          title="Services Management"
+          breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Services" }]}
+        />
+        <TableSkeleton rows={6} />
+      </div>
+    );
+  }
 
   // Sort by sort_order
   const sortedServices = [...rawServices].sort((a, b) => {

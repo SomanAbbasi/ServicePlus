@@ -59,15 +59,13 @@ export function SupervisorActionModal({
   onDelete,
   onToggleStatus,
 }: SupervisorActionModalProps) {
-  if (!supervisor) return null;
-
   // Edit State
-  const [name, setName] = useState(supervisor.name || (supervisor as any).fullName || "");
-  const [email, setEmail] = useState(supervisor.email || "");
-  const [phone, setPhone] = useState(supervisor.phone || "");
-  const [companyId, setCompanyId] = useState(supervisor.companyId || "");
+  const [name, setName] = useState(supervisor?.name || (supervisor as any)?.fullName || "");
+  const [email, setEmail] = useState(supervisor?.email || "");
+  const [phone, setPhone] = useState(supervisor?.phone || "");
+  const [companyId, setCompanyId] = useState(supervisor?.companyId || "");
   const [status, setStatus] = useState<"Activated" | "Deactivated">(
-    supervisor.status === "Activated" ? "Activated" : "Deactivated"
+    supervisor?.status === "Activated" ? "Activated" : "Deactivated"
   );
 
   // Change Password State
@@ -92,6 +90,8 @@ export function SupervisorActionModal({
       setShowConfirmPassword(false);
     }
   }, [supervisor]);
+
+  if (!supervisor) return null;
 
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();

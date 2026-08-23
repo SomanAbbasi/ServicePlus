@@ -59,20 +59,18 @@ export function TeamLeadActionModal({
   onDelete,
   onToggleStatus,
 }: TeamLeadActionModalProps) {
-  if (!teamLead) return null;
-
   // Edit State
-  const [name, setName] = useState(teamLead.name || (teamLead as any).fullName || "");
-  const [email, setEmail] = useState(teamLead.email || "");
-  const [phone, setPhone] = useState(teamLead.phone || "");
-  const [companyId, setCompanyId] = useState(teamLead.companyId || "");
+  const [name, setName] = useState(teamLead?.name || (teamLead as any)?.fullName || "");
+  const [email, setEmail] = useState(teamLead?.email || "");
+  const [phone, setPhone] = useState(teamLead?.phone || "");
+  const [companyId, setCompanyId] = useState(teamLead?.companyId || "");
   const [city, setCity] = useState(
-    typeof teamLead.city === "object" && teamLead.city !== null
-      ? (teamLead.city as any).name
-      : (teamLead.city || "Abu Dhabi")
+    typeof teamLead?.city === "object" && teamLead?.city !== null
+      ? (teamLead?.city as any)?.name
+      : (teamLead?.city || "Abu Dhabi")
   );
   const [status, setStatus] = useState<"Activated" | "Deactivated">(
-    teamLead.status === "Activated" ? "Activated" : "Deactivated"
+    teamLead?.status === "Activated" ? "Activated" : "Deactivated"
   );
 
   // Change Password State
@@ -102,6 +100,8 @@ export function TeamLeadActionModal({
       setShowConfirmPassword(false);
     }
   }, [teamLead]);
+
+  if (!teamLead) return null;
 
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
