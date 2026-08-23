@@ -125,34 +125,16 @@ function AdminPlansPage() {
 
   return (
     <div className="space-y-5 text-slate-800">
-      <div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-slate-600">Service Management</span>
-          <span>/</span>
-          <span className="text-slate-600">Plans Management</span>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Plans Management</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Create recurring subscription memberships (Weekly, Bi-Weekly, Monthly) with loyalty discounts.
-            </p>
-          </div>
-          <Link to="/admin/plans/create">
-            <Button
-              type="button"
-              size="sm"
-              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
-            >
-              <Plus className="size-3.5 me-1.5" /> Create Subscription Plan
-            </Button>
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Plans Management"
+        breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Service Management" }, { label: "Plans Management" }]}
+        actions={
+          <PageActions
+            addNewLabel="Create Subscription Plan"
+            addNewTo="/admin/plans/create"
+          />
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {plans.map((plan) => (
@@ -165,25 +147,17 @@ function AdminPlansPage() {
             <div>
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-100 text-cyan-800">
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-100 text-cyan-800">
                     {plan.interval} Plan
                   </span>
-                  <h3 className="font-extrabold text-slate-900 text-base mt-2">{plan.name}</h3>
+                  <h3 className="font-bold text-slate-900 text-base mt-2">{plan.name}</h3>
                   {plan.nameAr && <p className="text-xs text-slate-400 font-medium">{plan.nameAr}</p>}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleToggleActive(plan)}
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors ${
-                    plan.isActive ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
-                  }`}
-                >
-                  {plan.isActive ? "Active" : "Inactive"}
-                </button>
+                <button type="button" onClick={() => handleToggleActive(plan)}><StatusBadge status={plan.isActive ? "Active" : "Inactive"} /></button>
               </div>
 
               <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-2xl font-black text-slate-900">AED {plan.price || 0}</span>
+                <span className="text-2xl font-bold text-slate-900">AED {plan.price || 0}</span>
                 <span className="text-xs text-slate-400 font-medium">/{(plan.interval || "Monthly").toLowerCase()}</span>
                 {plan.discountPercentage > 0 && (
                   <span className="ms-auto text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
@@ -201,7 +175,7 @@ function AdminPlansPage() {
                 <ul className="space-y-1.5 font-medium text-slate-600">
                   {plan.features.map((feat, i) => (
                     <li key={i} className="flex items-center gap-2">
-                      <Check className="size-3.5 text-cyan-600 shrink-0" />
+                      <Check className="size-3.5 text-primary shrink-0" />
                       <span>{feat}</span>
                     </li>
                   ))}
@@ -210,22 +184,8 @@ function AdminPlansPage() {
             </div>
 
             <div className="pt-4 mt-5 border-t border-slate-100 flex items-center justify-between">
-              <Link
-                to="/admin/plans/edit"
-                search={{ id: plan.id }}
-                className="inline-flex items-center justify-center border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3 rounded-md text-xs font-bold transition-colors"
-              >
-                <Sliders className="size-3.5 me-1 text-slate-500" /> Edit Plan
-              </Link>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDelete(plan.id, plan.name)}
-                className="h-8 text-xs text-rose-600 hover:bg-rose-50"
-              >
-                <Trash2 className="size-3.5" />
-              </Button>
+              <ActionIconButton icon={Sliders} label="Edit Plan" action="edit" to="/admin/plans/edit" search={{ id: plan.id }} />
+              <ActionIconButton icon={Trash2} label="Delete Plan" action="delete" onClick={() => handleDelete(plan.id, plan.name)} />
             </div>
           </Card>
         ))}
@@ -235,8 +195,8 @@ function AdminPlansPage() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-slate-900">
-              <Sparkles className="size-5 text-cyan-600" />
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+              <Sparkles className="size-5 text-primary" />
               {editingId ? "Edit Subscription Plan" : "Create Cleaning Subscription Plan"}
             </DialogTitle>
             <DialogDescription className="text-xs">
@@ -338,7 +298,7 @@ function AdminPlansPage() {
               <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} size="sm">
                 Cancel
               </Button>
-              <Button type="submit" size="sm" className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold">
+              <Button type="submit" size="sm" className="font-bold">
                 Save Plan
               </Button>
             </DialogFooter>

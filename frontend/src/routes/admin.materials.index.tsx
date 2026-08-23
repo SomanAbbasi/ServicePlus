@@ -147,7 +147,7 @@ function AdminMaterialsPage() {
       {/* Breadcrumbs & Header */}
       <div>
         <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
+          <Link to="/admin" className="text-primary hover:underline font-semibold">
             Dashboard
           </Link>
           <span>/</span>
@@ -155,7 +155,7 @@ function AdminMaterialsPage() {
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Material Management</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Material Management</h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
               Manage equipment, cleaning chemicals, disposables, and supplies.
             </p>
@@ -167,7 +167,7 @@ function AdminMaterialsPage() {
               className={`font-semibold text-xs h-9 px-4 rounded-lg shadow-sm transition-all gap-1.5 ${
                 showFilters
                   ? "bg-slate-800 hover:bg-slate-900 text-white"
-                  : "bg-[#0088cc] hover:bg-[#0077b5] text-white"
+                  : ""
               }`}
             >
               <Search className="size-3.5" />
@@ -177,7 +177,7 @@ function AdminMaterialsPage() {
             <Link to="/admin/materials/create">
               <Button
                 type="button"
-                className="bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
+                className=" font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
               >
                 <Plus className="size-4 me-1" /> Add Material
               </Button>
@@ -331,7 +331,7 @@ function AdminMaterialsPage() {
                               }}
                             />
                           ) : (
-                            <div className="size-full grid place-items-center text-cyan-600">
+                            <div className="size-full grid place-items-center text-primary">
                               <Package className="size-5" />
                             </div>
                           )}
@@ -455,7 +455,7 @@ function AdminMaterialsPage() {
       <Dialog open={Boolean(editModalMat)} onOpenChange={(o) => !o && setEditModalMat(null)}>
         <DialogContent className="sm:max-w-md bg-white rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-base font-extrabold text-slate-900">
+            <DialogTitle className="text-base font-bold text-slate-900">
               Edit Material
             </DialogTitle>
           </DialogHeader>
@@ -518,7 +518,7 @@ function AdminMaterialsPage() {
               <Button
                 type="submit"
                 size="sm"
-                className="bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold text-xs"
+                className=" font-bold text-xs"
               >
                 Save Changes
               </Button>

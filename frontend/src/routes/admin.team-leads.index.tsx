@@ -223,51 +223,19 @@ function AdminTeamLeadsPage() {
 
   return (
     <div className="space-y-5 text-slate-800">
-      {/* Breadcrumb matching screenshot */}
-      <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-        <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
-          Dashboard
-        </Link>
-        <span>/</span>
-        <span className="text-slate-600">Team Lead Management</span>
-      </div>
-
-      {/* Top Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
-          Team Lead Management
-        </h1>
-        <div className="flex items-center gap-2.5">
-          <Button
-            type="button"
-            variant={isSearchOpen ? "default" : "outline"}
-            onClick={() => setIsSearchOpen((v) => !v)}
-            className={`font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs transition-all ${
-              isSearchOpen
-                ? "bg-cyan-600 hover:bg-cyan-700 text-white"
-                : "border-slate-300 text-slate-700 hover:bg-slate-50"
-            }`}
-          >
-            <Search className="size-3.5 me-1.5" /> Search
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleExportCsv}
-            className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs"
-          >
-            <Download className="size-3.5 me-1.5" /> Export
-          </Button>
-          <Button
-            asChild
-            className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 sm:h-10 px-5 rounded-xl shadow-sm"
-          >
-            <Link to="/admin/team-leads/create">
-              <Plus className="size-3.5 me-1.5" /> Add New Team Lead
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Team Lead Management"
+        breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Team Lead Management" }]}
+        actions={
+          <PageActions
+            onSearchToggle={() => setIsSearchOpen(v => !v)}
+            isSearchOpen={isSearchOpen}
+            onExport={handleExportCsv}
+            addNewLabel="Add New Team Lead"
+            addNewTo="/admin/team-leads/create"
+          />
+        }
+      />
 
       {/* Collapsible Search Drawer / Filter Form */}
       {isSearchOpen && (
@@ -346,14 +314,14 @@ function AdminTeamLeadsPage() {
                 variant="outline"
                 size="sm"
                 onClick={handleResetFilter}
-                className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
+                className="font-bold text-xs h-9 px-4 rounded-lg"
               >
                 <RotateCcw className="size-3.5 me-1.5" /> Reset
               </Button>
               <Button
                 type="submit"
                 size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
+                className="font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
               >
                 <Filter className="size-3.5 me-1.5" /> Filter
               </Button>
@@ -569,7 +537,7 @@ function AdminTeamLeadsPage() {
                                 onClick={() => handleOpenAction(lead, "info")}
                                 className="text-xs font-medium cursor-pointer"
                               >
-                                <Eye className="size-3.5 me-2 text-cyan-600" /> Team Lead Details
+                                <Eye className="size-3.5 me-2 text-primary" /> Team Lead Details
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleOpenAction(lead, "password")}
@@ -585,9 +553,9 @@ function AdminTeamLeadsPage() {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleOpenAction(lead, "delete")}
-                                className="text-xs font-medium text-rose-600 hover:text-rose-700 cursor-pointer"
+                                className="text-xs font-medium text-destructive cursor-pointer"
                               >
-                                <Trash2 className="size-3.5 me-2 text-rose-600" /> Delete Team Lead
+                                <Trash2 className="size-3.5 me-2 text-destructive" /> Delete Team Lead
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -622,18 +590,16 @@ function AdminTeamLeadsPage() {
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               const p = i + 1;
               return (
-                <Button
-                  key={p}
-                  type="button"
-                  variant={p === currentPage ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCurrentPage(p)}
-                  className={`h-8 w-8 text-xs font-bold p-0 ${
-                    p === currentPage ? "bg-cyan-600 text-white hover:bg-cyan-700" : ""
-                  }`}
-                >
-                  {p}
-                </Button>
+                  <Button
+                    key={p}
+                    type="button"
+                    variant={p === currentPage ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(p)}
+                    className={`h-8 w-8 text-xs font-bold p-0`}
+                  >
+                    {p}
+                  </Button>
               );
             })}
             <Button

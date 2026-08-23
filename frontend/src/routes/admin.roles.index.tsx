@@ -16,8 +16,9 @@ import { Card } from "@/frontend/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/frontend/components/ui/dialog";
 import { Label } from "@/frontend/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
-import { Check, ChevronsUpDown, Edit, Filter, Plus, RotateCcw, Search, Sliders, Trash2, X } from "lucide-react";
+import { ChevronsUpDown, Filter, RotateCcw, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader, PageActions, StatusBadge, ActionIconButton } from "@/frontend/components/admin/shell";
 
 export const Route = createFileRoute("/admin/roles/")({ component: AdminRolesPage });
 
@@ -162,40 +163,18 @@ function AdminRolesPage() {
   return (
     <div className="space-y-5 text-slate-800">
       {/* Breadcrumbs & Header Actions */}
-      <div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-slate-600">Roles Management</span>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Roles Management</h1>
-          <div className="flex items-center gap-2.5">
-            <Button
-              type="button"
-              variant={isSearchOpen ? "default" : "outline"}
-              onClick={() => setIsSearchOpen((v) => !v)}
-              className={`font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs transition-all ${
-                isSearchOpen
-                  ? "bg-cyan-600 hover:bg-cyan-700 text-white"
-                  : "border-slate-300 text-slate-700 hover:bg-slate-50"
-              }`}
-            >
-              <Search className="size-3.5 me-1.5" /> Search
-            </Button>
-            <Button
-              asChild
-              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 sm:h-10 px-5 rounded-xl shadow-sm"
-            >
-              <Link to="/admin/roles/create">
-                <Plus className="size-3.5 me-1.5" /> Add Role
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Roles Management"
+        breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Roles Management" }]}
+        actions={
+          <PageActions
+            onSearchToggle={() => setIsSearchOpen(v => !v)}
+            isSearchOpen={isSearchOpen}
+            addNewLabel="Add Role"
+            addNewTo="/admin/roles/create"
+          />
+        }
+      />
 
       {/* Collapsible Search & Filter Panel Matching Reference Screenshot */}
       {isSearchOpen && (
@@ -234,14 +213,14 @@ function AdminRolesPage() {
                 variant="outline"
                 size="sm"
                 onClick={handleResetFilter}
-                className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
+                className="font-bold text-xs h-9 px-4 rounded-lg"
               >
                 <RotateCcw className="size-3.5 me-1.5" /> Reset
               </Button>
               <Button
                 type="submit"
                 size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
+                className="font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
               >
                 <Filter className="size-3.5 me-1.5" /> Filter
               </Button>
@@ -340,47 +319,30 @@ function AdminRolesPage() {
                         {role.name}
                       </td>
                       <td className="px-3 py-3.5 text-center whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                            isActivated
-                              ? "bg-emerald-100/70 text-emerald-600"
-                              : "bg-rose-100/70 text-rose-600"
-                          }`}
-                        >
-                          {role.status}
-                        </span>
+                        <StatusBadge status={isActivated ? "Activated" : "Deactivated"} />
                       </td>
                       <td className="px-3 py-3.5 text-slate-600 text-xs">{role.registeredOn || "—"}</td>
                       <td className="px-3 py-3.5 text-center align-middle">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            type="button"
+                        <div className="flex items-center justify-center gap-1">
+                          <ActionIconButton
+                            icon={undefined} 
+                            label={isActivated ? "Deactivate" : "Activate"}
+                            action="toggle_status"
                             onClick={() => handleToggleStatus(role)}
-                            title={isActivated ? "Deactivate Role" : "Activate Role"}
-                            className="text-rose-500 hover:scale-125 transition-transform"
-                          >
-                            {isActivated ? (
-                              <X className="size-4 text-rose-500 stroke-[2.5]" />
-                            ) : (
-                              <Check className="size-4 text-emerald-500 stroke-[2.5]" />
-                            )}
-                          </button>
-                          <Link
+                          />
+                          <ActionIconButton
+                            icon={undefined}
+                            label="Edit"
+                            action="edit"
                             to="/admin/roles/edit"
                             search={{ id: role.id }}
-                            title="Edit Role & Permissions"
-                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
-                          >
-                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
-                          </Link>
-                          <button
-                            type="button"
+                          />
+                          <ActionIconButton
+                            icon={Trash2}
+                            label="Delete"
+                            action="delete"
                             onClick={() => handleDeleteRole(role.id, role.name)}
-                            title="Delete Role"
-                            className="text-rose-500 hover:scale-125 transition-transform"
-                          >
-                            <Trash2 className="size-4 text-rose-500 stroke-[2.5]" />
-                          </button>
+                          />
                         </div>
                       </td>
                     </tr>
@@ -414,9 +376,7 @@ function AdminRolesPage() {
                 variant={p === currentPage ? "default" : "outline"}
                 size="sm"
                 onClick={() => setCurrentPage(p)}
-                className={`h-8 w-8 p-0 text-xs font-bold rounded-lg ${
-                  p === currentPage ? "bg-cyan-600 text-white hover:bg-cyan-700" : "text-slate-600"
-                }`}
+                className={`h-8 w-8 p-0 text-xs font-bold rounded-lg`}
               >
                 {p}
               </Button>
@@ -439,7 +399,7 @@ function AdminRolesPage() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl border-slate-200">
           <DialogHeader>
-            <DialogTitle className="text-lg font-extrabold text-slate-900">
+            <DialogTitle className="text-lg font-bold text-slate-900">
               Configure Role Permissions
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
@@ -489,7 +449,7 @@ function AdminRolesPage() {
               </Button>
               <Button
                 type="submit"
-                className="h-9 text-xs font-bold bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg shadow-sm"
+                className="h-9 text-xs font-bold rounded-lg shadow-sm"
               >
                 Save Changes
               </Button>

@@ -14,18 +14,12 @@ import { Input } from "@/frontend/components/ui/input";
 import { Card } from "@/frontend/components/ui/card";
 import { Label } from "@/frontend/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/frontend/components/ui/dropdown-menu";
+
 import {
   Check,
   ChevronsUpDown,
   Download,
   Filter,
-  MoreVertical,
   Plus,
   RotateCcw,
   Search,
@@ -152,65 +146,19 @@ function AdminStaffPage() {
 
   return (
     <div className="space-y-5 text-slate-800">
-      {/* Breadcrumbs & Header */}
-      <div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-slate-600">Staff Management</span>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Staff Management</h1>
-          <div className="flex items-center gap-2.5">
-            <Button
-              type="button"
-              variant={isSearchOpen ? "default" : "outline"}
-              size="sm"
-              onClick={() => setIsSearchOpen((v) => !v)}
-              className={
-                isSearchOpen
-                  ? "bg-cyan-600 text-white hover:bg-cyan-700 font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
-                  : "border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
-              }
-            >
-              <Search className="size-3.5 me-1.5" /> Search
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                downloadCsv(
-                  "staff-list.csv",
-                  filteredStaff.map((s, i) => ({
-                    "#": i + 1,
-                    Name: s.name || "",
-                    Email: s.email || "",
-                    Phone: s.phone || "",
-                    Role: s.roleName || "",
-                    Status: s.status || "Activated",
-                    Registered: s.registeredOn || "",
-                  })),
-                )
-              }
-              className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
-            >
-              <Download className="size-3.5 me-1.5 text-slate-500" /> Export CSV
-            </Button>
-            <Link to="/admin/staff/create">
-              <Button
-                type="button"
-                size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
-              >
-                <Plus className="size-3.5 me-1.5" /> Add Staff Member
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+  title="Staff Management"
+  breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Staff Management" }]}
+  actions={
+    <PageActions
+      onSearchToggle={() => setIsSearchOpen((v) => !v)}
+      isSearchOpen={isSearchOpen}
+      onExport={() => downloadCsv("staff-list.csv", filteredStaff.map((s, i) => ({ "#": i + 1, "Name": s.name || "", "Email": s.email || "", "Phone": s.phone || "", "Role": s.roleName || "", "Status": s.status || "Activated", "Registered": s.registeredOn || "" })))}
+      addNewLabel="Add Staff Member"
+      addNewTo="/admin/staff/create"
+    />
+  }
+/>
 
       {/* Collapsible Search & Filter Card */}
       {isSearchOpen && (
@@ -292,7 +240,7 @@ function AdminStaffPage() {
               <Button
                 type="submit"
                 size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
+                className="font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
               >
                 <Filter className="size-3.5 me-1.5" /> Filter
               </Button>
@@ -446,52 +394,11 @@ function AdminStaffPage() {
                         {staff.registeredOn || staff.createdAt?.slice(0, 10) || "—"}
                       </td>
                       <td className="px-3 py-3.5 text-center align-middle">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(staff)}
-                            title={isActivated ? "Deactivate Staff" : "Activate Staff"}
-                            className="text-rose-500 hover:scale-125 transition-transform"
-                          >
-                            {isActivated ? (
-                              <X className="size-4 text-rose-500 stroke-[2.5]" />
-                            ) : (
-                              <Check className="size-4 text-emerald-500 stroke-[2.5]" />
-                            )}
-                          </button>
-                          <Link
-                            to="/admin/staff/edit"
-                            search={{ id: staff.id }}
-                            title="Edit Staff Member"
-                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
-                          >
-                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
-                          </Link>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                type="button"
-                                title="More actions"
-                                className="text-slate-600 hover:scale-125 transition-transform p-0.5"
-                              >
-                                <MoreVertical className="size-4 text-slate-600 stroke-[2.5]" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48 bg-white border-slate-200">
-                              <DropdownMenuItem
-                                onClick={() => handleSendCredentials(staff)}
-                                className="text-xs font-medium cursor-pointer"
-                              >
-                                <Send className="size-3.5 me-2 text-indigo-600" /> Send Credentials
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteStaff(staff.id)}
-                                className="text-xs font-medium text-rose-600 hover:text-rose-700 cursor-pointer"
-                              >
-                                <Trash2 className="size-3.5 me-2 text-rose-600" /> Delete Staff
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                        <div className="flex items-center gap-1">
+                          <ActionIconButton icon={isActivated ? X : Check} label={isActivated ? "Deactivate" : "Activate"} action={isActivated ? "toggle_off" : "toggle_on"} onClick={() => handleToggleStatus(staff)} />
+                          <ActionIconButton icon={Sliders} label="Edit" action="edit" to="/admin/staff/edit" search={{ id: staff.id }} />
+                          <ActionIconButton icon={Send} label="Send" action="send" onClick={() => handleSendCredentials(staff)} />
+                          <ActionIconButton icon={Trash2} label="Delete" action="delete" onClick={() => handleDeleteStaff(staff.id)} />
                         </div>
                       </td>
                     </tr>
@@ -527,7 +434,7 @@ function AdminStaffPage() {
                 size="sm"
                 onClick={() => setCurrentPage(p)}
                 className={`h-8 w-8 p-0 text-xs font-bold rounded-lg ${
-                  p === currentPage ? "bg-cyan-600 text-white hover:bg-cyan-700" : "text-slate-600"
+                  p === currentPage ? "" : "text-slate-600"
                 }`}
               >
                 {p}

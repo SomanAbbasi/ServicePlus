@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { getAdminReviews } from "@/frontend/lib/api-services";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
-import { ErrorState, TableSkeleton, downloadCsv } from "@/frontend/components/admin/shell";
+import { ErrorState, TableSkeleton, downloadCsv, PageHeader, PageActions, StatusBadge, ActionIconButton } from "@/frontend/components/admin/shell";
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { Card } from "@/frontend/components/ui/card";
@@ -165,25 +165,16 @@ function AdminReviews() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="text-sm font-medium mb-1">
-            <Link to="/admin" className="text-cyan-600 hover:underline">Dashboard</Link>
-            <span className="text-slate-400 mx-2">/</span>
-            <span className="text-slate-600">Rating & Reviews</span>
-          </div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Rating & Reviews</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => setShowFilters(!showFilters)}
-            className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full px-6"
-          >
-            <Search className="w-4 h-4 mr-2" />
-            Search
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Rating & Reviews"
+        breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Rating & Reviews" }]}
+        actions={
+          <PageActions
+            onSearchToggle={() => setShowFilters(!showFilters)}
+            isSearchOpen={showFilters}
+          />
+        }
+      />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -191,7 +182,7 @@ function AdminReviews() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-slate-500 mb-2">Average Rating</p>
-              <h3 className="text-3xl font-extrabold text-slate-900 flex items-center gap-2">
+              <h3 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
                 {averageRating.toFixed(1)} <Star className="w-6 h-6 fill-amber-400 text-amber-400" />
               </h3>
             </div>
@@ -205,7 +196,7 @@ function AdminReviews() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-slate-500 mb-2">5-Star Reviews</p>
-              <h3 className="text-3xl font-extrabold text-slate-900">{fiveStarReviews}</h3>
+              <h3 className="text-3xl font-bold text-slate-900">{fiveStarReviews}</h3>
             </div>
             <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center group-hover:bg-green-100 transition-colors">
               <Star className="w-6 h-6 text-green-500 fill-green-500" />
@@ -217,7 +208,7 @@ function AdminReviews() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-slate-500 mb-2">Below 3-Star</p>
-              <h3 className="text-3xl font-extrabold text-slate-900">{belowThreeStarReviews}</h3>
+              <h3 className="text-3xl font-bold text-slate-900">{belowThreeStarReviews}</h3>
             </div>
             <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center group-hover:bg-red-100 transition-colors">
               <Star className="w-6 h-6 text-red-500" />
@@ -268,7 +259,7 @@ function AdminReviews() {
             <Button variant="outline" onClick={handleReset} className="border-slate-300">
               <RefreshCw className="w-4 h-4 mr-2" /> Reset
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6">
+            <Button className="rounded-full px-6">
               <Filter className="w-4 h-4 mr-2" /> Filter
             </Button>
           </div>
@@ -376,14 +367,7 @@ function AdminReviews() {
                         {row.created_at ? format(new Date(row.created_at), "dd MMM yyyy") : "—"}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => setSelectedReview(row)}
-                          className="h-8 w-8 text-slate-500 hover:text-cyan-600 hover:bg-cyan-50"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
+                        <ActionIconButton icon={Eye} label="View" action="view" onClick={() => setSelectedReview(row)} />
                       </td>
                     </tr>
                   ))
@@ -452,11 +436,7 @@ function AdminReviews() {
                     key={pageNum}
                     variant={currentPage === pageNum ? "default" : "outline"}
                     size="sm"
-                    className={`h-8 w-8 p-0 ${
-                      currentPage === pageNum
-                        ? "bg-cyan-500 hover:bg-cyan-600 text-white border-cyan-500"
-                        : ""
-                    }`}
+                    className="h-8 w-8 p-0"
                     onClick={() => setCurrentPage(pageNum)}
                   >
                     {pageNum}

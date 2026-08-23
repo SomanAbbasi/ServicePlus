@@ -28,9 +28,7 @@ import {
   Download,
   Eye,
   Filter,
-  Glasses,
   KeyRound,
-  Lock,
   MoreVertical,
   Plus,
   RotateCcw,
@@ -214,65 +212,19 @@ function AdminUsersPage() {
 
   return (
     <div className="space-y-5 text-slate-800">
-      {/* Breadcrumbs & Header Actions */}
-      <div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-slate-600">Users</span>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">User Management</h1>
-          <div className="flex items-center gap-2.5">
-            <Button
-              type="button"
-              variant={isSearchOpen ? "default" : "outline"}
-              size="sm"
-              onClick={() => setIsSearchOpen((v) => !v)}
-              className={
-                isSearchOpen
-                  ? "bg-cyan-600 text-white hover:bg-cyan-700 font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
-                  : "border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
-              }
-            >
-              <Search className="size-3.5 me-1.5" /> Search
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                downloadCsv(
-                  "users-list.csv",
-                  filteredUsers.map((u, i) => ({
-                    "#": i + 1,
-                    Name: u.fullName || "",
-                    "E-mail": u.email || "",
-                    "Phone Number": u.phone || "",
-                    "Wallet Balance": (typeof u.walletBalance === "number" ? u.walletBalance : 0).toFixed(2),
-                    Status: u.status || "Activated",
-                    "Registered On": u.registeredOn || u.createdAt?.slice(0, 10) || "",
-                  })),
-                )
-              }
-              className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
-            >
-              <Download className="size-3.5 me-1.5 text-slate-500" /> Export CSV
-            </Button>
-            <Link to="/admin/users/create">
-              <Button
-                type="button"
-                size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
-              >
-                <Plus className="size-3.5 me-1.5" /> Add New User
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+  title="User Management"
+  breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Users" }]}
+  actions={
+    <PageActions
+      onSearchToggle={() => setIsSearchOpen((v) => !v)}
+      isSearchOpen={isSearchOpen}
+      onExport={() => downloadCsv("users-list.csv", filteredUsers.map((u, i) => ({ "#": i + 1, "Name": u.fullName || "", "E-mail": u.email || "", "Phone Number": u.phone || "", "Wallet Balance": (typeof u.walletBalance === "number" ? u.walletBalance : 0).toFixed(2), "Status": u.status || "Activated", "Registered On": u.registeredOn || u.createdAt?.slice(0, 10) || "" })))}
+      addNewLabel="Add New User"
+      addNewTo="/admin/users/create"
+    />
+  }
+/>
 
       {/* Collapsible Search & Filter Card */}
       {isSearchOpen && (
@@ -355,7 +307,7 @@ function AdminUsersPage() {
               <Button
                 type="submit"
                 size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
+                className="font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
               >
                 <Filter className="size-3.5 me-1.5" /> Filter
               </Button>
@@ -540,69 +492,13 @@ function AdminUsersPage() {
 
                       {/* 6 Action Icons */}
                       <td className="px-2 py-3 text-center align-middle">
-                        <div className="flex flex-col items-center justify-center gap-1.5 py-0.5">
-                          <div className="flex items-center justify-center gap-2">
-                            {/* 1. Toggle Status */}
-                            <button
-                              type="button"
-                              onClick={() => handleOpenAction(user, "toggle_status")}
-                              title={isActivated ? "Deactivate User" : "Activate User"}
-                              className="text-rose-500 hover:scale-125 transition-transform"
-                            >
-                              {isActivated ? (
-                                <X className="size-4 text-rose-500 stroke-[2.5]" />
-                              ) : (
-                                <Check className="size-4 text-emerald-500 stroke-[2.5]" />
-                              )}
-                            </button>
-                            {/* 2. Edit */}
-                            <Link
-                              to="/admin/users/edit"
-                              search={{ id: user.id }}
-                              title="Edit User Profile"
-                              className="text-blue-500 hover:scale-125 transition-transform inline-flex items-center justify-center"
-                            >
-                              <Sliders className="size-4 text-blue-500 stroke-[2.5]" />
-                            </Link>
-                            {/* 3. View Info */}
-                            <button
-                              type="button"
-                              onClick={() => handleOpenAction(user, "info")}
-                              title="User Information"
-                              className="text-blue-600 hover:scale-125 transition-transform"
-                            >
-                              <Glasses className="size-4 text-blue-600 stroke-[2.5]" />
-                            </button>
-                          </div>
-                          <div className="flex items-center justify-center gap-2">
-                            {/* 4. Change Password */}
-                            <button
-                              type="button"
-                              onClick={() => handleOpenAction(user, "password")}
-                              title="Reset Password"
-                              className="text-cyan-500 hover:scale-125 transition-transform"
-                            >
-                              <KeyRound className="size-4 text-cyan-500 stroke-[2.5]" />
-                            </button>
-                            {/* 5. Delete */}
-                            <button
-                              type="button"
-                              onClick={() => handleOpenAction(user, "delete")}
-                              title="Delete User"
-                              className="text-rose-500 hover:scale-125 transition-transform"
-                            >
-                              <Trash2 className="size-4 text-rose-500 stroke-[2.5]" />
-                            </button>
-                            {/* 6. Send Credentials */}
-                            <button
-                              type="button"
-                              onClick={() => handleOpenAction(user, "send_credentials")}
-                              title="Send Credentials"
-                              className="text-slate-800 hover:scale-125 transition-transform"
-                            >
-                              <Send className="size-4 text-slate-800 stroke-[2.5]" />
-                            </button>
-                          </div>
+                        <div className="flex items-center gap-1">
+                          <ActionIconButton icon={isActivated ? X : Check} label={isActivated ? "Deactivate" : "Activate"} action={isActivated ? "toggle_off" : "toggle_on"} onClick={() => handleOpenAction(user, "toggle_status")} />
+                          <ActionIconButton icon={Sliders} label="Edit" action="edit" to="/admin/users/edit" search={{ id: user.id }} />
+                          <ActionIconButton icon={Eye} label="View" action="view" onClick={() => handleOpenAction(user, "info")} />
+                          <ActionIconButton icon={KeyRound} label="Password" action="password" onClick={() => handleOpenAction(user, "password")} />
+                          <ActionIconButton icon={Trash2} label="Delete" action="delete" onClick={() => handleOpenAction(user, "delete")} />
+                          <ActionIconButton icon={Send} label="Send" action="send" onClick={() => handleOpenAction(user, "send_credentials")} />
                         </div>
                       </td>
                     </tr>
@@ -638,7 +534,7 @@ function AdminUsersPage() {
                 size="sm"
                 onClick={() => setCurrentPage(p)}
                 className={`h-8 w-8 p-0 text-xs font-bold rounded-lg ${
-                  p === currentPage ? "bg-cyan-600 text-white hover:bg-cyan-700" : "text-slate-600"
+                  p === currentPage ? "" : "text-slate-600"
                 }`}
               >
                 {p}

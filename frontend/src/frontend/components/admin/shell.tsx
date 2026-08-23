@@ -1,4 +1,8 @@
 import * as React from "react";
+import { Button } from "@/frontend/components/ui/button";
+import { Link } from "@tanstack/react-router";
+import { Search, Download, Plus } from "lucide-react";
+
 import { Card } from "@/frontend/components/ui/card";
 import { Skeleton } from "@/frontend/components/ui/skeleton";
 import { cn } from "@/frontend/lib/utils";
@@ -8,13 +12,25 @@ export function PageHeader({
   title,
   description,
   actions,
+  breadcrumbs,
 }: {
   title: string;
   description?: string;
   actions?: React.ReactNode;
+  breadcrumbs?: { label: string; to?: string }[];
 }) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <div className="w-full text-sm text-muted-foreground mb-1">
+          {breadcrumbs.map((b, i) => (
+            <span key={i}>
+              {b.to ? <a href={b.to} className="hover:underline">{b.label}</a> : b.label}
+              {i < breadcrumbs.length - 1 && " / "}
+            </span>
+          ))}
+        </div>
+      )}
       <div>
         <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
         {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
@@ -170,4 +186,96 @@ export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+export function PageActions({
+  onSearchToggle,
+  isSearchOpen,
+  onExport,
+  addNewLabel,
+  addNewTo,
+}: {
+  onSearchToggle?: () => void;
+  isSearchOpen?: boolean;
+  onExport?: () => void;
+  addNewLabel?: string;
+  addNewTo?: string;
+}) {
+  return (
+    <div className="flex items-center gap-2.5">
+      {onSearchToggle && (
+        <Button
+          type="button"
+          variant={isSearchOpen ? "default" : "outline"}
+          onClick={onSearchToggle}
+          className={`font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs transition-all ${
+            isSearchOpen
+              ? "bg-primary text-primary-foreground"
+              : "border-border text-foreground hover:bg-muted"
+          }`}
+        >
+          <Search className="size-3.5 me-1.5" /> Search
+        </Button>
+      )}
+      {onExport && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onExport}
+          className="border-border text-foreground hover:bg-muted font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs"
+        >
+          <Download className="size-3.5 me-1.5" /> Export
+        </Button>
+      )}
+      {addNewLabel && addNewTo && (
+        <Button
+          asChild
+          className="font-bold text-xs h-9 sm:h-10 px-5 rounded-xl shadow-sm"
+        >
+          <Link to={addNewTo as any}>
+            <Plus className="size-3.5 me-1.5" /> {addNewLabel}
+          </Link>
+        </Button>
+      )}
+    </div>
+  );
+}
+
+export function ActionIconButton({
+  icon: Icon,
+  label,
+  action,
+  onClick,
+  to,
+  search,
+}: {
+  icon: LucideIcon;
+  label: string;
+  action: string;
+  onClick?: () => void;
+  to?: string;
+  search?: any;
+}) {
+  const content = (
+    <Icon className="size-4 stroke-[2.5]" />
+  );
+  const className = `hover:scale-125 transition-transform inline-flex items-center justify-center p-1 ` + (
+    action === 'delete' ? 'text-destructive' : 
+    action === 'edit' ? 'text-primary' : 
+    action === 'view' ? 'text-blue-500' :
+    'text-muted-foreground hover:text-foreground'
+  );
+
+  if (to) {
+    return (
+      <Link to={to as any} search={search} title={label} className={className}>
+        {content}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" onClick={onClick} title={label} className={className}>
+      {content}
+    </button>
+  );
 }

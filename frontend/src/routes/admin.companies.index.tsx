@@ -208,51 +208,19 @@ function AdminCompaniesPage() {
 
   return (
     <div className="space-y-5 text-slate-800">
-      {/* Breadcrumb matching screenshot */}
-      <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-        <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
-          Dashboard
-        </Link>
-        <span>/</span>
-        <span className="text-slate-600">Company Management</span>
-      </div>
-
-      {/* Top Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
-          Company Management
-        </h1>
-        <div className="flex items-center gap-2.5">
-          <Button
-            type="button"
-            variant={isSearchOpen ? "default" : "outline"}
-            onClick={() => setIsSearchOpen((v) => !v)}
-            className={`font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs transition-all ${
-              isSearchOpen
-                ? "bg-cyan-600 hover:bg-cyan-700 text-white"
-                : "border-slate-300 text-slate-700 hover:bg-slate-50"
-            }`}
-          >
-            <Search className="size-3.5 me-1.5" /> Search
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleExportCsv}
-            className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs"
-          >
-            <Download className="size-3.5 me-1.5" /> Export
-          </Button>
-          <Button
-            asChild
-            className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 sm:h-10 px-5 rounded-xl shadow-sm"
-          >
-            <Link to="/admin/companies/create">
-              <Plus className="size-3.5 me-1.5" /> Add New Company
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Company Management"
+        breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Company Management" }]}
+        actions={
+          <PageActions
+            onSearchToggle={() => setIsSearchOpen(v => !v)}
+            isSearchOpen={isSearchOpen}
+            onExport={handleExportCsv}
+            addNewLabel="Add New Company"
+            addNewTo="/admin/companies/create"
+          />
+        }
+      />
 
       {/* Collapsible Search Drawer / Filter Form */}
       {isSearchOpen && (
@@ -467,15 +435,7 @@ function AdminCompaniesPage() {
 
                       {/* 5. Status */}
                       <td className="px-3 py-3.5 text-center whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                            isActivated
-                              ? "bg-emerald-100/70 text-emerald-700"
-                              : "bg-rose-100/70 text-rose-700"
-                          }`}
-                        >
-                          {isActivated ? "Activated" : "Deactivated"}
-                        </span>
+                        <StatusBadge status={isActivated ? "Activated" : "Deactivated"} />
                       </td>
 
                       {/* 6. Registered On */}
@@ -483,30 +443,22 @@ function AdminCompaniesPage() {
                         {formattedDate}
                       </td>
 
-                      {/* 7. Action (4/6 Persistent Action Buttons) */}
                       {/* 7. Action Horizontal Row */}
                       <td className="px-3 py-3.5 text-center align-middle">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            type="button"
+                        <div className="flex items-center justify-center gap-1">
+                          <ActionIconButton
+                            icon={undefined} 
+                            label={isActivated ? "Deactivate" : "Activate"}
+                            action="toggle_status"
                             onClick={() => handleOpenAction(comp, "toggle_status")}
-                            title={isActivated ? "Deactivate Company" : "Activate Company"}
-                            className="text-rose-500 hover:scale-125 transition-transform"
-                          >
-                            {isActivated ? (
-                              <X className="size-4 text-rose-500 stroke-[2.5]" />
-                            ) : (
-                              <Check className="size-4 text-emerald-500 stroke-[2.5]" />
-                            )}
-                          </button>
-                          <Link
+                          />
+                          <ActionIconButton
+                            icon={undefined}
+                            label="Edit"
+                            action="edit"
                             to="/admin/companies/edit"
                             search={{ id: comp.id }}
-                            title="Edit Company Profile"
-                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
-                          >
-                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
-                          </Link>
+                          />
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
@@ -522,13 +474,13 @@ function AdminCompaniesPage() {
                                 onClick={() => handleOpenAction(comp, "info")}
                                 className="text-xs font-medium cursor-pointer"
                               >
-                                <Eye className="size-3.5 me-2 text-cyan-600" /> Company Details
+                                <Eye className="size-3.5 me-2 text-primary" /> Company Details
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleOpenAction(comp, "delete")}
-                                className="text-xs font-medium text-rose-600 hover:text-rose-700 cursor-pointer"
+                                className="text-xs font-medium text-destructive cursor-pointer"
                               >
-                                <Trash2 className="size-3.5 me-2 text-rose-600" /> Delete Company
+                                <Trash2 className="size-3.5 me-2 text-destructive" /> Delete Company
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -569,9 +521,7 @@ function AdminCompaniesPage() {
                   variant={p === currentPage ? "default" : "outline"}
                   size="sm"
                   onClick={() => setCurrentPage(p)}
-                  className={`h-8 w-8 text-xs font-bold p-0 ${
-                    p === currentPage ? "bg-cyan-600 text-white hover:bg-cyan-700" : ""
-                  }`}
+                  className={`h-8 w-8 text-xs font-bold p-0`}
                 >
                   {p}
                 </Button>

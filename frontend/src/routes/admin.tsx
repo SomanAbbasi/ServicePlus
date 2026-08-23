@@ -184,7 +184,7 @@ function AdminLayout() {
               />
             </Link>
             <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Admin Dashboard Login</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">Admin Dashboard Login</h1>
               <p className="mt-1 text-xs text-slate-500 font-medium">
                 Enter your credentials to access the ServicePlus Operations Console.
               </p>
@@ -233,14 +233,14 @@ function AdminLayout() {
 
             <Button
               type="submit"
-              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold shadow-md shadow-cyan-600/20 text-xs py-3 rounded-xl transition-all"
+              className="w-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold shadow-md shadow-primary/20 text-xs py-3 rounded-xl transition-all"
             >
               Sign In to Admin Console
             </Button>
           </form>
 
           <div className="pt-2 text-center border-t border-slate-100">
-            <Link to="/" className="text-xs font-bold text-slate-500 hover:text-cyan-600 transition-colors">
+            <Link to="/" className="text-xs font-bold text-slate-500 hover:text-primary transition-colors">
               ← Return to Main Website
             </Link>
           </div>
@@ -369,7 +369,7 @@ function AdminLayout() {
                 <ShieldAlert className="size-6" />
               </div>
               <div>
-                <h2 className="text-lg font-extrabold text-slate-900">Access Restricted</h2>
+                <h2 className="text-lg font-bold text-slate-900">Access Restricted</h2>
                 <p className="text-xs text-slate-500 mt-1">
                   Your assigned role does not have permission to view or manage this section. Please contact your system administrator to request access.
                 </p>
@@ -377,7 +377,7 @@ function AdminLayout() {
               <div className="pt-2">
                 <Link
                   to="/admin"
-                  className="inline-flex items-center justify-center px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-bold transition-colors shadow-xs"
+                  className="inline-flex items-center justify-center px-5 py-2.5 bg-primary hover:bg-primary-hover text-primary-foreground rounded-lg text-xs font-bold transition-colors shadow-xs"
                 >
                   Return to Dashboard
                 </Link>

@@ -3,6 +3,7 @@ import { downloadCsv, EmptyState, TableSkeleton } from "@/frontend/components/ad
 import { Button } from "@/frontend/components/ui/button";
 import { Card } from "@/frontend/components/ui/card";
 import { Input } from "@/frontend/components/ui/input";
+import { Download } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -58,9 +59,9 @@ export function DataTable<T extends { id?: string }>({
   const slice = filtered.slice(page * pageSize, page * pageSize + pageSize);
 
   return (
-    <Card className="p-2">
+    <Card className="p-0">
       {(searchKeys || toolbar || csvName) && (
-        <div className="flex flex-wrap items-center gap-2 p-2">
+        <div className="flex flex-wrap items-center gap-2 p-3">
           {searchKeys && (
             <Input
               value={term}
@@ -77,7 +78,7 @@ export function DataTable<T extends { id?: string }>({
             <Button
               variant="outline"
               size="sm"
-              className="ms-auto"
+              className="ms-auto h-9 px-4 text-xs font-medium"
               onClick={() =>
                 downloadCsv(
                   csvName,
@@ -89,6 +90,7 @@ export function DataTable<T extends { id?: string }>({
                 )
               }
             >
+              <Download className="size-4 me-1.5" />
               Export CSV
             </Button>
           )}
@@ -122,7 +124,7 @@ export function DataTable<T extends { id?: string }>({
             </TableBody>
           </Table>
           {filtered.length > pageSize && (
-            <div className="flex items-center justify-between p-3 text-sm text-muted-foreground">
+            <div className="flex items-center justify-between p-3 text-xs text-muted-foreground font-medium">
               <span>
                 {page * pageSize + 1}–{Math.min(filtered.length, (page + 1) * pageSize)} of{" "}
                 {filtered.length}

@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/frontend/components/ui/label";
 import { Boxes, Layers, Package, Plus, Sliders, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader, PageActions, StatusBadge, ActionIconButton } from "@/frontend/components/admin/shell";
 
 export const Route = createFileRoute("/admin/service-grouping/")({ component: AdminServiceGroupingPage });
 
@@ -65,34 +66,21 @@ function AdminServiceGroupingPage() {
 
   return (
     <div className="space-y-5 text-slate-800">
-      <div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-slate-600">Service Management</span>
-          <span>/</span>
-          <span className="text-slate-600">Service Grouping</span>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Service Grouping & Packages</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Bundle multiple related services and addons into high-converting special offers and multi-room packages.
-            </p>
-          </div>
-          <Link to="/admin/service-grouping/create">
-            <Button
-              type="button"
-              size="sm"
-              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
-            >
-              <Plus className="size-3.5 me-1.5" /> Create Grouped Package
-            </Button>
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Service Grouping & Packages"
+        description="Bundle multiple related services and addons into high-converting special offers and multi-room packages."
+        breadcrumbs={[
+          { label: "Dashboard", to: "/admin" },
+          { label: "Service Management" },
+          { label: "Service Grouping" }
+        ]}
+        actions={
+          <PageActions
+            addNewLabel="Create Grouped Package"
+            addNewTo="/admin/service-grouping/create"
+          />
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {bundles.length === 0 ? (
@@ -107,12 +95,10 @@ function AdminServiceGroupingPage() {
               <div>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="font-extrabold text-slate-900 text-sm">{bundle.name}</h3>
-                    <span className="text-[11px] font-mono text-cyan-600">/{bundle.slug}</span>
+                    <h3 className="font-bold text-slate-900 text-sm">{bundle.name}</h3>
+                    <span className="text-[11px] font-mono text-primary">/{bundle.slug}</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                    {bundle.is_active !== false ? "Active" : "Paused"}
-                  </span>
+                  <StatusBadge status={bundle.is_active !== false ? "Active" : "Paused"} />
                 </div>
 
                 <p className="text-xs text-slate-500 mt-2 font-medium">
@@ -120,7 +106,7 @@ function AdminServiceGroupingPage() {
                 </p>
 
                 <div className="mt-4 flex items-baseline gap-2">
-                  <span className="text-xl font-black text-slate-900">AED {bundle.price}</span>
+                  <span className="text-xl font-bold text-slate-900">AED {bundle.price}</span>
                   {bundle.original_price && (
                     <span className="text-xs text-slate-400 line-through">AED {bundle.original_price}</span>
                   )}
@@ -129,23 +115,9 @@ function AdminServiceGroupingPage() {
 
               <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-[11px] text-slate-400 font-semibold">{bundle.items?.length || 2} Included Services</span>
-                <div className="flex items-center gap-2">
-                  <Link
-                    to="/admin/service-grouping/edit"
-                    search={{ id: bundle.id }}
-                    className="inline-flex items-center justify-center h-7 text-xs text-cyan-700 hover:bg-cyan-50 px-2 rounded-md font-semibold transition-colors"
-                  >
-                    <Sliders className="size-3.5 me-1" /> Edit
-                  </Link>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(bundle.id, bundle.name)}
-                    className="h-7 text-xs text-rose-600 hover:bg-rose-50 px-2"
-                  >
-                    <Trash2 className="size-3.5 me-1" /> Remove
-                  </Button>
+                <div className="flex items-center gap-1">
+                  <ActionIconButton icon={Sliders} label="Edit" action="edit" to="/admin/service-grouping/edit" search={{ id: bundle.id }} />
+                  <ActionIconButton icon={Trash2} label="Remove" action="delete" onClick={() => handleDelete(bundle.id, bundle.name)} />
                 </div>
               </div>
             </Card>
@@ -157,8 +129,8 @@ function AdminServiceGroupingPage() {
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-slate-900">
-              <Sparkles className="size-5 text-cyan-600" /> Create Service Package
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+              <Sparkles className="size-5 text-primary" /> Create Service Package
             </DialogTitle>
             <DialogDescription className="text-xs">
               Combine multiple cleaning services into a promotional bundle.
@@ -217,7 +189,7 @@ function AdminServiceGroupingPage() {
               <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)} size="sm">
                 Cancel
               </Button>
-              <Button type="submit" size="sm" className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold">
+              <Button type="submit" size="sm" className="font-bold text-xs">
                 Create Package
               </Button>
             </DialogFooter>

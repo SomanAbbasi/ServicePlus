@@ -175,7 +175,7 @@ function AdminMaterialRequestsPage() {
       {/* Breadcrumb & Header */}
       <div>
         <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
+          <Link to="/admin" className="text-primary hover:underline font-semibold">
             Dashboard
           </Link>
           <span>/</span>
@@ -183,7 +183,7 @@ function AdminMaterialRequestsPage() {
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Material Request</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Material Request</h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
               Review and manage supply replenishment requests from field staff and team leaders.
             </p>
@@ -195,7 +195,7 @@ function AdminMaterialRequestsPage() {
               className={`font-semibold text-xs h-9 px-4 rounded-lg shadow-sm transition-all gap-1.5 ${
                 showFilters
                   ? "bg-slate-800 hover:bg-slate-900 text-white"
-                  : "bg-[#0088cc] hover:bg-[#0077b5] text-white"
+                  : ""
               }`}
             >
               <Search className="size-3.5" />
@@ -205,7 +205,7 @@ function AdminMaterialRequestsPage() {
             <Button
               type="button"
               onClick={() => setIsAddOpen(true)}
-              className="bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
+              className=" font-bold text-xs h-9 px-4 rounded-lg shadow-sm"
             >
               <Plus className="size-4 me-1" /> Add Request
             </Button>
@@ -293,7 +293,7 @@ function AdminMaterialRequestsPage() {
                   type="button"
                   size="sm"
                   onClick={() => setCurrentPage(1)}
-                  className="h-8 text-xs font-semibold bg-[#0088cc] hover:bg-[#0077b5] text-white rounded-md px-4"
+                  className="h-8 text-xs font-semibold  rounded-md px-4"
                 >
                   Filter
                 </Button>
@@ -406,7 +406,7 @@ function AdminMaterialRequestsPage() {
                             Approved
                           </span>
                         ) : req.status === "Dispatched" ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold bg-cyan-100 text-cyan-800">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold bg-cyan-100 text-primary/80">
                             Dispatched
                           </span>
                         ) : (
@@ -506,7 +506,7 @@ function AdminMaterialRequestsPage() {
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="sm:max-w-md bg-white rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-base font-extrabold text-slate-900">
+            <DialogTitle className="text-base font-bold text-slate-900">
               Create Material Request
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
@@ -588,7 +588,7 @@ function AdminMaterialRequestsPage() {
               <Button
                 type="submit"
                 size="sm"
-                className="bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold text-xs"
+                className=" font-bold text-xs"
               >
                 Create Request
               </Button>

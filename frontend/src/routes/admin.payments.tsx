@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { getAdminPayments } from "@/frontend/lib/api-services";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
-import { ErrorState, downloadCsv, TableSkeleton } from "@/frontend/components/admin/shell";
+import { ErrorState, downloadCsv, TableSkeleton, PageHeader, PageActions, StatusBadge, ActionIconButton } from "@/frontend/components/admin/shell";
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { Card } from "@/frontend/components/ui/card";
@@ -128,15 +128,15 @@ function AdminPayments() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "PAID":
-        return <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Success</span>;
+        return <StatusBadge status="Success" />;
       case "REFUNDED":
-        return <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-700">Refunded</span>;
+        return <StatusBadge status="Refunded" />;
       case "PENDING":
-        return <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">Pending</span>;
+        return <StatusBadge status="Pending" />;
       case "FAILED":
-        return <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-700">Failed</span>;
+        return <StatusBadge status="Failed" />;
       default:
-        return <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">{status}</span>;
+        return <StatusBadge status={status} />;
     }
   };
 
@@ -159,26 +159,14 @@ function AdminPayments() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="text-sm font-medium text-slate-500 mb-1">
-            <Link to="/admin" className="text-cyan-600 hover:underline">Dashboard</Link> / Payment Management
-          </div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Payment Management</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            className="rounded-full bg-cyan-50 text-cyan-700 border-cyan-200 hover:bg-cyan-100"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Search className="h-4 w-4 mr-2" />
-            Search
-          </Button>
-          <Button
-            className="rounded-full bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={() => {
+      <PageHeader
+        title="Payment Management"
+        breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Payment Management" }]}
+        actions={
+          <PageActions
+            onSearchToggle={() => setShowFilters(!showFilters)}
+            isSearchOpen={showFilters}
+            onExport={() => {
               downloadCsv("payments.csv", rows.map(r => ({
                 "Payment Reference Number": r.bookings?.booking_number ? `TI${new Date(r.created_at).getTime()}` : r.id,
                 "Gateway Transaction ID": r.provider_reference || "",
@@ -189,12 +177,9 @@ function AdminPayments() {
                 "Created On": formatDate(r.created_at)
               })));
             }}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </div>
-      </div>
+          />
+        }
+      />
 
       {/* Filter Panel */}
       {showFilters && (
@@ -255,7 +240,7 @@ function AdminPayments() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Reset
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button>
               <Filter className="h-4 w-4 mr-2" />
               Filter
             </Button>
@@ -337,9 +322,7 @@ function AdminPayments() {
                         <td className="px-4 py-3 text-slate-600">{refundStatus}</td>
                         <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{formatDate(r.created_at)}</td>
                         <td className="px-4 py-3 text-center">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-600">
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <ActionIconButton icon={Eye} label="View" action="view" />
                         </td>
                       </tr>
                     );
@@ -390,7 +373,7 @@ function AdminPayments() {
                     {i > 0 && p - arr[i - 1]! > 1 && <span className="px-2">...</span>}
                     <Button
                       variant={p === page ? "default" : "outline"}
-                      className={`h-8 w-8 ${p === page ? "bg-cyan-600 text-white hover:bg-cyan-700" : ""}`}
+                      className="h-8 w-8"
                       onClick={() => setPage(p)}
                     >
                       {p}

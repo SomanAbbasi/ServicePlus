@@ -8,7 +8,7 @@ import {
   setCouponActive,
   upsertCoupon,
 } from "@/frontend/lib/api-services";
-import { ErrorState, TableSkeleton } from "@/frontend/components/admin/shell";
+import { ErrorState, TableSkeleton, PageHeader, PageActions, StatusBadge, ActionIconButton, downloadCsv } from "@/frontend/components/admin/shell";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
@@ -197,13 +197,13 @@ function AdminCoupons() {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
+          <Link to="/admin" className="text-primary hover:underline font-semibold">
             Dashboard
           </Link>
           <span>/</span>
           <span className="text-slate-600">Coupons</span>
         </div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Coupon Management</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Coupon Management</h1>
         <TableSkeleton rows={6} />
       </div>
     );
@@ -241,40 +241,19 @@ function AdminCoupons() {
   return (
     <div className="space-y-5 text-slate-800">
       {/* Top Breadcrumb & Page Header */}
-      <div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-slate-600">Coupon Management</span>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Coupon Management</h1>
-          <div className="flex items-center gap-2.5">
-            <Button
-              type="button"
-              variant={isSearchOpen ? "default" : "outline"}
-              onClick={() => setIsSearchOpen((v) => !v)}
-              className={`font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs transition-all ${
-                isSearchOpen
-                  ? "bg-cyan-600 hover:bg-cyan-700 text-white"
-                  : "border-slate-300 text-slate-700 hover:bg-slate-50"
-              }`}
-            >
-              <Search className="size-3.5 me-1.5" /> Search
-            </Button>
-            <Button
-              asChild
-              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 sm:h-10 px-5 rounded-xl shadow-sm"
-            >
-              <Link to="/admin/coupons/create">
-                <Plus className="size-3.5 me-1.5" /> Add Coupon
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Coupon Management"
+        breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Coupon Management" }]}
+        actions={
+          <PageActions
+            onSearchToggle={() => setIsSearchOpen((v) => !v)}
+            isSearchOpen={isSearchOpen}
+            addNewLabel="Add Coupon"
+            addNewTo="/admin/coupons/create"
+          />
+        }
+      />
+      
 
       {/* Collapsible Search & Filter Panel */}
       {isSearchOpen && (
@@ -348,7 +327,7 @@ function AdminCoupons() {
               <Button
                 type="submit"
                 size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
+                className="font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
               >
                 <Filter className="size-3.5 me-1.5" /> Filter
               </Button>
@@ -445,7 +424,7 @@ function AdminCoupons() {
                       {/* Code Badge */}
                       <td className="px-4 py-3.5">
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200/80 font-mono font-bold text-slate-900 text-xs tracking-wider">
-                          <Tag className="size-3 text-cyan-600" />
+                          <Tag className="size-3 text-primary" />
                           <span>{r.code}</span>
                         </div>
                       </td>
@@ -486,39 +465,20 @@ function AdminCoupons() {
 
                       {/* Status Column */}
                       <td className="px-3 py-3.5 text-center whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                            isActive
-                              ? "bg-emerald-100/70 text-emerald-600"
-                              : "bg-rose-100/70 text-rose-600"
-                          }`}
-                        >
-                          {isActive ? "Activated" : "Deactivated"}
-                        </span>
+                        <StatusBadge status={isActive ? "Activated" : "Deactivated"} />
                       </td>
 
                       {/* Action Horizontal Row */}
                       <td className="px-3 py-3.5 text-center align-middle">
                         <div className="flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(r)}
-                            title={isActive ? "Deactivate Coupon" : "Activate Coupon"}
-                            className="text-rose-500 hover:scale-125 transition-transform"
-                          >
-                            {isActive ? (
-                              <X className="size-4 text-rose-500 stroke-[2.5]" />
-                            ) : (
-                              <Check className="size-4 text-emerald-500 stroke-[2.5]" />
-                            )}
-                          </button>
+                          <ActionIconButton icon={isActive ? X : Check} label={isActive ? "Deactivate Coupon" : "Activate Coupon"} action={isActive ? "delete" : "view"} onClick={() => handleToggleStatus(r)} />
                           <Link
                             to="/admin/coupons/edit"
                             search={{ id: r.id }}
                             title="Edit Coupon"
-                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
+                            className="text-primary hover:scale-125 transition-transform inline-flex items-center justify-center"
                           >
-                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
+                            <Sliders className="size-4 text-primary stroke-[2.5]" />
                           </Link>
                           <button
                             type="button"
@@ -594,7 +554,7 @@ function AdminCoupons() {
       <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent className="max-w-2xl bg-white rounded-2xl border-slate-200 p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-extrabold text-slate-900">
+            <DialogTitle className="text-lg font-bold text-slate-900">
               Edit Coupon Code
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
@@ -647,7 +607,7 @@ function AdminCoupons() {
                   onClick={() => setEditTab("en")}
                   className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all border-b-2 ${
                     editTab === "en"
-                      ? "border-cyan-600 text-cyan-600 bg-cyan-50/40 rounded-t-lg"
+                      ? "border-primary text-primary bg-primary/10 rounded-t-lg"
                       : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-t-lg"
                   }`}
                 >
@@ -660,7 +620,7 @@ function AdminCoupons() {
                   onClick={() => setEditTab("ar")}
                   className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all border-b-2 ${
                     editTab === "ar"
-                      ? "border-cyan-600 text-cyan-600 bg-cyan-50/40 rounded-t-lg"
+                      ? "border-primary text-primary bg-primary/10 rounded-t-lg"
                       : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-t-lg"
                   }`}
                 >
@@ -806,7 +766,7 @@ function AdminCoupons() {
               <Button
                 type="submit"
                 disabled={isSaving}
-                className="h-9 text-xs font-bold bg-cyan-600 hover:bg-cyan-700 text-white"
+                className="h-9 text-xs font-bold "
               >
                 {isSaving ? (
                   <>

@@ -30,7 +30,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { downloadCsv } from "@/frontend/components/admin/shell";
+import { PageHeader, PageActions, StatusBadge, ActionIconButton, downloadCsv } from "@/frontend/components/admin/shell";
 import { AdminDateInput } from "@/frontend/components/admin/AdminDateInput";
 import {
   Dialog,
@@ -200,36 +200,17 @@ function AdminExpiredDocumentsPage() {
 
   return (
     <div className="space-y-5 text-slate-800">
-      {/* Breadcrumb & Header */}
-      <div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <span className="text-cyan-600 font-semibold">Dashboard</span>
-          <span>/</span>
-          <span>Expired Documents</span>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Expired Documents</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Monitor, renew, and audit official licenses, visas, IDs, and permits across all registered entities.
-            </p>
-          </div>
-          <Button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`font-semibold text-xs h-9 px-4 rounded-full shadow-sm transition-all gap-1.5 ${
-              showFilters
-                ? "bg-slate-800 hover:bg-slate-900 text-white"
-                : "bg-cyan-500 hover:bg-cyan-600 text-white"
-            }`}
-          >
-            <Search className="size-3.5" />
-            <span>Search</span>
-            {hasActiveFilters && (
-              <span className="size-2 rounded-full bg-amber-400" />
-            )}
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Expired Documents"
+        description="Monitor, renew, and audit official licenses, visas, IDs, and permits across all registered entities."
+        breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Expired Documents" }]}
+        actions={
+          <PageActions
+            onSearchToggle={() => setShowFilters(!showFilters)}
+            isSearchOpen={showFilters}
+          />
+        }
+      />
 
       {/* KPI Status Badges */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
@@ -243,9 +224,9 @@ function AdminExpiredDocumentsPage() {
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-600">Total Registered Docs</span>
-            <FileText className="size-4 text-cyan-600" />
+            <FileText className="size-4 text-primary" />
           </div>
-          <p className="text-2xl font-black text-slate-900 mt-2">{documents.length}</p>
+          <p className="text-2xl font-bold text-slate-900 mt-2">{documents.length}</p>
         </Card>
 
         <Card
@@ -260,7 +241,7 @@ function AdminExpiredDocumentsPage() {
             <span className="text-xs font-bold text-rose-700">Expired Documents</span>
             <ShieldAlert className="size-4 text-rose-600" />
           </div>
-          <p className="text-2xl font-black text-rose-700 mt-2">{expiredCount}</p>
+          <p className="text-2xl font-bold text-rose-700 mt-2">{expiredCount}</p>
         </Card>
 
         <Card
@@ -275,7 +256,7 @@ function AdminExpiredDocumentsPage() {
             <span className="text-xs font-bold text-amber-700">Expiring in ≤ 30 Days</span>
             <AlertTriangle className="size-4 text-amber-600" />
           </div>
-          <p className="text-2xl font-black text-amber-700 mt-2">{expiring30Count}</p>
+          <p className="text-2xl font-bold text-amber-700 mt-2">{expiring30Count}</p>
         </Card>
 
         <Card
@@ -290,7 +271,7 @@ function AdminExpiredDocumentsPage() {
             <span className="text-xs font-bold text-emerald-700">Compliant & Valid</span>
             <ShieldCheck className="size-4 text-emerald-600" />
           </div>
-          <p className="text-2xl font-black text-emerald-700 mt-2">{validCount}</p>
+          <p className="text-2xl font-bold text-emerald-700 mt-2">{validCount}</p>
         </Card>
       </div>
 
@@ -407,7 +388,7 @@ function AdminExpiredDocumentsPage() {
                 <Button
                   size="sm"
                   onClick={() => setCurrentPage(1)}
-                  className="h-8 text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white rounded-full px-4"
+                  className="h-8 text-xs font-semibold  rounded-full px-4"
                 >
                   <Filter className="size-3.5 mr-1.5" />
                   Apply Filter
@@ -485,7 +466,7 @@ function AdminExpiredDocumentsPage() {
                       ? "bg-indigo-50 text-indigo-700 border-indigo-200"
                       : doc.entityType === "Supervisor"
                       ? "bg-purple-50 text-purple-700 border-purple-200"
-                      : "bg-cyan-50 text-cyan-800 border-cyan-200";
+                      : "bg-cyan-50 text-primary/80 border-cyan-200";
 
                   const roleLabel =
                     doc.entityType === "TeamLead" ? "Team Leader" : doc.entityType;
@@ -510,7 +491,7 @@ function AdminExpiredDocumentsPage() {
                       </td>
                       <td className="px-3.5 py-3.5 font-semibold text-slate-800">
                         <div className="flex items-center gap-1.5">
-                          <FileText className="size-3.5 text-cyan-600 shrink-0" />
+                          <FileText className="size-3.5 text-primary shrink-0" />
                           <span>{doc.documentType}</span>
                         </div>
                       </td>
@@ -524,25 +505,13 @@ function AdminExpiredDocumentsPage() {
                         {doc.expiryDate}
                       </td>
                       <td className="px-3 py-3.5 text-center">
-                        {isExpired ? (
-                          <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-rose-500 text-white shadow-2xs">
-                            Expired
-                          </span>
-                        ) : diffDays <= 30 ? (
-                          <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-500 text-white shadow-2xs">
-                            Expiring ({diffDays}d)
-                          </span>
-                        ) : (
-                          <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-emerald-500 text-white shadow-2xs">
-                            Valid
-                          </span>
-                        )}
+                        <StatusBadge status={isExpired ? "Expired" : diffDays <= 30 ? "Expiring" : "Valid"} />
                       </td>
                       <td className="px-3 py-3.5 text-center">
                         <button
                           type="button"
                           onClick={() => handleOpenViewer(doc)}
-                          className="text-cyan-600 hover:text-cyan-800 font-bold text-xs hover:underline cursor-pointer"
+                          className="text-primary hover:text-primary/80 font-bold text-xs hover:underline cursor-pointer"
                         >
                           View File
                         </button>
@@ -562,7 +531,7 @@ function AdminExpiredDocumentsPage() {
                             <button
                               type="button"
                               onClick={() => setRemarksModalDoc(doc)}
-                              className="text-cyan-600 hover:text-cyan-800 font-extrabold text-[11px] underline shrink-0 cursor-pointer"
+                              className="text-primary hover:text-primary/80 font-bold text-[11px] underline shrink-0 cursor-pointer"
                               title="Click to view full remarks"
                             >
                               View
@@ -577,23 +546,19 @@ function AdminExpiredDocumentsPage() {
                           : doc.issueDate || "—"}
                       </td>
                       <td className="px-3 py-3.5 text-center">
-                        <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100/70 border border-slate-200/60 shadow-2xs">
-                          <button
-                            type="button"
+                        <div className="flex items-center justify-center gap-1">
+                          <ActionIconButton
+                            icon={Eye}
+                            label="View"
+                            action="view"
                             onClick={() => handleOpenViewer(doc)}
-                            title="Preview & Renew Document"
-                            className="p-1 rounded-lg text-cyan-700 hover:bg-cyan-100 transition-colors cursor-pointer"
-                          >
-                            <Eye className="size-3.5" />
-                          </button>
-                          <button
-                            type="button"
+                          />
+                          <ActionIconButton
+                            icon={BellRing}
+                            label="Reminder"
+                            action="manage"
                             onClick={() => handleSendReminder(doc)}
-                            title="Send Expiry Reminder Notification"
-                            className="p-1 rounded-lg text-amber-600 hover:bg-amber-100 transition-colors cursor-pointer"
-                          >
-                            <BellRing className="size-3.5" />
-                          </button>
+                          />
                         </div>
                       </td>
                     </tr>
@@ -628,9 +593,7 @@ function AdminExpiredDocumentsPage() {
                 variant={p === currentPage ? "default" : "outline"}
                 size="sm"
                 onClick={() => setCurrentPage(p)}
-                className={`h-8 w-8 p-0 text-xs font-bold ${
-                  p === currentPage ? "bg-cyan-600 text-white hover:bg-cyan-700" : "text-slate-600"
-                }`}
+                className="h-8 w-8 p-0 text-xs font-bold"
               >
                 {p}
               </Button>
@@ -653,11 +616,11 @@ function AdminExpiredDocumentsPage() {
       <Dialog open={Boolean(remarksModalDoc)} onOpenChange={(open) => !open && setRemarksModalDoc(null)}>
         <DialogContent className="max-w-md p-6 rounded-3xl bg-white shadow-2xl border border-slate-200">
           <DialogHeader className="pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2 text-cyan-600 mb-1">
+            <div className="flex items-center gap-2 text-primary mb-1">
               <MessageSquare className="size-4" />
-              <span className="text-[11px] font-extrabold uppercase tracking-wider">Document Remarks</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider">Document Remarks</span>
             </div>
-            <DialogTitle className="text-base font-extrabold text-slate-900">
+            <DialogTitle className="text-base font-bold text-slate-900">
               {remarksModalDoc?.documentType}
             </DialogTitle>
           </DialogHeader>

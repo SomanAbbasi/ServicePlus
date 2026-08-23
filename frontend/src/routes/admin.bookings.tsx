@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getAdminBookings, getAdminProfessionals, setBookingStatus, assignProfessional, getAdminBookingDetail } from "@/frontend/lib/api-services";
-import { StatusBadge, TableSkeleton, ErrorState, downloadCsv } from "@/frontend/components/admin/shell";
+import { StatusBadge, TableSkeleton, ErrorState, downloadCsv, PageHeader, PageActions } from "@/frontend/components/admin/shell";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
 import { AdminDateInput } from "@/frontend/components/admin/AdminDateInput";
 import { Button } from "@/frontend/components/ui/button";
@@ -182,31 +182,17 @@ function AdminBookings() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="text-sm text-slate-500 mb-1">Dashboard / Booking Management</div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Booking Management</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            className="rounded-full bg-cyan-500 hover:bg-cyan-600 text-white" 
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Search className="w-4 h-4 mr-2" />
-            Search
-          </Button>
-          <Link to="/admin/calendar">
-            <Button className="rounded-full bg-amber-500 hover:bg-amber-600 text-white">
-              <Calendar className="w-4 h-4 mr-2" />
-              Calendar View
-            </Button>
-          </Link>
-          <Button className="rounded-full bg-blue-600 hover:bg-blue-700 text-white" onClick={handleExport}>
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Booking Management"
+        breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Booking Management" }]}
+        actions={
+          <PageActions
+            onSearchToggle={() => setShowFilters(v => !v)}
+            isSearchOpen={showFilters}
+            onExport={handleExport}
+          />
+        }
+      />
 
       {/* Filter Panel */}
       {showFilters && (
@@ -260,7 +246,7 @@ function AdminBookings() {
               <RefreshCw className="w-4 h-4 mr-2" />
               Reset
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full" onClick={applyFilters}>
+            <Button className="rounded-full" onClick={applyFilters}>
               <Filter className="w-4 h-4 mr-2" />
               Filter
             </Button>
@@ -361,7 +347,7 @@ function AdminBookings() {
 
                     <td className="px-4 py-4 align-top text-right" onClick={e => e.stopPropagation()}>
                       {b.professional_id ? (
-                        <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-xs px-3 h-8">
+                        <Button size="sm" className="rounded-full text-xs px-3 h-8">
                           <Navigation className="w-3 h-3 mr-1.5" />
                           Navigate to professional
                         </Button>
@@ -407,7 +393,7 @@ function AdminBookings() {
               <Button
                 key={i}
                 variant={page === i ? "default" : "outline"}
-                className={cn("w-8 h-8 rounded p-0 text-sm", page === i && "bg-blue-600 text-white")}
+                className={cn("w-8 h-8 rounded p-0 text-sm")}
                 onClick={() => setPage(i)}
               >
                 {i + 1}

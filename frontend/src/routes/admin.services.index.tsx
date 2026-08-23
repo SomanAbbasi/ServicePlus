@@ -11,7 +11,7 @@ import {
   uploadMedia,
 } from "@/frontend/lib/api-services";
 import { resolveImageUrl } from "@/frontend/lib/api-client";
-import { ErrorState, TableSkeleton } from "@/frontend/components/admin/shell";
+import { ErrorState, TableSkeleton, PageHeader, PageActions, StatusBadge, ActionIconButton, downloadCsv } from "@/frontend/components/admin/shell";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
 import { OptionsManager } from "@/frontend/components/admin/OptionsManager";
 import { Button } from "@/frontend/components/ui/button";
@@ -256,13 +256,13 @@ function AdminServices() {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
+          <Link to="/admin" className="text-primary hover:underline font-semibold">
             Dashboard
           </Link>
           <span>/</span>
           <span className="text-slate-600">Services</span>
         </div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Services Management</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Services Management</h1>
         <TableSkeleton rows={6} />
       </div>
     );
@@ -396,40 +396,19 @@ function AdminServices() {
   return (
     <div className="space-y-5 text-slate-800">
       {/* Breadcrumbs & Header Actions matching Category Management */}
-      <div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-slate-600">Services Management</span>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Services Management</h1>
-          <div className="flex items-center gap-2.5">
-            <Button
-              type="button"
-              variant={isSearchOpen ? "default" : "outline"}
-              onClick={() => setIsSearchOpen((v) => !v)}
-              className={`font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs transition-all ${
-                isSearchOpen
-                  ? "bg-cyan-600 hover:bg-cyan-700 text-white"
-                  : "border-slate-300 text-slate-700 hover:bg-slate-50"
-              }`}
-            >
-              <Search className="size-3.5 me-1.5" /> Search
-            </Button>
-            <Button
-              asChild
-              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 sm:h-10 px-5 rounded-xl shadow-sm"
-            >
-              <Link to="/admin/services/create">
-                <Plus className="size-3.5 me-1.5" /> Add Service
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Services Management"
+        breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Services Management" }]}
+        actions={
+          <PageActions
+            onSearchToggle={() => setIsSearchOpen((v) => !v)}
+            isSearchOpen={isSearchOpen}
+            addNewLabel="Add Service"
+            addNewTo="/admin/services/create"
+          />
+        }
+      />
+      
 
       {/* Collapsible Search & Filter Panel matching Category Management */}
       {isSearchOpen && (
@@ -527,7 +506,7 @@ function AdminServices() {
               <Button
                 type="submit"
                 size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
+                className="font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
               >
                 <Filter className="size-3.5 me-1.5" /> Filter
               </Button>
@@ -612,7 +591,7 @@ function AdminServices() {
                           : "hover:bg-slate-50/80"
                       } ${
                         dragOverIndex === globalIdx && draggedIndex !== globalIdx
-                          ? "border-t-2 border-cyan-500 bg-cyan-50/40"
+                          ? "border-t-2 border-cyan-500 bg-primary/10"
                           : ""
                       }`}
                     >
@@ -627,13 +606,13 @@ function AdminServices() {
                               handleMove(globalIdx, "up");
                             }}
                             title="Move Up"
-                            className="text-slate-400 hover:text-cyan-600 disabled:opacity-20 transition-colors p-0.5"
+                            className="text-slate-400 hover:text-primary disabled:opacity-20 transition-colors p-0.5"
                           >
                             <ArrowUp className="size-3" />
                           </button>
                           <div
                             title="Drag to reorder"
-                            className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-cyan-600 transition-colors"
+                            className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-primary transition-colors"
                           >
                             <Menu className="size-4 shrink-0" />
                           </div>
@@ -645,7 +624,7 @@ function AdminServices() {
                               handleMove(globalIdx, "down");
                             }}
                             title="Move Down"
-                            className="text-slate-400 hover:text-cyan-600 disabled:opacity-20 transition-colors p-0.5"
+                            className="text-slate-400 hover:text-primary disabled:opacity-20 transition-colors p-0.5"
                           >
                             <ArrowDown className="size-3" />
                           </button>
@@ -700,7 +679,7 @@ function AdminServices() {
                         {Number(price) === 0 ? (
                           <div className="flex flex-col">
                             <span className="text-slate-500 font-semibold">AED 0.00</span>
-                            <span className="text-[10px] text-cyan-600 font-medium">Option-based</span>
+                            <span className="text-[10px] text-primary font-medium">Option-based</span>
                           </div>
                         ) : (
                           formatMoney(num(price))
@@ -718,39 +697,20 @@ function AdminServices() {
 
                       {/* Status Column */}
                       <td className="px-3 py-3.5 text-center whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                            isActive
-                              ? "bg-emerald-100/70 text-emerald-600"
-                              : "bg-rose-100/70 text-rose-600"
-                          }`}
-                        >
-                          {isActive ? "Activated" : "Deactivated"}
-                        </span>
+                        <StatusBadge status={isActive ? "Activated" : "Deactivated"} />
                       </td>
 
                       {/* Action Horizontal Row */}
                       <td className="px-3 py-3.5 text-center align-middle">
                         <div className="flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(s)}
-                            title={isActive ? "Deactivate Service" : "Activate Service"}
-                            className="text-rose-500 hover:scale-125 transition-transform"
-                          >
-                            {isActive ? (
-                              <X className="size-4 text-rose-500 stroke-[2.5]" />
-                            ) : (
-                              <Check className="size-4 text-emerald-500 stroke-[2.5]" />
-                            )}
-                          </button>
+                          <ActionIconButton icon={isActive ? X : Check} label={isActive ? "Deactivate Service" : "Activate Service"} action={isActive ? "delete" : "view"} onClick={() => handleToggleStatus(s)} />
                           <Link
                             to="/admin/services/edit"
                             search={{ id: s.id }}
                             title="Edit Service"
-                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
+                            className="text-primary hover:scale-125 transition-transform inline-flex items-center justify-center"
                           >
-                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
+                            <Sliders className="size-4 text-primary stroke-[2.5]" />
                           </Link>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -767,7 +727,7 @@ function AdminServices() {
                                 onClick={() => setOptionsFor(s)}
                                 className="text-xs font-medium cursor-pointer"
                               >
-                                <SlidersHorizontal className="size-3.5 me-2 text-cyan-600" /> Manage Options
+                                <SlidersHorizontal className="size-3.5 me-2 text-primary" /> Manage Options
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => dupMutation.mutate(s.id)}
@@ -849,7 +809,7 @@ function AdminServices() {
       <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent className="max-w-2xl bg-white rounded-2xl border-slate-200 p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-extrabold text-slate-900">
+            <DialogTitle className="text-lg font-bold text-slate-900">
               Edit Service Offering
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
@@ -903,7 +863,7 @@ function AdminServices() {
                   onClick={() => setEditTab("en")}
                   className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all border-b-2 ${
                     editTab === "en"
-                      ? "border-cyan-600 text-cyan-600 bg-cyan-50/40 rounded-t-lg"
+                      ? "border-primary text-primary bg-primary/10 rounded-t-lg"
                       : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-t-lg"
                   }`}
                 >
@@ -916,7 +876,7 @@ function AdminServices() {
                   onClick={() => setEditTab("ar")}
                   className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all border-b-2 ${
                     editTab === "ar"
-                      ? "border-cyan-600 text-cyan-600 bg-cyan-50/40 rounded-t-lg"
+                      ? "border-primary text-primary bg-primary/10 rounded-t-lg"
                       : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-t-lg"
                   }`}
                 >
@@ -1098,7 +1058,7 @@ function AdminServices() {
               <Button
                 type="submit"
                 disabled={isEditSaving || isCompressing}
-                className="h-9 text-xs font-bold bg-cyan-600 hover:bg-cyan-700 text-white"
+                className="h-9 text-xs font-bold "
               >
                 {isEditSaving ? (
                   <>

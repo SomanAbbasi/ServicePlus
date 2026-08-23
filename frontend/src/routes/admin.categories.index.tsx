@@ -10,7 +10,7 @@ import {
   uploadMedia,
 } from "@/frontend/lib/api-services";
 import { resolveImageUrl } from "@/frontend/lib/api-client";
-import { ErrorState, TableSkeleton } from "@/frontend/components/admin/shell";
+import { ErrorState, TableSkeleton, PageHeader, PageActions, StatusBadge, ActionIconButton, downloadCsv } from "@/frontend/components/admin/shell";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
@@ -216,13 +216,13 @@ function AdminCategories() {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
+          <Link to="/admin" className="text-primary hover:underline font-semibold">
             Dashboard
           </Link>
           <span>/</span>
           <span className="text-slate-600">Category Management</span>
         </div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Category Management</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Category Management</h1>
         <TableSkeleton rows={6} />
       </div>
     );
@@ -347,40 +347,19 @@ function AdminCategories() {
   return (
     <div className="space-y-5 text-slate-800">
       {/* Breadcrumbs & Header Actions matching Screenshot 3 */}
-      <div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-slate-600">Category Management</span>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Category Management</h1>
-          <div className="flex items-center gap-2.5">
-            <Button
-              type="button"
-              variant={isSearchOpen ? "default" : "outline"}
-              onClick={() => setIsSearchOpen((v) => !v)}
-              className={`font-bold text-xs h-9 sm:h-10 px-4 rounded-xl shadow-2xs transition-all ${
-                isSearchOpen
-                  ? "bg-cyan-600 hover:bg-cyan-700 text-white"
-                  : "border-slate-300 text-slate-700 hover:bg-slate-50"
-              }`}
-            >
-              <Search className="size-3.5 me-1.5" /> Search
-            </Button>
-            <Button
-              asChild
-              className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 sm:h-10 px-5 rounded-xl shadow-sm"
-            >
-              <Link to="/admin/categories/create">
-                <Plus className="size-3.5 me-1.5" /> Add Category
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Category Management"
+        breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Category Management" }]}
+        actions={
+          <PageActions
+            onSearchToggle={() => setIsSearchOpen((v) => !v)}
+            isSearchOpen={isSearchOpen}
+            addNewLabel="Add Category"
+            addNewTo="/admin/categories/create"
+          />
+        }
+      />
+      
 
       {/* Collapsible Search & Filter Panel */}
       {isSearchOpen && (
@@ -426,7 +405,7 @@ function AdminCategories() {
               <Button
                 type="submit"
                 size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
+                className="font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
               >
                 <Filter className="size-3.5 me-1.5" /> Filter
               </Button>
@@ -514,7 +493,7 @@ function AdminCategories() {
                           : "hover:bg-slate-50/80"
                       } ${
                         dragOverIndex === globalIdx && draggedIndex !== globalIdx
-                          ? "border-t-2 border-cyan-500 bg-cyan-50/40"
+                          ? "border-t-2 border-cyan-500 bg-primary/10"
                           : ""
                       }`}
                     >
@@ -529,13 +508,13 @@ function AdminCategories() {
                               handleMove(globalIdx, "up");
                             }}
                             title="Move Up"
-                            className="text-slate-400 hover:text-cyan-600 disabled:opacity-20 transition-colors p-0.5"
+                            className="text-slate-400 hover:text-primary disabled:opacity-20 transition-colors p-0.5"
                           >
                             <ArrowUp className="size-3" />
                           </button>
                           <div
                             title="Drag to reorder"
-                            className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-cyan-600 transition-colors"
+                            className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-primary transition-colors"
                           >
                             <Menu className="size-4 shrink-0" />
                           </div>
@@ -547,7 +526,7 @@ function AdminCategories() {
                               handleMove(globalIdx, "down");
                             }}
                             title="Move Down"
-                            className="text-slate-400 hover:text-cyan-600 disabled:opacity-20 transition-colors p-0.5"
+                            className="text-slate-400 hover:text-primary disabled:opacity-20 transition-colors p-0.5"
                           >
                             <ArrowDown className="size-3" />
                           </button>
@@ -581,44 +560,23 @@ function AdminCategories() {
 
                       {/* Status Column with Soft Pill Badge */}
                       <td className="px-3 py-3.5 text-center whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleStatus(c)}
-                          className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold transition-all hover:opacity-85 ${
-                            isActive
-                              ? "bg-emerald-100/70 text-emerald-600 hover:bg-emerald-100"
-                              : "bg-rose-100/70 text-rose-600 hover:bg-rose-100"
-                          }`}
-                        >
-                          {isActive ? "Activated" : "Deactivated"}
-                        </button>
+                        <button type="button" onClick={() => handleToggleStatus(c)}><StatusBadge status={isActive ? "Activated" : "Deactivated"} /></button>
                       </td>
 
                       {/* Action Column matching Screenshot 3 */}
                       <td className="px-3 py-3.5 text-center align-middle">
                         <div className="flex items-center justify-center gap-2">
                           {/* Toggle status icon: Red X when active (to deactivate), Green check when inactive (to activate) */}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(c)}
-                            title={isActive ? "Deactivate Category" : "Activate Category"}
-                            className="text-rose-500 hover:scale-125 transition-transform"
-                          >
-                            {isActive ? (
-                              <X className="size-4 text-rose-500 stroke-[2.5]" />
-                            ) : (
-                              <Check className="size-4 text-emerald-500 stroke-[2.5]" />
-                            )}
-                          </button>
+                          <ActionIconButton icon={isActive ? X : Check} label={isActive ? "Deactivate Category" : "Activate Category"} action={isActive ? "delete" : "view"} onClick={() => handleToggleStatus(c)} />
 
                           {/* Edit button */}
                           <Link
                             to="/admin/categories/edit"
                             search={{ id: c.id }}
                             title="Edit Category"
-                            className="text-cyan-600 hover:scale-125 transition-transform inline-flex items-center justify-center"
+                            className="text-primary hover:scale-125 transition-transform inline-flex items-center justify-center"
                           >
-                            <Sliders className="size-4 text-cyan-600 stroke-[2.5]" />
+                            <Sliders className="size-4 text-primary stroke-[2.5]" />
                           </Link>
 
                           {/* More menu (Manage Services, Delete) */}
@@ -637,7 +595,7 @@ function AdminCategories() {
                                 onClick={() => setListingFor(c)}
                                 className="text-xs font-medium cursor-pointer"
                               >
-                                <Layers className="size-3.5 me-2 text-cyan-600" /> Manage Services
+                                <Layers className="size-3.5 me-2 text-primary" /> Manage Services
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => {
@@ -685,9 +643,7 @@ function AdminCategories() {
                 variant={p === currentPage ? "default" : "outline"}
                 size="sm"
                 onClick={() => setCurrentPage(p)}
-                className={`h-8 w-8 p-0 text-xs font-bold rounded-lg ${
-                  p === currentPage ? "bg-cyan-600 text-white hover:bg-cyan-700" : "text-slate-600"
-                }`}
+                className={`h-8 w-8 p-0 text-xs font-bold rounded-lg ${ p === currentPage ? "" : "text-slate-600" }`}
               >
                 {p}
               </Button>
@@ -710,7 +666,7 @@ function AdminCategories() {
       <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent className="max-w-xl bg-white rounded-2xl border-slate-200 p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-extrabold text-slate-900">
+            <DialogTitle className="text-lg font-bold text-slate-900">
               Edit Category
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
@@ -764,7 +720,7 @@ function AdminCategories() {
                   onClick={() => setEditTab("en")}
                   className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all border-b-2 ${
                     editTab === "en"
-                      ? "border-cyan-600 text-cyan-600 bg-cyan-50/40 rounded-t-lg"
+                      ? "border-primary text-primary bg-primary/10 rounded-t-lg"
                       : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-t-lg"
                   }`}
                 >
@@ -777,7 +733,7 @@ function AdminCategories() {
                   onClick={() => setEditTab("ar")}
                   className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all border-b-2 ${
                     editTab === "ar"
-                      ? "border-cyan-600 text-cyan-600 bg-cyan-50/40 rounded-t-lg"
+                      ? "border-primary text-primary bg-primary/10 rounded-t-lg"
                       : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-t-lg"
                   }`}
                 >
@@ -844,7 +800,7 @@ function AdminCategories() {
               <Button
                 type="submit"
                 disabled={isEditSaving || isCompressing}
-                className="h-9 text-xs font-bold bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg shadow-sm"
+                className="h-9 text-xs font-bold rounded-lg shadow-sm"
               >
                 {isEditSaving ? (
                   <>
@@ -865,7 +821,7 @@ function AdminCategories() {
       <Sheet open={Boolean(listingFor)} onOpenChange={(o) => !o && setListingFor(null)}>
         <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md bg-white">
           <SheetHeader>
-            <SheetTitle className="text-base font-extrabold text-slate-900">
+            <SheetTitle className="text-base font-bold text-slate-900">
               {listingFor?.name} — Services
             </SheetTitle>
           </SheetHeader>
