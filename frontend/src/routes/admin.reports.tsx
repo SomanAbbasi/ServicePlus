@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CalendarCheck, CheckCircle2, XCircle, Wallet, Download } from "lucide-react";
 import { getAdminReports } from "@/frontend/lib/api-services";
 import {
   EmptyState,
@@ -14,7 +15,6 @@ import {
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
 import { Button } from "@/frontend/components/ui/button";
 import { Card } from "@/frontend/components/ui/card";
-import { Input } from "@/frontend/components/ui/input";
 import { AdminDateInput } from "@/frontend/components/admin/AdminDateInput";
 import { formatMoney, num } from "@/frontend/lib/money";
 
@@ -76,30 +76,31 @@ function AdminReports() {
   if (isError) return <ErrorState />;
   if (isPending || !report) {
     return (
-      <>
+      <div className="space-y-6">
         <PageHeader title="Reports" />
         <TableSkeleton rows={8} />
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="space-y-5 text-slate-800">
       <PageHeader
-        title="Reports"
-        description="Performance by service, city and professional"
+        title="Reports & Analytics"
+        description="Comprehensive volume, completion rate, and revenue performance analytics"
+        breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Reports" }]}
         actions={
           <Button
-            variant="outline"
-            size="sm"
             onClick={() => downloadCsv("report-services.csv", report.byService)}
+            className="h-10 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs shadow-xs"
           >
-            Export CSV
+            <Download className="size-4 me-1.5" /> Export Service Report
           </Button>
         }
       />
 
-      <Card className="mb-4 flex flex-wrap items-center gap-3 p-3 bg-white border-slate-200 shadow-xs">
+      <Card className="flex flex-wrap items-center gap-3 p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs">
+        <span className="text-xs font-bold text-slate-700">Filter Range:</span>
         <div className="w-44">
           <AdminDateInput
             placeholder="Start Date"
@@ -108,7 +109,7 @@ function AdminReports() {
             className="h-9"
           />
         </div>
-        <span className="text-xs font-semibold text-slate-500">to</span>
+        <span className="text-xs font-semibold text-slate-400">to</span>
         <div className="w-44">
           <AdminDateInput
             placeholder="End Date"
@@ -119,14 +120,34 @@ function AdminReports() {
         </div>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatsCard label="Bookings" value={report.bookings.length} />
-        <StatsCard label="Completed" value={report.completed} />
-        <StatsCard label="Cancelled" value={report.cancelled} />
-        <StatsCard label="Revenue" value={formatMoney(report.revenue)} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatsCard
+          label="TOTAL BOOKINGS"
+          value={report.bookings.length}
+          icon={CalendarCheck}
+          accent="teal"
+        />
+        <StatsCard
+          label="COMPLETED JOBS"
+          value={report.completed}
+          icon={CheckCircle2}
+          accent="emerald"
+        />
+        <StatsCard
+          label="CANCELLED JOBS"
+          value={report.cancelled}
+          icon={XCircle}
+          accent="rose"
+        />
+        <StatsCard
+          label="TOTAL REVENUE"
+          value={formatMoney(report.revenue)}
+          icon={Wallet}
+          accent="primary"
+        />
       </div>
 
-      <SectionCard title="Revenue by service" className="mt-4">
+      <SectionCard title="Revenue by Service (Top 10)" className="mt-4">
         {report.byService.length ? (
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -143,7 +164,7 @@ function AdminReports() {
                 />
                 <YAxis tickLine={false} axisLine={false} fontSize={11} width={60} />
                 <Tooltip formatter={(v: number) => formatMoney(v)} />
-                <Bar dataKey="revenue" fill="#12B8E8" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="revenue" fill="#00B4D8" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -153,26 +174,26 @@ function AdminReports() {
       </SectionCard>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <SectionCard title="Top cities">
+        <SectionCard title="Top Cities by Revenue">
           <Ranking rows={report.byCity} />
         </SectionCard>
-        <SectionCard title="Top professionals">
+        <SectionCard title="Top Professionals by Revenue">
           <Ranking rows={report.byPro} />
         </SectionCard>
       </div>
-    </>
+    </div>
   );
 }
 
 function Ranking({ rows }: { rows: { name: string; bookings: number; revenue: number }[] }) {
   if (!rows.length) return <EmptyState title="No data yet" />;
   return (
-    <ul className="divide-y divide-border text-sm">
+    <ul className="divide-y divide-slate-100 text-sm">
       {rows.slice(0, 8).map((r) => (
-        <li key={r.name} className="flex items-center justify-between py-2">
-          <span className="truncate font-medium">{r.name}</span>
-          <span className="text-muted-foreground">{r.bookings} bookings</span>
-          <span>{formatMoney(r.revenue)}</span>
+        <li key={r.name} className="flex items-center justify-between py-2.5">
+          <span className="truncate font-semibold text-slate-900">{r.name}</span>
+          <span className="text-xs text-slate-500 font-medium">{r.bookings} bookings</span>
+          <span className="font-extrabold text-slate-900">{formatMoney(r.revenue)}</span>
         </li>
       ))}
     </ul>

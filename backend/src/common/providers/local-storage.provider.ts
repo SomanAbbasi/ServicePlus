@@ -72,6 +72,38 @@ export class LocalStorageProvider implements StorageProvider {
     return { buffer, contentType };
   }
 
+  private extractKey(pathOrUrl: string): string {
+    if (!pathOrUrl) return '';
+    let clean = pathOrUrl.trim();
+    if (clean.startsWith('http://') || clean.startsWith('https://')) {
+      try {
+        const parsed = new URL(clean);
+        clean = parsed.pathname;
+      } catch {}
+    }
+    clean = clean.replace(/^\/?api\/media\/file\/?/, '');
+    clean = clean.replace(/^\/+/, '');
+    return clean;
+  }
+
+  async deleteObject(pathOrUrl: string): Promise<boolean> {
+    if (!pathOrUrl) return false;
+    try {
+      const key = this.extractKey(pathOrUrl);
+      if (!key) return false;
+      const fullPath = path.join(this.storagePath, key);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+        this.logger.log(`Deleted local file: ${fullPath}`);
+        return true;
+      }
+      return false;
+    } catch (e: any) {
+      this.logger.warn(`Failed to delete local file ${pathOrUrl}: ${e?.message}`);
+      return false;
+    }
+  }
+
   getStoragePath(): string {
     return this.storagePath;
   }

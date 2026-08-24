@@ -2,6 +2,7 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { Injectable, Logger } from '@nestjs/common';
 import { StorageProvider } from './storage.provider';
@@ -83,8 +84,40 @@ export class R2StorageProvider implements StorageProvider {
       const contentType = res.ContentType || 'image/jpeg';
       return { buffer, contentType };
     } catch (e: any) {
-      this.logger.error(`Error fetching R2 object ${path}: ${e.message}`);
+      this.logger.error(`Error fetching R2 object ${path}: ${e?.message}`);
       return null;
+    }
+  }
+  private extractKey(pathOrUrl: string): string {
+    if (!pathOrUrl) return '';
+    let clean = pathOrUrl.trim();
+    if (clean.startsWith('http://') || clean.startsWith('https://')) {
+      try {
+        const parsed = new URL(clean);
+        clean = parsed.pathname;
+      } catch {}
+    }
+    clean = clean.replace(/^\/?api\/media\/file\/?/, '');
+    clean = clean.replace(/^\/+/, '');
+    return clean;
+  }
+
+  async deleteObject(pathOrUrl: string): Promise<boolean> {
+    if (!pathOrUrl) return false;
+    try {
+      const key = this.extractKey(pathOrUrl);
+      if (!key) return false;
+      await this.client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+        }),
+      );
+      this.logger.log(`Deleted from Cloudflare R2: ${key}`);
+      return true;
+    } catch (e: any) {
+      this.logger.warn(`Failed to delete Cloudflare R2 object ${pathOrUrl}: ${e?.message}`);
+      return false;
     }
   }
 }

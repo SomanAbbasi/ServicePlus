@@ -69,17 +69,16 @@ export class BookingService {
     const variantIds = input.variantIds.map((v) => v.id);
     const addonIds = input.addonIds.map((a) => a.id);
 
-    const [variants, addons, city, coupon] = await Promise.all([
+    const [allServiceVariants, addons, city, coupon] = await Promise.all([
       variantIds.length
         ? this.prisma.serviceVariant.findMany({
             where: {
-              id: { in: variantIds },
               serviceId: service.id,
               isActive: true,
             },
-            select: { id: true, name: true, price: true, durationMinutes: true },
+            select: { id: true, name: true, price: true, durationMinutes: true, description: true },
           })
-        : [] as { id: string; name: string; price: number; durationMinutes: number }[],
+        : [] as { id: string; name: string; price: number; durationMinutes: number; description?: string | null }[],
       addonIds.length
         ? this.prisma.addon.findMany({
             where: { id: { in: addonIds }, isActive: true },
@@ -99,7 +98,36 @@ export class BookingService {
         : null,
     ]);
 
-    const variantLines: PricingLine[] = variants.map((v) => ({
+    const resolvedVariants: { id: string; name: string; price: number; durationMinutes: number }[] = [];
+    for (const v of allServiceVariants) {
+      if (variantIds.includes(v.id)) {
+        resolvedVariants.push({
+          id: v.id,
+          name: v.name,
+          price: Number(v.price),
+          durationMinutes: v.durationMinutes ?? 0,
+        });
+      }
+      if (v.description && v.description.includes('sub_options')) {
+        try {
+          const parsed = JSON.parse(v.description);
+          if (Array.isArray(parsed.sub_options)) {
+            for (const sub of parsed.sub_options) {
+              if (variantIds.includes(sub.id)) {
+                resolvedVariants.push({
+                  id: sub.id,
+                  name: sub.name || v.name,
+                  price: Number(sub.price || 0),
+                  durationMinutes: Number(sub.durationMinutes || 0),
+                });
+              }
+            }
+          }
+        } catch {}
+      }
+    }
+
+    const variantLines: PricingLine[] = resolvedVariants.map((v) => ({
       label: v.name,
       unit_price: Number(v.price),
       quantity: input.variantIds.find((x) => x.id === v.id)?.quantity ?? 1,
@@ -160,7 +188,7 @@ export class BookingService {
       frequencyDiscountPct: frequencyDiscountPct(input.frequency),
     });
 
-    const variantMinutes = variants.reduce(
+    const variantMinutes = resolvedVariants.reduce(
       (sum, v) =>
         sum +
         (v.durationMinutes ?? 0) *
@@ -170,7 +198,9 @@ export class BookingService {
     const durationMinutes =
       service.bookingType === 'hourly'
         ? Math.ceil((input.hours * 60) / Math.max(1, input.professionals))
-        : Math.max(service.durationMinutes ?? 60, variantMinutes);
+        : variantMinutes > 0
+        ? variantMinutes
+        : (service.durationMinutes ?? 60);
 
     return {
       breakdown,

@@ -63,8 +63,8 @@ export function SearchSuggest({
     if (!q) return [];
     const match = (row: { name: string; name_ar?: string | null }) =>
       row.name.toLowerCase().includes(q) || (row.name_ar ?? "").toLowerCase().includes(q);
-    const cats: Hit[] = data.categories
-      .filter(match)
+    const cats: Hit[] = (data.categories ?? [])
+      .filter((c: any) => c.is_active !== false && c.isActive !== false && match(c))
       .slice(0, 3)
       .map((c) => ({
         kind: "category",
@@ -73,8 +73,8 @@ export function SearchSuggest({
         name: name(c),
         image: c.image_url,
       }));
-    const svcs: Hit[] = data.services
-      .filter(match)
+    const svcs: Hit[] = (data.services ?? [])
+      .filter((s: any) => s.is_active !== false && s.isActive !== false && match(s))
       .slice(0, 7)
       .map((s) => ({
         kind: "service",
@@ -87,7 +87,7 @@ export function SearchSuggest({
     return [...svcs, ...cats];
   }, [data, term, locale]);
 
-  const topServices = (data?.services ?? []).filter((s) => s.image_url).slice(0, 8);
+  const topServices = (data?.services ?? []).filter((s: any) => s.is_active !== false && s.isActive !== false && s.image_url).slice(0, 8);
 
   const go = (hit: Hit) => {
     setOpen(false);

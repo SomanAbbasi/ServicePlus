@@ -107,4 +107,9 @@ export class MediaService {
 
     return null;
   }
+
+  async deleteFile(filePathOrUrl: string): Promise<boolean> {
+    if (!filePathOrUrl) return false;
+    return this.storageProvider.deleteObject(filePathOrUrl);
+  }
 }

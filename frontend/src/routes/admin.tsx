@@ -5,6 +5,7 @@ import { Bell, Eye, EyeOff, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search,
 import { amIAdmin, getAdminNotifications } from "@/frontend/lib/api-services";
 import { AdminDataStore } from "@/frontend/lib/admin-mock-data";
 import { AdminSidebar, NAV_GROUPS, isRoutePermitted } from "@/frontend/components/admin/AdminSidebar";
+import { AdminProfileMenu } from "@/frontend/components/admin/AdminProfileMenu";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
 import { toast } from "sonner";
 import { Button } from "@/frontend/components/ui/button";
@@ -333,28 +334,25 @@ function AdminLayout() {
           <Link
             to="/admin/notifications"
             aria-label="Notifications"
-            className="relative grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="relative grid size-9 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
           >
-            <Bell className="size-4" />
+            <Bell className="size-4.5" />
             {notifications.length > 0 && (
               <span className="absolute top-1.5 end-1.5 size-2.5 rounded-full bg-cyan-500 ring-2 ring-white animate-pulse" />
             )}
           </Link>
           <Link
             to="/"
+            target="_blank"
             aria-label="View storefront"
-            className="grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            title="Open Storefront Website"
+            className="grid size-9 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
           >
-            <Store className="size-4" />
+            <Store className="size-4.5" />
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Sign out"
-            onClick={handleAdminLogout}
-          >
-            <LogOut className="size-4" />
-          </Button>
+
+          {/* Admin Profile Dropdown Popover matching screenshot */}
+          <AdminProfileMenu onLogout={handleAdminLogout} />
         </header>
 
         <main className="p-4 sm:p-6">

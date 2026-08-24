@@ -241,8 +241,6 @@ export function AdminSidebar({
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const rawPermissions = typeof window !== "undefined" ? localStorage.getItem("serviceplus_admin_user_permissions") : null;
-  const userRole = typeof window !== "undefined" ? localStorage.getItem("serviceplus_admin_user_role") || "Master Admin" : "Master Admin";
-  const userName = typeof window !== "undefined" ? localStorage.getItem("serviceplus_admin_user_name") || "Administrator" : "Administrator";
 
   // Filter navigation links dynamically based on role permissions
   const filteredNavigation = useMemo(() => {
@@ -311,21 +309,6 @@ export function AdminSidebar({
           </div>
         )}
       </div>
-
-      {/* User Role Profile Tag */}
-      {!collapsed && (
-        <div className="mx-1 mb-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5">
-          <div className="size-7 rounded-full bg-primary text-primary-foreground font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
-            {userName.charAt(0).toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-slate-900 truncate">{userName}</p>
-            <span className="inline-block text-[10px] font-semibold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded-md truncate max-w-full">
-              {userRole}
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* Navigation List */}
       <ul className="space-y-1.5 flex-1">

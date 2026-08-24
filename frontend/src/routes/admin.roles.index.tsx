@@ -9,16 +9,22 @@ import {
 } from "@/frontend/lib/api-services";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { PermissionMatrix } from "@/frontend/components/admin/PermissionMatrix";
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { Card } from "@/frontend/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/frontend/components/ui/dialog";
 import { Label } from "@/frontend/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
-import { Check, ChevronsUpDown, Filter, RotateCcw, Search, Sliders, Trash2, X } from "lucide-react";
+import { Check, ChevronsUpDown, RotateCcw, Search, Sliders, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, PageActions, StatusBadge, ActionIconButton } from "@/frontend/components/admin/shell";
+import {
+  PageHeader,
+  PageActions,
+  StatusBadge,
+  ActionIconButton,
+  TablePagination,
+  downloadCsv,
+} from "@/frontend/components/admin/shell";
+import { TYPOGRAPHY } from "@/frontend/lib/design-tokens";
 
 export const Route = createFileRoute("/admin/roles/")({ component: AdminRolesPage });
 
@@ -41,15 +47,11 @@ function AdminRolesPage() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Sorting state
-  const [sortField, setSortField] = useState<string>("id");
+  const [sortField, setSortField] = useState<string>("name");
   const [sortAsc, setSortAsc] = useState<boolean>(true);
 
-  // Add / Edit Role Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
-  const [roleName, setRoleName] = useState("");
-  const [roleStatus, setRoleStatus] = useState<"Activated" | "Deactivated">("Activated");
-  const [rolePermissions, setRolePermissions] = useState<Record<string, Record<string, boolean>>>({});
+  // Optimistic status overrides
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, boolean>>({});
 
   const handleApplyFilter = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -81,12 +83,15 @@ function AdminRolesPage() {
 
   const filteredRoles = useMemo(() => {
     const list = roles.filter((r) => {
+      const isAct = statusOverrides[r.id] !== undefined ? statusOverrides[r.id] : r.status === "Activated";
+      const currentStatus = isAct ? "Activated" : "Deactivated";
+
       if (appliedFilters.name) {
         const matchName = (r.name || "").toLowerCase().includes(appliedFilters.name);
         if (!matchName) return false;
       }
       if (appliedFilters.status !== "all") {
-        if (r.status !== appliedFilters.status) return false;
+        if (currentStatus !== appliedFilters.status) return false;
       }
       return true;
     });
@@ -102,48 +107,13 @@ function AdminRolesPage() {
     });
 
     return list;
-  }, [roles, appliedFilters, sortField, sortAsc]);
+  }, [roles, appliedFilters, sortField, sortAsc, statusOverrides]);
 
   const totalPages = Math.ceil(filteredRoles.length / pageSize) || 1;
   const paginatedRoles = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return filteredRoles.slice(start, start + pageSize);
   }, [filteredRoles, currentPage, pageSize]);
-
-  const handleOpenEdit = (role: AdminRole) => {
-    setEditingRoleId(role.id);
-    setRoleName(role.name);
-    setRoleStatus(role.status);
-    setRolePermissions(role.permissions || {});
-    setIsModalOpen(true);
-  };
-
-  const handleSaveRole = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!roleName.trim()) {
-      toast.error("Role Name is required.");
-      return;
-    }
-
-    if (editingRoleId) {
-      await updateAdminRole(editingRoleId, {
-        name: roleName,
-        status: roleStatus,
-        permissions: rolePermissions,
-      });
-      toast.success(`Role ${roleName} updated successfully!`);
-    } else {
-      await createAdminRole({
-        name: roleName,
-        status: roleStatus,
-        permissions: rolePermissions,
-      });
-      toast.success(`Role ${roleName} created successfully!`);
-    }
-
-    setIsModalOpen(false);
-    queryClient.invalidateQueries({ queryKey: ["admin", "roles"] });
-  };
 
   const handleDeleteRole = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete role "${name}"?`)) {
@@ -154,54 +124,93 @@ function AdminRolesPage() {
   };
 
   const handleToggleStatus = async (role: AdminRole) => {
-    const nextStatus = role.status === "Activated" ? "Deactivated" : "Activated";
-    await updateAdminRole(role.id, { status: nextStatus });
-    toast.success(`Role ${role.name} is now ${nextStatus}`);
-    queryClient.invalidateQueries({ queryKey: ["admin", "roles"] });
+    const isCurrentlyActive = statusOverrides[role.id] !== undefined
+      ? statusOverrides[role.id]
+      : role.status === "Activated";
+    const nextIsActive = !isCurrentlyActive;
+    const nextStatus = nextIsActive ? "Activated" : "Deactivated";
+
+    // Immediate optimistic update
+    setStatusOverrides((prev) => ({ ...prev, [role.id]: nextIsActive }));
+
+    try {
+      await updateAdminRole(role.id, { status: nextStatus });
+      toast.success(`Role ${role.name} is now ${nextStatus}`);
+      queryClient.invalidateQueries({ queryKey: ["admin", "roles"] });
+    } catch {
+      setStatusOverrides((prev) => ({ ...prev, [role.id]: isCurrentlyActive }));
+      toast.error("Failed to update status");
+    }
+  };
+
+  const handleExportCsv = () => {
+    const exportData = filteredRoles.map((r, index) => ({
+      "#": index + 1,
+      "Role Name": r.name || "",
+      "Status": statusOverrides[r.id] !== undefined ? (statusOverrides[r.id] ? "Activated" : "Deactivated") : r.status || "Activated",
+      "Registered On": r.registeredOn || "—",
+    }));
+    downloadCsv(`roles_export_${new Date().toISOString().slice(0, 10)}.csv`, exportData);
+    toast.success(`Exported ${exportData.length} records to CSV`);
   };
 
   return (
     <div className="space-y-5 text-slate-800">
-      {/* Breadcrumbs & Header Actions */}
       <PageHeader
         title="Roles Management"
+        description="Configure role definitions, granular administrative permissions, and module access"
         breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Roles Management" }]}
         actions={
           <PageActions
             onSearchToggle={() => setIsSearchOpen(v => !v)}
             isSearchOpen={isSearchOpen}
+            onExport={handleExportCsv}
             addNewLabel="Add Role"
             addNewTo="/admin/roles/create"
           />
         }
       />
 
-      {/* Collapsible Search & Filter Panel Matching Reference Screenshot */}
+      {/* Expandable Search & Filter Bar */}
       {isSearchOpen && (
         <Card className="p-5 bg-white border-slate-200/90 rounded-2xl shadow-xs animate-in fade-in slide-in-from-top-2 duration-200">
           <form onSubmit={handleApplyFilter} className="space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Filter Roles
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSearchOpen(false)}
+                className="h-7 text-xs text-slate-400 hover:text-slate-700"
+              >
+                <X className="size-3.5 me-1" /> Close
+              </Button>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
+                <Label className="text-xs font-bold text-slate-700">Role Name</Label>
                 <Input
-                  placeholder="Search Name"
+                  placeholder="Search Role Name..."
                   value={searchName}
                   onChange={(e) => setSearchName(e.target.value)}
-                  className="h-10 text-xs bg-white border-slate-200 rounded-lg placeholder:text-slate-400"
+                  className="h-10 text-xs bg-slate-50 border-slate-200 rounded-lg focus:bg-white"
                 />
               </div>
 
-              <div className="relative">
-                <label className="absolute -top-2 start-3 px-1 text-[11px] font-semibold text-slate-500 bg-white z-10">
-                  Status
-                </label>
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-slate-700">Status</Label>
                 <Select value={searchStatus} onValueChange={setSearchStatus}>
-                  <SelectTrigger className="h-10 text-xs bg-white border-slate-200 rounded-lg">
-                    <SelectValue placeholder="Select Status" />
+                  <SelectTrigger className="h-10 text-xs bg-slate-50 border-slate-200 rounded-lg focus:bg-white">
+                    <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all" className="text-xs font-semibold">Select Status</SelectItem>
-                    <SelectItem value="Activated" className="text-xs text-emerald-600 font-bold">Activated</SelectItem>
-                    <SelectItem value="Deactivated" className="text-xs text-rose-600 font-bold">Deactivated</SelectItem>
+                    <SelectItem value="all" className="text-xs font-semibold">All Statuses</SelectItem>
+                    <SelectItem value="Activated" className="text-xs font-semibold">Activated</SelectItem>
+                    <SelectItem value="Deactivated" className="text-xs font-semibold">Deactivated</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -211,18 +220,16 @@ function AdminRolesPage() {
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
                 onClick={handleResetFilter}
-                className="font-bold text-xs h-9 px-4 rounded-lg"
+                className="h-10 px-4 text-xs font-bold border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50"
               >
                 <RotateCcw className="size-3.5 me-1.5" /> Reset
               </Button>
               <Button
                 type="submit"
-                size="sm"
-                className="font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
+                className="h-10 px-5 text-xs font-bold bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg shadow-xs"
               >
-                <Filter className="size-3.5 me-1.5" /> Filter
+                <Search className="size-3.5 me-1.5" /> Apply Filters
               </Button>
             </div>
           </form>
@@ -230,49 +237,22 @@ function AdminRolesPage() {
       )}
 
       {/* Main Table Card */}
-      <Card className="p-5 bg-white border-slate-200/90 rounded-2xl shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-            <span>Show</span>
-            <Select
-              value={pageSize.toString()}
-              onValueChange={(val) => {
-                setPageSize(Number(val));
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger className="h-8 w-20 text-xs bg-slate-50 rounded-lg">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10" className="text-xs">10</SelectItem>
-                <SelectItem value="20" className="text-xs">20</SelectItem>
-                <SelectItem value="50" className="text-xs">50</SelectItem>
-              </SelectContent>
-            </Select>
-            <span>entries</span>
-          </div>
-
-          <div className="text-xs text-slate-400 font-medium">
-            Total {filteredRoles.length} role{filteredRoles.length === 1 ? "" : "s"}
-          </div>
-        </div>
-
-        <div className="overflow-x-auto mt-2">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="text-slate-500 font-semibold border-b border-slate-200">
-              <tr>
-                <th className="px-3 py-3 w-10 text-center">#</th>
+      <Card className="bg-white border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-start border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-700 font-semibold text-[13px]">
+                <th className="px-3.5 py-3.5 w-12 text-center">#</th>
                 <th
-                  className="px-3 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  className="px-3.5 py-3.5 text-start cursor-pointer select-none hover:text-cyan-700 transition-colors"
                   onClick={() => handleSort("name")}
                 >
                   <div className="flex items-center gap-1">
-                    Name <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+                    Role Name <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
                   </div>
                 </th>
                 <th
-                  className="px-3 py-3 text-center cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  className="px-3.5 py-3.5 text-center cursor-pointer select-none hover:text-cyan-700 transition-colors"
                   onClick={() => handleSort("status")}
                 >
                   <div className="flex items-center justify-center gap-1">
@@ -280,59 +260,65 @@ function AdminRolesPage() {
                   </div>
                 </th>
                 <th
-                  className="px-3 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  className="px-3.5 py-3.5 text-start cursor-pointer select-none hover:text-cyan-700 transition-colors"
                   onClick={() => handleSort("registeredOn")}
                 >
                   <div className="flex items-center gap-1">
                     Registered On <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
                   </div>
                 </th>
-                <th className="px-3 py-3 text-center w-16">
-                  <div className="flex items-center justify-center gap-1 text-slate-600 font-bold">
-                    Action <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+
+                {/* Sticky Actions */}
+                <th className="sticky end-0 bg-slate-50 z-10 px-4 py-3.5 text-center min-w-[140px] border-s border-slate-200">
+                  <div className="flex items-center justify-center gap-1 text-slate-700 font-bold">
+                    Action
                   </div>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+            <tbody className="divide-y divide-slate-100 text-[14px] text-slate-800">
               {isPending ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-400">
+                  <td colSpan={5} className="py-12 text-center text-slate-400 font-medium">
                     Loading roles directory...
                   </td>
                 </tr>
               ) : paginatedRoles.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-400">
+                  <td colSpan={5} className="py-12 text-center text-slate-400 font-medium">
                     No roles found matching criteria.
                   </td>
                 </tr>
               ) : (
                 paginatedRoles.map((role, idx) => {
                   const globalIdx = (currentPage - 1) * pageSize + idx + 1;
-                  const isActivated = role.status === "Activated";
+                  const isActivated = statusOverrides[role.id] !== undefined
+                    ? statusOverrides[role.id]
+                    : role.status === "Activated";
 
                   return (
-                    <tr key={role.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="px-3 py-3.5 text-center font-medium text-slate-500">{globalIdx}</td>
-                      <td className="px-3 py-3.5 font-bold text-slate-900">
+                    <tr key={role.id} className="group hover:bg-slate-50/80 transition-colors">
+                      <td className="px-3.5 py-3.5 text-center font-bold text-slate-400">{globalIdx}</td>
+                      <td className="px-3.5 py-3.5 font-bold text-slate-900">
                         {role.name}
                       </td>
-                      <td className="px-3 py-3.5 text-center whitespace-nowrap">
+                      <td className="px-3.5 py-3.5 text-center whitespace-nowrap">
                         <StatusBadge status={isActivated ? "Activated" : "Deactivated"} />
                       </td>
-                      <td className="px-3 py-3.5 text-slate-600 text-xs">{role.registeredOn || "—"}</td>
-                      <td className="px-3 py-3.5 text-center align-middle">
-                        <div className="flex items-center justify-center gap-1">
+                      <td className="px-3.5 py-3.5 text-slate-700 text-xs whitespace-nowrap font-mono">{role.registeredOn || "—"}</td>
+
+                      {/* Sticky Actions */}
+                      <td className="sticky end-0 bg-white group-hover:bg-slate-50/90 z-10 px-3 py-3 text-center align-middle border-s border-slate-200/80 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.03)]">
+                        <div className="flex items-center justify-center gap-1.5">
                           <ActionIconButton
-                            icon={isActivated ? X : Check} 
+                            icon={isActivated ? X : Check}
                             label={isActivated ? "Deactivate" : "Activate"}
-                            action="toggle_status"
+                            action={isActivated ? "toggle_off" : "toggle_on"}
                             onClick={() => handleToggleStatus(role)}
                           />
                           <ActionIconButton
                             icon={Sliders}
-                            label="Edit"
+                            label="Edit Permissions"
                             action="edit"
                             to="/admin/roles/edit"
                             search={{ id: role.id }}
@@ -353,110 +339,16 @@ function AdminRolesPage() {
           </table>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100 text-xs text-slate-500 font-medium">
-          <div>
-            Showing {filteredRoles.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} to{" "}
-            {Math.min(currentPage * pageSize, filteredRoles.length)} of {filteredRoles.length} entries
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-              className="h-8 px-2 text-xs rounded-lg"
-            >
-              ‹
-            </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <Button
-                key={p}
-                type="button"
-                variant={p === currentPage ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCurrentPage(p)}
-                className={`h-8 w-8 p-0 text-xs font-bold rounded-lg`}
-              >
-                {p}
-              </Button>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="h-8 px-2 text-xs rounded-lg"
-            >
-              ›
-            </Button>
-          </div>
-        </div>
+        {/* Standard Table Pagination */}
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={filteredRoles.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </Card>
-
-      {/* Edit Role Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl border-slate-200">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-slate-900">
-              Configure Role Permissions
-            </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500">
-              Update role title and customize permissions.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleSaveRole} className="space-y-4 pt-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-slate-700">Role Title *</Label>
-                <Input
-                  value={roleName}
-                  onChange={(e) => setRoleName(e.target.value)}
-                  placeholder="e.g. Finance Admin"
-                  required
-                  className="h-10 text-xs"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-slate-700">Status</Label>
-                <Select value={roleStatus} onValueChange={(val: any) => setRoleStatus(val)}>
-                  <SelectTrigger className="h-10 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Activated" className="text-xs text-emerald-600 font-bold">Activated</SelectItem>
-                    <SelectItem value="Deactivated" className="text-xs text-rose-600 font-bold">Deactivated</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <PermissionMatrix permissions={rolePermissions} onChange={setRolePermissions} />
-            </div>
-
-            <DialogFooter className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsModalOpen(false)}
-                className="h-9 text-xs font-bold rounded-lg"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="h-9 text-xs font-bold rounded-lg shadow-sm"
-              >
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

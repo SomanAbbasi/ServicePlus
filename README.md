@@ -47,7 +47,6 @@ cp .env.example .env    # Fill in Neon + Redis Cloud credentials
 npm install
 npx prisma generate
 npx prisma migrate dev
-npx prisma db seed
 npm run start:dev
 ```
 
@@ -114,7 +113,6 @@ npm run start:dev          # Start in development mode
 npm run build              # Build for production
 npm run start:prod         # Start in production mode
 npx prisma migrate dev     # Run migrations
-npx prisma db seed         # Seed database
 npx prisma studio          # Open Prisma Studio
 npx prisma generate        # Generate Prisma Client
 ```

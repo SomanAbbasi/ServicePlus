@@ -88,12 +88,13 @@ export class PricingServiceEngine {
 
     let base = 0;
     if (service.booking_type === 'hourly') {
-      const rate = service.hourly_rate ?? service.base_price;
-      base = rate * Math.max(1, hours);
+      const rate = service.hourly_rate != null && service.hourly_rate > 0 ? service.hourly_rate : service.base_price;
+      const baseHours = rate * Math.max(1, hours);
+      const extraPct = service.extra_professional_pct !== undefined && service.extra_professional_pct > 0
+        ? service.extra_professional_pct
+        : 100;
       const extras = Math.max(0, professionals - 1);
-      base +=
-        ((rate * Math.max(1, hours) * service.extra_professional_pct) / 100) *
-        extras;
+      base = baseHours + ((baseHours * extraPct) / 100) * extras;
     } else if (service.booking_type === 'variant' || service.booking_type === 'options') {
       base = 0;
     } else {
@@ -108,7 +109,7 @@ export class PricingServiceEngine {
       (sum, l) => sum + l.unit_price * l.quantity,
       0,
     );
-    const materialsTotal = materials ? service.materials_price : 0;
+    const materialsTotal = materials ? (service.materials_price ?? 0) : 0;
 
     const subtotal = base + itemsTotal;
     const preDiscount = subtotal + addonsTotal + materialsTotal;

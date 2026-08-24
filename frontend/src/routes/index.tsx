@@ -78,8 +78,8 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const { data } = useSuspenseQuery(homeQuery);
-  const services = data?.services ?? [];
-  const categories = data?.categories ?? [];
+  const services = (data?.services ?? []).filter((s: any) => s.is_active !== false && s.isActive !== false && s.isActive !== 0);
+  const categories = (data?.categories ?? []).filter((c: any) => c.is_active !== false && c.isActive !== false && c.isActive !== 0);
   const navigate = useNavigate();
   const { t, locale } = useLocale();
   const { location, save } = useSavedLocation();

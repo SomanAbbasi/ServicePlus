@@ -90,6 +90,7 @@ import { Route as AdminServiceGroupingEditRouteImport } from './routes/admin.ser
 import { Route as AdminServicesIndexRouteImport } from './routes/admin.services.index'
 import { Route as AdminServicesCreateRouteImport } from './routes/admin.services.create'
 import { Route as AdminServicesEditRouteImport } from './routes/admin.services.edit'
+import { Route as AdminServicesOptionsRouteImport } from './routes/admin.services.options'
 import { Route as AdminStaffIndexRouteImport } from './routes/admin.staff.index'
 import { Route as AdminStaffCreateRouteImport } from './routes/admin.staff.create'
 import { Route as AdminStaffEditRouteImport } from './routes/admin.staff.edit'
@@ -516,6 +517,11 @@ const AdminServicesEditRoute = AdminServicesEditRouteImport.update({
   path: '/edit',
   getParentRoute: () => AdminServicesRoute,
 } as any)
+const AdminServicesOptionsRoute = AdminServicesOptionsRouteImport.update({
+  id: '/options',
+  path: '/options',
+  getParentRoute: () => AdminServicesRoute,
+} as any)
 const AdminStaffIndexRoute = AdminStaffIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -653,6 +659,7 @@ export interface FileRoutesByFullPath {
   '/admin/service-grouping/edit': typeof AdminServiceGroupingEditRoute
   '/admin/services/create': typeof AdminServicesCreateRoute
   '/admin/services/edit': typeof AdminServicesEditRoute
+  '/admin/services/options': typeof AdminServicesOptionsRoute
   '/admin/staff/create': typeof AdminStaffCreateRoute
   '/admin/staff/edit': typeof AdminStaffEditRoute
   '/admin/supervisors/create': typeof AdminSupervisorsCreateRoute
@@ -733,6 +740,7 @@ export interface FileRoutesByTo {
   '/admin/service-grouping/edit': typeof AdminServiceGroupingEditRoute
   '/admin/services/create': typeof AdminServicesCreateRoute
   '/admin/services/edit': typeof AdminServicesEditRoute
+  '/admin/services/options': typeof AdminServicesOptionsRoute
   '/admin/staff/create': typeof AdminStaffCreateRoute
   '/admin/staff/edit': typeof AdminStaffEditRoute
   '/admin/supervisors/create': typeof AdminSupervisorsCreateRoute
@@ -830,6 +838,7 @@ export interface FileRoutesById {
   '/admin/service-grouping/edit': typeof AdminServiceGroupingEditRoute
   '/admin/services/create': typeof AdminServicesCreateRoute
   '/admin/services/edit': typeof AdminServicesEditRoute
+  '/admin/services/options': typeof AdminServicesOptionsRoute
   '/admin/staff/create': typeof AdminStaffCreateRoute
   '/admin/staff/edit': typeof AdminStaffEditRoute
   '/admin/supervisors/create': typeof AdminSupervisorsCreateRoute
@@ -928,6 +937,7 @@ export interface FileRouteTypes {
     | '/admin/service-grouping/edit'
     | '/admin/services/create'
     | '/admin/services/edit'
+    | '/admin/services/options'
     | '/admin/staff/create'
     | '/admin/staff/edit'
     | '/admin/supervisors/create'
@@ -1008,6 +1018,7 @@ export interface FileRouteTypes {
     | '/admin/service-grouping/edit'
     | '/admin/services/create'
     | '/admin/services/edit'
+    | '/admin/services/options'
     | '/admin/staff/create'
     | '/admin/staff/edit'
     | '/admin/supervisors/create'
@@ -1104,6 +1115,7 @@ export interface FileRouteTypes {
     | '/admin/service-grouping/edit'
     | '/admin/services/create'
     | '/admin/services/edit'
+    | '/admin/services/options'
     | '/admin/staff/create'
     | '/admin/staff/edit'
     | '/admin/supervisors/create'
@@ -1719,6 +1731,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminServicesEditRouteImport
       parentRoute: typeof AdminServicesRoute
     }
+    '/admin/services/options': {
+      id: '/admin/services/options'
+      path: '/options'
+      fullPath: '/admin/services/options'
+      preLoaderRoute: typeof AdminServicesOptionsRouteImport
+      parentRoute: typeof AdminServicesRoute
+    }
     '/admin/staff/': {
       id: '/admin/staff/'
       path: '/'
@@ -1975,12 +1994,14 @@ const AdminServiceGroupingRouteWithChildren =
 interface AdminServicesRouteChildren {
   AdminServicesCreateRoute: typeof AdminServicesCreateRoute
   AdminServicesEditRoute: typeof AdminServicesEditRoute
+  AdminServicesOptionsRoute: typeof AdminServicesOptionsRoute
   AdminServicesIndexRoute: typeof AdminServicesIndexRoute
 }
 
 const AdminServicesRouteChildren: AdminServicesRouteChildren = {
   AdminServicesCreateRoute: AdminServicesCreateRoute,
   AdminServicesEditRoute: AdminServicesEditRoute,
+  AdminServicesOptionsRoute: AdminServicesOptionsRoute,
   AdminServicesIndexRoute: AdminServicesIndexRoute,
 }
 

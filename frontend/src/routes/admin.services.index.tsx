@@ -633,9 +633,12 @@ function AdminServices() {
                           {imgUrl ? (
                             <div className="size-10 rounded-full overflow-hidden border border-slate-200 shrink-0 shadow-2xs">
                               <img
-                                src={resolveImageUrl(imgUrl)}
+                                src={resolveImageUrl(imgUrl) || FALLBACK_IMAGE}
                                 alt={s.name}
                                 className="size-full object-cover"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+                                }}
                               />
                             </div>
                           ) : (
@@ -719,11 +722,14 @@ function AdminServices() {
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48 bg-white border-slate-200">
-                              <DropdownMenuItem
-                                onClick={() => setOptionsFor(s)}
-                                className="text-xs font-medium cursor-pointer"
-                              >
-                                <SlidersHorizontal className="size-3.5 me-2 text-primary" /> Manage Options
+                              <DropdownMenuItem asChild className="text-xs font-medium cursor-pointer">
+                                <Link
+                                  to="/admin/services/options"
+                                  search={{ serviceId: s.id }}
+                                  className="flex items-center w-full"
+                                >
+                                  <SlidersHorizontal className="size-3.5 me-2 text-primary" /> Manage Options
+                                </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => dupMutation.mutate(s.id)}

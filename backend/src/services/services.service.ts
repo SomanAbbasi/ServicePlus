@@ -25,6 +25,33 @@ export class ServicesService {
         rating: true,
         reviewCount: true,
         categoryId: true,
+        variants: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' },
+          select: {
+            id: true,
+            groupId: true,
+            name: true,
+            nameAr: true,
+            description: true,
+            descriptionAr: true,
+            imageUrl: true,
+            price: true,
+            originalPrice: true,
+            durationMinutes: true,
+            maxQuantity: true,
+          },
+        },
+        optionGroups: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' },
+          select: {
+            id: true,
+            name: true,
+            nameAr: true,
+            imageUrl: true,
+          },
+        },
       },
     });
   }
@@ -174,6 +201,33 @@ export class ServicesService {
           reviewCount: true,
           categoryId: true,
           isFeatured: true,
+          variants: {
+            where: { isActive: true },
+            orderBy: { sortOrder: 'asc' },
+            select: {
+              id: true,
+              groupId: true,
+              name: true,
+              nameAr: true,
+              description: true,
+              descriptionAr: true,
+              imageUrl: true,
+              price: true,
+              originalPrice: true,
+              durationMinutes: true,
+              maxQuantity: true,
+            },
+          },
+          optionGroups: {
+            where: { isActive: true },
+            orderBy: { sortOrder: 'asc' },
+            select: {
+              id: true,
+              name: true,
+              nameAr: true,
+              imageUrl: true,
+            },
+          },
         },
       }),
       this.prisma.serviceListing.findMany({
@@ -227,6 +281,33 @@ export class ServicesService {
           rating: true,
           reviewCount: true,
           categoryId: true,
+          variants: {
+            where: { isActive: true },
+            orderBy: { sortOrder: 'asc' },
+            select: {
+              id: true,
+              groupId: true,
+              name: true,
+              nameAr: true,
+              description: true,
+              descriptionAr: true,
+              imageUrl: true,
+              price: true,
+              originalPrice: true,
+              durationMinutes: true,
+              maxQuantity: true,
+            },
+          },
+          optionGroups: {
+            where: { isActive: true },
+            orderBy: { sortOrder: 'asc' },
+            select: {
+              id: true,
+              name: true,
+              nameAr: true,
+              imageUrl: true,
+            },
+          },
         },
       }),
       this.prisma.serviceCategory.findMany({
@@ -272,6 +353,37 @@ export class ServicesService {
     });
     if (!category) return null;
 
+    const variantSelect = {
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' as const },
+      select: {
+        id: true,
+        groupId: true,
+        name: true,
+        nameAr: true,
+        description: true,
+        descriptionAr: true,
+        imageUrl: true,
+        price: true,
+        originalPrice: true,
+        durationMinutes: true,
+        maxQuantity: true,
+        sortOrder: true,
+      },
+    };
+
+    const optionGroupSelect = {
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' as const },
+      select: {
+        id: true,
+        name: true,
+        nameAr: true,
+        imageUrl: true,
+        sortOrder: true,
+      },
+    };
+
     const serviceSelect = {
       id: true,
       slug: true,
@@ -288,6 +400,9 @@ export class ServicesService {
       rating: true,
       reviewCount: true,
       categoryId: true,
+      isActive: true,
+      variants: variantSelect,
+      optionGroups: optionGroupSelect,
     } as const;
 
     const listings = await this.prisma.serviceListing.findMany({

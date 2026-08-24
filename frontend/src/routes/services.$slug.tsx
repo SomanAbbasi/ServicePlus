@@ -279,20 +279,38 @@ function ServiceDetail() {
                     const vRec = v as Record<string, unknown>;
                     const vName = (localizedText(vRec, "name", locale) ?? v.name) as string;
                     const vDesc = (localizedText(vRec, "description", locale) ?? v.description) as string | null;
+                    const vImg = resolveImageUrl(v.image_url || v.imageUrl);
+                    const origP = v.original_price || v.originalPrice;
                     return (
                       <li
                         key={String(v.id)}
                         className="flex items-center justify-between gap-4 bg-white px-5 py-4 transition-colors hover:bg-gray-50"
                       >
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900">{vName}</p>
-                          {vDesc ? (
-                            <p className="mt-0.5 text-xs text-gray-400">{vDesc}</p>
-                          ) : null}
+                        <div className="flex items-center gap-3 min-w-0">
+                          {vImg && (
+                            <img
+                              src={vImg}
+                              alt=""
+                              className="size-12 rounded-xl object-cover border border-slate-100 shrink-0"
+                            />
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900">{vName}</p>
+                            {vDesc ? (
+                              <p className="mt-0.5 text-xs text-gray-400">{vDesc}</p>
+                            ) : null}
+                          </div>
                         </div>
-                        <span className="shrink-0 text-sm font-semibold text-gray-900">
-                          {formatMoney(num(v.price))}
-                        </span>
+                        <div className="flex flex-col items-end shrink-0">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {formatMoney(num(v.price))}
+                          </span>
+                          {origP && Number(origP) > Number(v.price) && (
+                            <span className="text-xs text-gray-400 line-through">
+                              {formatMoney(num(origP))}
+                            </span>
+                          )}
+                        </div>
                       </li>
                     );
                   })}

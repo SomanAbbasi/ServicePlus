@@ -215,6 +215,18 @@ export interface AdminService {
   hourlyRate?: number | null;
   materials_price?: number;
   materialsPrice?: number;
+  materials_label_en?: string;
+  materialsLabelEn?: string;
+  materials_label_ar?: string;
+  materialsLabelAr?: string;
+  extra_professional_pct?: number;
+  extraProfessionalPct?: number;
+  min_hours?: number;
+  minHours?: number;
+  max_hours?: number;
+  maxHours?: number;
+  max_professionals?: number;
+  maxProfessionals?: number;
   booking_type?: string;
   bookingType?: string;
   duration_minutes?: number;
@@ -238,279 +250,12 @@ export interface AdminListing {
 }
 
 /* ==========================================================================
-   DEFAULT CLEAN SYSTEM TEMPLATES
+   DEFAULT CLEAN SYSTEM TEMPLATES (ZERO SEEDED / DUMMY DATA)
    ========================================================================== */
 
-export const INITIAL_CATEGORIES: AdminCategory[] = [
-  {
-    id: "e6eaf8c8-af7e-493e-96cc-fe163eb33603",
-    name: "Home Cleaning",
-    name_ar: "تنظيف المنازل بالساعة",
-    nameAr: "تنظيف المنازل بالساعة",
-    slug: "home-cleaning",
-    imageUrl: "/api/media/file/catalog/736cbbf1-df0e-4dd5-97b6-4a84330f5591-homeclean.png.jpg",
-    image_url: "/api/media/file/catalog/736cbbf1-df0e-4dd5-97b6-4a84330f5591-homeclean.png.jpg",
-    icon: "Sparkles",
-    description: "Professional home cleaning services for every need.",
-    description_ar: "أفضل تنظيف المنازل بالساعة في دبي والإمارات.",
-    descriptionAr: "أفضل تنظيف المنازل بالساعة في دبي والإمارات.",
-    is_active: true,
-    isActive: true,
-    sort_order: 0,
-    sortOrder: 0,
-  },
-  {
-    id: "b1573133-0f86-478f-a015-d63bea4e5907",
-    name: "General Cleaning",
-    name_ar: "التنظيف العام",
-    nameAr: "التنظيف العام",
-    slug: "general-cleaning",
-    imageUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
-    image_url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
-    icon: "Sparkles",
-    description: "Top-rated home cleaning, AC maintenance, furniture deep cleaning, villa deep cleaning, laundry & shoe care.",
-    description_ar: "تنظيف منازل بالساعة، صيانة مكيفات، غسيل كنب وسجاد، تنظيف عميق للفلل والمباني، غسيل ملابس وتنظيف أحذية.",
-    descriptionAr: "تنظيف منازل بالساعة، صيانة مكيفات، غسيل كنب وسجاد، تنظيف عميق للفلل والمباني، غسيل ملابس وتنظيف أحذية.",
-    is_active: true,
-    isActive: true,
-    sort_order: 1,
-    sortOrder: 1,
-  },
-  {
-    id: "b6c6665c-456d-4328-b7f3-5a80998851d1",
-    name: "Salon & Spa at Home",
-    name_ar: "صالون وسبا في المنزل",
-    nameAr: "صالون وسبا في المنزل",
-    slug: "salon-spa-at-home",
-    imageUrl: "/api/media/file/catalog/72aa77b5-60c7-4cf9-8b9a-20d71f03daa0-menhaircut.webp",
-    image_url: "/api/media/file/catalog/72aa77b5-60c7-4cf9-8b9a-20d71f03daa0-menhaircut.webp",
-    icon: "Sparkles",
-    description: "Top-rated women's and men's beauty, salon and luxury spa wellness treatments delivered to your home.",
-    description_ar: "خدمات التجميل والسبا النسائية والرجالية الفاخرة تصلك حتى باب منزلك.",
-    descriptionAr: "خدمات التجميل والسبا النسائية والرجالية الفاخرة تصلك حتى باب منزلك.",
-    is_active: true,
-    isActive: true,
-    sort_order: 2,
-    sortOrder: 2,
-  },
-  {
-    id: "5dd165f2-1f59-4e66-95fb-8d8a35c252cd",
-    name: "Handyman",
-    name_ar: "خدمات Handyman",
-    nameAr: "خدمات Handyman",
-    slug: "handyman",
-    imageUrl: "/api/media/file/catalog/cae87c5f-ef98-420a-bd08-c55d0d1b4072-handyman.jpeg.jpg",
-    image_url: "/api/media/file/catalog/cae87c5f-ef98-420a-bd08-c55d0d1b4072-handyman.jpeg.jpg",
-    icon: "Wrench",
-    description: "Expert handyman services for repairs and maintenance.",
-    description_ar: "أفضل خدمات Handyman في دبي والإمارات.",
-    descriptionAr: "أفضل خدمات Handyman في دبي والإمارات.",
-    is_active: false,
-    isActive: false,
-    sort_order: 3,
-    sortOrder: 3,
-  },
-  {
-    id: "6591ba21-6409-4062-a244-fdc386de9373",
-    name: "Healthcare at Home",
-    name_ar: "الرعاية الصحية في المنزل",
-    nameAr: "الرعاية الصحية في المنزل",
-    slug: "healthcare-at-home",
-    imageUrl: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80",
-    image_url: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80",
-    icon: "Activity",
-    description: "DHA-licensed medical consultations, home lab tests, IV therapy, nurse care, vaccines and physical therapy.",
-    description_ar: "فحوصات مخبرية منزلية، علاج بالوريد، استشارات طبية، رعاية تمريضية، لقاحات وعلاج طبيعي.",
-    descriptionAr: "فحوصات مخبرية منزلية، علاج بالوريد، استشارات طبية، رعاية تمريضية، لقاحات وعلاج طبيعي.",
-    is_active: false,
-    isActive: false,
-    sort_order: 4,
-    sortOrder: 4,
-  },
-  {
-    id: "14f21a0e-c63a-49da-a004-8f151844777c",
-    name: "Handyman & Maintenance",
-    name_ar: "الصيانة والخدمات المنزلية",
-    nameAr: "الصيانة والخدمات المنزلية",
-    slug: "handyman-maintenance",
-    imageUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
-    image_url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
-    icon: "Wrench",
-    description: "Skilled handymen, electricians, plumbers, home painting & roof waterproofing services at home.",
-    description_ar: "حرفيون مهرة، كهربائيون، سباكون، دهان منازل وعزل أسطح معتمد في منزلك.",
-    descriptionAr: "حرفيون مهرة، كهربائيون، سباكون، دهان منازل وعزل أسطح معتمد في منزلك.",
-    is_active: false,
-    isActive: false,
-    sort_order: 5,
-    sortOrder: 5,
-  },
-  {
-    id: "198d67a7-88e4-4eef-8990-3004f717af4a",
-    name: "Car Services",
-    name_ar: "خدمات السيارات",
-    nameAr: "خدمات السيارات",
-    slug: "car-services",
-    imageUrl: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=800&q=80",
-    image_url: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=800&q=80",
-    icon: "Car",
-    description: "Doorstep car service, periodic 10K maintenance, oil changes, detailing & eco-friendly car wash at home.",
-    description_ar: "خدمات صيانة وتغيير زيت السيارات عند البيت، غسيل وتلميع متنقل وتنظيف عميق.",
-    descriptionAr: "خدمات صيانة وتغيير زيت السيارات عند البيت، غسيل وتلميع متنقل وتنظيف عميق.",
-    is_active: false,
-    isActive: false,
-    sort_order: 6,
-    sortOrder: 6,
-  },
-  {
-    id: "bb8d60bf-0ccc-4535-a019-9dc2561a4b52",
-    name: "Water Purifiers",
-    name_ar: "أجهزة تنقية المياه",
-    nameAr: "أجهزة تنقية المياه",
-    slug: "water-purifiers",
-    imageUrl: "/api/media/file/catalog/238ed6a2-5ab5-4f76-87e3-1f1306ef238e-water.webp",
-    image_url: "/api/media/file/catalog/238ed6a2-5ab5-4f76-87e3-1f1306ef238e-water.webp",
-    icon: "Droplet",
-    description: "Premium countertop & floor-standing UV & RO water purification systems and hassle-free subscriptions.",
-    description_ar: "أنظمة تنقية المياه المنزلية المتطورة بالفلترة النانوية والأشعة فوق البنفسجية واشتراكات ميسرة.",
-    descriptionAr: "أنظمة تنقية المياه المنزلية المتطورة بالفلترة النانوية والأشعة فوق البنفسجية واشتراكات ميسرة.",
-    is_active: false,
-    isActive: false,
-    sort_order: 7,
-    sortOrder: 7,
-  },
-  {
-    id: "3b06f46b-4732-40e8-af48-0b13fb78cb4e",
-    name: "Pet Care at Home",
-    name_ar: "العناية بالحيوانات الأليفة في المنزل",
-    nameAr: "العناية بالحيوانات الأليفة في المنزل",
-    slug: "pet-care-at-home",
-    imageUrl: "/api/media/file/catalog/c98d34bd-2dfb-4fc4-a291-7129ec80c663-petcare.webp",
-    image_url: "/api/media/file/catalog/c98d34bd-2dfb-4fc4-a291-7129ec80c663-petcare.webp",
-    icon: "PawPrint",
-    description: "Doorstep mobile pet grooming vans, home bathing, VIP pet spa, MOCCAE-certified vet visits, vaccines & walking.",
-    description_ar: "سيارات متنقلة لقص وتزيين الحيوانات الأليفة، سبا منزلي، وفحوصات بيطرية وتطعيمات معتمدة.",
-    descriptionAr: "سيارات متنقلة لقص وتزيين الحيوانات الأليفة، سبا منزلي، وفحوصات بيطرية وتطعيمات معتمدة.",
-    is_active: false,
-    isActive: false,
-    sort_order: 8,
-    sortOrder: 8,
-  },
-  {
-    id: "f1cebfff-43c3-40d9-be23-152bc1ba6800",
-    name: "Pest Control & Disinfection",
-    name_ar: "مكافحة الآفات والتطهير",
-    nameAr: "مكافحة الآفات والتطهير",
-    slug: "pest-control",
-    imageUrl: "/api/media/file/catalog/3e545700-ee94-4ce7-a589-afa3d90ae3ca-pest.webp",
-    image_url: "/api/media/file/catalog/3e545700-ee94-4ce7-a589-afa3d90ae3ca-pest.webp",
-    icon: "Shield",
-    description: "Cockroach, bed bug, pest management & sanitization",
-    description_ar: "خدمات مكافحة الحشرات الفعالة.",
-    descriptionAr: "خدمات مكافحة الحشرات الفعالة.",
-    is_active: false,
-    isActive: false,
-    sort_order: 9,
-    sortOrder: 9,
-  },
-  {
-    id: "5b0b82c5-9056-4468-9f18-838889ff5e10",
-    name: "Disinfection",
-    name_ar: "تعقيم",
-    nameAr: "تعقيم",
-    slug: "disinfection",
-    imageUrl: "https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600&q=80",
-    image_url: "https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600&q=80",
-    icon: "ShieldCheck",
-    description: "Complete home and office disinfection and sanitisation.",
-    description_ar: "تعقيم وتطهير شامل للمنازل والمكاتب.",
-    descriptionAr: "تعقيم وتطهير شامل للمنازل والمكاتب.",
-    is_active: false,
-    isActive: false,
-    sort_order: 10,
-    sortOrder: 10,
-  },
-];
-
-export const INITIAL_SERVICES: AdminService[] = [
-  {
-    id: "svc-std-home-cleaning",
-    name: "Standard Home Cleaning",
-    name_ar: "تنظيف منازل بالساعة",
-    nameAr: "تنظيف منازل بالساعة",
-    slug: "standard-home-cleaning",
-    category_id: "e6eaf8c8-af7e-493e-96cc-fe163eb33603",
-    categoryId: "e6eaf8c8-af7e-493e-96cc-fe163eb33603",
-    short_description: "Professional hourly home cleaning with certified cleaners.",
-    description: "Full dusting, vacuuming, mopping, and kitchen/bathroom sanitization.",
-    image_url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop&q=80",
-    imageUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop&q=80",
-    base_price: 120,
-    basePrice: 120,
-    booking_type: "hourly",
-    bookingType: "hourly",
-    duration_minutes: 120,
-    durationMinutes: 120,
-    is_active: true,
-    isActive: true,
-    is_featured: true,
-    sort_order: 1,
-    sortOrder: 1,
-  },
-  {
-    id: "svc-general-cleaning",
-    name: "General Cleaning Service",
-    name_ar: "خدمة التنظيف العام",
-    nameAr: "خدمة التنظيف العام",
-    slug: "general-cleaning-service",
-    category_id: "b1573133-0f86-478f-a015-d63bea4e5907",
-    categoryId: "b1573133-0f86-478f-a015-d63bea4e5907",
-    short_description: "General home and office cleaning package.",
-    description: "Top-rated cleaning with all materials provided.",
-    image_url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
-    imageUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
-    base_price: 150,
-    basePrice: 150,
-    booking_type: "fixed",
-    bookingType: "fixed",
-    duration_minutes: 180,
-    durationMinutes: 180,
-    is_active: true,
-    isActive: true,
-    is_featured: true,
-    sort_order: 2,
-    sortOrder: 2,
-  },
-  {
-    id: "svc-swedish-massage",
-    name: "Salon & Spa at Home Care",
-    name_ar: "صالون وسبا في المنزل",
-    nameAr: "صالون وسبا في المنزل",
-    slug: "salon-spa-at-home-care",
-    category_id: "b6c6665c-456d-4328-b7f3-5a80998851d1",
-    categoryId: "b6c6665c-456d-4328-b7f3-5a80998851d1",
-    short_description: "Luxury wellness and relaxing spa treatments.",
-    description: "Certified therapists deliver salon treatments directly to your home.",
-    image_url: "/api/media/file/catalog/72aa77b5-60c7-4cf9-8b9a-20d71f03daa0-menhaircut.webp",
-    imageUrl: "/api/media/file/catalog/72aa77b5-60c7-4cf9-8b9a-20d71f03daa0-menhaircut.webp",
-    base_price: 220,
-    basePrice: 220,
-    booking_type: "hourly",
-    bookingType: "hourly",
-    duration_minutes: 60,
-    durationMinutes: 60,
-    is_active: true,
-    isActive: true,
-    is_featured: true,
-    sort_order: 3,
-    sortOrder: 3,
-  },
-];
-
-export const INITIAL_LISTINGS: AdminListing[] = [
-  { category_id: "e6eaf8c8-af7e-493e-96cc-fe163eb33603", service_id: "svc-std-home-cleaning", sort_order: 1 },
-  { category_id: "b1573133-0f86-478f-a015-d63bea4e5907", service_id: "svc-general-cleaning", sort_order: 2 },
-  { category_id: "b6c6665c-456d-4328-b7f3-5a80998851d1", service_id: "svc-swedish-massage", sort_order: 3 },
-];
+export const INITIAL_CATEGORIES: AdminCategory[] = [];
+export const INITIAL_SERVICES: AdminService[] = [];
+export const INITIAL_LISTINGS: AdminListing[] = [];
 
 const INITIAL_COMPANIES: AdminCompany[] = [];
 const INITIAL_PROFESSIONALS: AdminProfessional[] = [];
@@ -590,12 +335,12 @@ const INITIAL_ROLES: AdminRole[] = [
    STORAGE ENGINE & CACHE CLEANSING
    ========================================================================== */
 
-const STORAGE_VERSION = "v4_clean_dashboard";
+const STORAGE_VERSION = "v5_clean_no_seed";
 
 function getFromStorage<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try {
-    // One-time cleanup of old dummy data if previous storage version
+    // One-time cleanup of old dummy / seeded data
     const version = localStorage.getItem("serviceplus_admin_data_version");
     if (version !== STORAGE_VERSION) {
       const keysToClear = [
@@ -608,6 +353,10 @@ function getFromStorage<T>(key: string, fallback: T): T {
         "serviceplus_admin_material_requests",
         "serviceplus_admin_plans",
         "serviceplus_admin_staff",
+        "serviceplus_admin_categories",
+        "serviceplus_admin_services",
+        "serviceplus_admin_listings",
+        "serviceplus_admin_roles",
       ];
       keysToClear.forEach((k) => localStorage.removeItem(k));
       localStorage.setItem("serviceplus_admin_data_version", STORAGE_VERSION);
@@ -1199,6 +948,22 @@ export const AdminDataStore = {
         is_active: s.is_active ?? s.isActive ?? true,
         image_url: s.image_url ?? s.imageUrl,
         sort_order: s.sort_order ?? s.sortOrder ?? 0,
+        hourly_rate: s.hourly_rate ?? s.hourlyRate,
+        hourlyRate: s.hourly_rate ?? s.hourlyRate,
+        materials_price: s.materials_price ?? s.materialsPrice,
+        materialsPrice: s.materials_price ?? s.materialsPrice,
+        materials_label_en: s.materials_label_en ?? s.materialsLabelEn,
+        materialsLabelEn: s.materials_label_en ?? s.materialsLabelEn,
+        materials_label_ar: s.materials_label_ar ?? s.materialsLabelAr,
+        materialsLabelAr: s.materials_label_ar ?? s.materialsLabelAr,
+        min_hours: s.min_hours ?? s.minHours,
+        minHours: s.min_hours ?? s.minHours,
+        max_hours: s.max_hours ?? s.maxHours,
+        maxHours: s.max_hours ?? s.maxHours,
+        max_professionals: s.max_professionals ?? s.maxProfessionals,
+        maxProfessionals: s.max_professionals ?? s.maxProfessionals,
+        extra_professional_pct: s.extra_professional_pct ?? s.extraProfessionalPct,
+        extraProfessionalPct: s.extra_professional_pct ?? s.extraProfessionalPct,
       })));
     }
     if (Array.isArray(listings) && listings.length > 0) {

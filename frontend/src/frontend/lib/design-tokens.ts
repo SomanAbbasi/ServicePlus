@@ -1,12 +1,33 @@
 /**
- * ServicePlus Admin Design System — Central Design Tokens
+ * ServicePlus Admin Design System — Central Design Tokens (Round 2 Specifications)
  *
- * Single source of truth for colors, sizes, and mappings used across
- * every admin page. Import from here instead of hardcoding values.
+ * Single source of truth for typography, colors, icon containers, buttons,
+ * and chart mappings used across every admin page.
  */
 
 /* ------------------------------------------------------------------ */
-/*  Status Colors                                                      */
+/*  Typography Tokens (Exact Numbers)                                 */
+/* ------------------------------------------------------------------ */
+
+export const TYPOGRAPHY = {
+  /** Page titles: 26–28px, weight 700 */
+  pageTitle: "text-[26px] sm:text-[28px] font-bold text-slate-900 tracking-tight leading-tight" as const,
+  /** Card/section titles: 16–18px, weight 600 */
+  cardTitle: "text-[16px] sm:text-[18px] font-semibold text-slate-900 tracking-tight" as const,
+  /** Stat numbers: 32–36px, weight 700 (dominant visual element) */
+  statNumber: "text-[32px] sm:text-[36px] font-bold text-slate-900 tracking-tight leading-none" as const,
+  /** Stat labels: 12–13px, uppercase, letter-spacing 0.05em, weight 500, color #6B7280 */
+  statLabel: "text-[12px] sm:text-[13px] font-medium uppercase tracking-[0.05em] text-[#6B7280]" as const,
+  /** Table headers: 13–14px, weight 600 */
+  tableHeader: "text-[13px] sm:text-[14px] font-semibold text-slate-700" as const,
+  /** Table body/cell text: 14–15px, weight 400 */
+  tableCell: "text-[14px] sm:text-[15px] font-normal text-slate-800" as const,
+  /** Base body font size for the whole admin app: 14px minimum */
+  baseBody: "text-[14px] text-slate-700" as const,
+} as const;
+
+/* ------------------------------------------------------------------ */
+/*  Status Colors                                                     */
 /* ------------------------------------------------------------------ */
 
 export type StatusKey =
@@ -36,121 +57,120 @@ export type StatusKey =
   | "ON_LEAVE";
 
 export interface StatusStyle {
-  /** Tailwind classes for badge background + text */
   badge: string;
-  /** Hex color for use in charts (Recharts, etc.) */
   chart: string;
 }
 
 /**
- * Canonical status color palette.
+ * Canonical status color palette (WCAG AA Compliant):
  *
- * Pending        → amber/orange
- * In Progress    → sky/cyan
- * Completed      → indigo/purple
- * Cancelled      → green
- * Danger/Failed  → rose/red
- * Neutral/Draft  → slate
+ * Pending       → Amber
+ * In Progress   → Cyan/Sky
+ * Completed     → Emerald/Green
+ * Cancelled     → Red/Neutral
+ * Deactivated   → Rose/Red
+ * Activated     → Emerald/Green
  */
-export const STATUS_COLORS = {
-  // ── Completed / Success ──
-  COMPLETED:    { badge: "bg-violet-100/70 text-violet-700",   chart: "#8b5cf6" },
-  CONFIRMED:    { badge: "bg-violet-100/70 text-violet-700",   chart: "#8b5cf6" },
-  PAID:         { badge: "bg-violet-100/70 text-violet-700",   chart: "#8b5cf6" },
-  AVAILABLE:    { badge: "bg-emerald-100/70 text-emerald-700", chart: "#10b981" },
+export const STATUS_COLORS: Record<string, StatusStyle> = {
+  // ── Activated / Available / Success ──
+  ACTIVATED:    { badge: "bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold", chart: "#10B981" },
+  ACTIVE:       { badge: "bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold", chart: "#10B981" },
+  AVAILABLE:    { badge: "bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold", chart: "#10B981" },
+  COMPLETED:    { badge: "bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold", chart: "#10B981" },
+  CONFIRMED:    { badge: "bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold", chart: "#10B981" },
+  PAID:         { badge: "bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold", chart: "#10B981" },
 
-  // ── Active / Activated ──
-  ACTIVE:       { badge: "bg-emerald-100/70 text-emerald-700", chart: "#10b981" },
-  ACTIVATED:    { badge: "bg-emerald-100/70 text-emerald-700", chart: "#10b981" },
-
-  // ── Deactivated / Inactive ──
-  INACTIVE:     { badge: "bg-rose-100/70 text-rose-600",       chart: "#e11d48" },
-  DEACTIVATED:  { badge: "bg-rose-100/70 text-rose-600",       chart: "#e11d48" },
+  // ── Deactivated / Inactive / Suspended ──
+  DEACTIVATED:  { badge: "bg-rose-100 text-rose-800 border border-rose-200 font-bold",       chart: "#EF4444" },
+  INACTIVE:     { badge: "bg-rose-100 text-rose-800 border border-rose-200 font-bold",       chart: "#EF4444" },
+  SUSPENDED:    { badge: "bg-rose-100 text-rose-800 border border-rose-200 font-bold",       chart: "#EF4444" },
+  FAILED:       { badge: "bg-rose-100 text-rose-800 border border-rose-200 font-bold",       chart: "#EF4444" },
+  PAYMENT_FAILED: { badge: "bg-rose-100 text-rose-800 border border-rose-200 font-bold",     chart: "#EF4444" },
 
   // ── Pending ──
-  PENDING:      { badge: "bg-amber-100/70 text-amber-700",     chart: "#f59e0b" },
-  ASSIGNING:    { badge: "bg-amber-100/70 text-amber-700",     chart: "#f59e0b" },
+  PENDING:      { badge: "bg-amber-100 text-amber-800 border border-amber-200 font-bold",     chart: "#F59E0B" },
+  ASSIGNING:    { badge: "bg-amber-100 text-amber-800 border border-amber-200 font-bold",     chart: "#F59E0B" },
 
   // ── In Progress ──
-  ASSIGNED:     { badge: "bg-sky-100/70 text-sky-700",         chart: "#06b6d4" },
-  EN_ROUTE:     { badge: "bg-sky-100/70 text-sky-700",         chart: "#06b6d4" },
-  ARRIVED:      { badge: "bg-sky-100/70 text-sky-700",         chart: "#06b6d4" },
-  IN_PROGRESS:  { badge: "bg-sky-100/70 text-sky-700",         chart: "#06b6d4" },
-  BUSY:         { badge: "bg-sky-100/70 text-sky-700",         chart: "#06b6d4" },
+  IN_PROGRESS:  { badge: "bg-cyan-100 text-cyan-800 border border-cyan-200 font-bold",         chart: "#00B4D8" },
+  ASSIGNED:     { badge: "bg-cyan-100 text-cyan-800 border border-cyan-200 font-bold",         chart: "#00B4D8" },
+  EN_ROUTE:     { badge: "bg-cyan-100 text-cyan-800 border border-cyan-200 font-bold",         chart: "#00B4D8" },
+  ARRIVED:      { badge: "bg-cyan-100 text-cyan-800 border border-cyan-200 font-bold",         chart: "#00B4D8" },
+  BUSY:         { badge: "bg-cyan-100 text-cyan-800 border border-cyan-200 font-bold",         chart: "#00B4D8" },
 
-  // ── Cancelled (green per design spec) ──
-  CANCELLED:    { badge: "bg-green-100/70 text-green-700",     chart: "#22c55e" },
+  // ── Cancelled ──
+  CANCELLED:    { badge: "bg-red-100 text-red-800 border border-red-200 font-bold",           chart: "#DC2626" },
 
   // ── Rescheduled / Refunded ──
-  RESCHEDULED:  { badge: "bg-violet-100/70 text-violet-600",   chart: "#7c3aed" },
-  REFUNDED:     { badge: "bg-violet-100/70 text-violet-600",   chart: "#7c3aed" },
-
-  // ── Failed / Danger ──
-  FAILED:       { badge: "bg-rose-100/70 text-rose-600",       chart: "#e11d48" },
-  PAYMENT_FAILED: { badge: "bg-rose-100/70 text-rose-600",     chart: "#e11d48" },
-  SUSPENDED:    { badge: "bg-rose-100/70 text-rose-600",       chart: "#e11d48" },
+  RESCHEDULED:  { badge: "bg-purple-100 text-purple-800 border border-purple-200 font-bold",   chart: "#8B5CF6" },
+  REFUNDED:     { badge: "bg-purple-100 text-purple-800 border border-purple-200 font-bold",   chart: "#8B5CF6" },
 
   // ── Neutral ──
-  DRAFT:        { badge: "bg-slate-100 text-slate-600",        chart: "#64748b" },
-  OFFLINE:      { badge: "bg-slate-100 text-slate-600",        chart: "#64748b" },
-  ON_LEAVE:     { badge: "bg-slate-100 text-slate-600",        chart: "#64748b" },
-} as Record<string, StatusStyle>;
+  DRAFT:        { badge: "bg-slate-100 text-slate-700 border border-slate-200 font-semibold",  chart: "#64748B" },
+  OFFLINE:      { badge: "bg-slate-100 text-slate-700 border border-slate-200 font-semibold",  chart: "#64748B" },
+  ON_LEAVE:     { badge: "bg-slate-100 text-slate-700 border border-slate-200 font-semibold",  chart: "#64748B" },
+};
 
 /** Fallback for unknown statuses */
 export const STATUS_DEFAULT: StatusStyle = {
-  badge: "bg-slate-100 text-slate-600",
-  chart: "#64748b",
+  badge: "bg-slate-100 text-slate-700 border border-slate-200 font-semibold",
+  chart: "#64748B",
 };
 
-/** Donut chart status mapping (canonical order) */
+/** Donut chart status mapping */
 export const DONUT_STATUS_COLORS: Record<string, string> = {
-  Pending:       "#f59e0b",
-  "In Progress": "#06b6d4",
-  Completed:     "#8b5cf6",
-  Cancelled:     "#22c55e",
+  Completed:     "#10B981",
+  "In Progress": "#00B4D8",
+  Pending:       "#F59E0B",
+  Cancelled:     "#EF4444",
 };
 
 /* ------------------------------------------------------------------ */
-/*  Stat Card Accent Palette                                           */
+/*  Stat Card Accent Palette (Solid 40x40 Containers + White Icons)   */
 /* ------------------------------------------------------------------ */
 
 export type StatAccent =
-  | "blue"
+  | "primary"
   | "cyan"
+  | "blue"
+  | "indigo"
+  | "teal"
   | "emerald"
   | "amber"
+  | "orange"
   | "rose"
   | "violet"
-  | "indigo"
-  | "primary";
+  | "purple";
 
 export const STAT_CARD_ACCENTS: Record<StatAccent, { bg: string; text: string }> = {
-  primary: { bg: "bg-primary/10",       text: "text-primary" },
-  blue:    { bg: "bg-blue-100/70",      text: "text-blue-600" },
-  cyan:    { bg: "bg-cyan-100/70",      text: "text-cyan-600" },
-  emerald: { bg: "bg-emerald-100/70",   text: "text-emerald-600" },
-  amber:   { bg: "bg-amber-100/70",     text: "text-amber-600" },
-  rose:    { bg: "bg-rose-100/70",      text: "text-rose-600" },
-  violet:  { bg: "bg-violet-100/70",    text: "text-violet-600" },
-  indigo:  { bg: "bg-indigo-100/70",    text: "text-indigo-600" },
+  primary: { bg: "bg-[#00B4D8]", text: "text-white" },
+  cyan:    { bg: "bg-cyan-600",  text: "text-white" },
+  blue:    { bg: "bg-blue-600",  text: "text-white" },
+  indigo:  { bg: "bg-indigo-600",text: "text-white" },
+  teal:    { bg: "bg-teal-600",  text: "text-white" },
+  emerald: { bg: "bg-emerald-600",text: "text-white" },
+  amber:   { bg: "bg-amber-500", text: "text-white" },
+  orange:  { bg: "bg-orange-500",text: "text-white" },
+  rose:    { bg: "bg-rose-500",  text: "text-white" },
+  violet:  { bg: "bg-purple-600",text: "text-white" },
+  purple:  { bg: "bg-purple-600",text: "text-white" },
 };
 
 /* ------------------------------------------------------------------ */
-/*  Icon Sizes                                                         */
+/*  Icon Sizes & Containers                                           */
 /* ------------------------------------------------------------------ */
 
-/** Standardized icon sizes across the admin console */
 export const ICON = {
-  /** Inline icons in text, buttons, top bar — 16px */
-  inline: "size-4" as const,
-  /** Icons inside stat card containers — 20px */
+  /** Standard inline/action icon size: 18–20px */
+  inline: "size-[18px]" as const,
+  /** Stat card icon inside 40x40 container: 20px */
   statCard: "size-5" as const,
-  /** Stat card icon container — 40px */
-  statContainer: "size-10" as const,
+  /** Stat card container: 40x40px rounded container */
+  statContainer: "size-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs" as const,
 } as const;
 
 /* ------------------------------------------------------------------ */
-/*  Action Icon Colors                                                 */
+/*  Action Icon Colors (Consistent Across Every Table)                */
 /* ------------------------------------------------------------------ */
 
 export type ActionType =
@@ -164,20 +184,29 @@ export type ActionType =
   | "duplicate";
 
 export const ACTION_ICON_STYLES: Record<ActionType, string> = {
-  view:       "text-blue-600 hover:bg-blue-50",
-  edit:       "text-primary hover:bg-primary/5",
-  delete:     "text-rose-500 hover:bg-rose-50",
-  send:       "text-slate-600 hover:bg-slate-50",
-  toggle_on:  "text-emerald-600 hover:bg-emerald-50",
-  toggle_off: "text-rose-500 hover:bg-rose-50",
-  password:   "text-cyan-600 hover:bg-cyan-50",
-  duplicate:  "text-violet-600 hover:bg-violet-50",
+  view:       "text-blue-600 hover:bg-blue-50 border border-blue-200/60",
+  edit:       "text-cyan-700 hover:bg-cyan-50 border border-cyan-200/60",
+  delete:     "text-rose-600 hover:bg-rose-50 border border-rose-200/60",
+  send:       "text-purple-600 hover:bg-purple-50 border border-purple-200/60",
+  toggle_on:  "text-emerald-600 hover:bg-emerald-50 border border-emerald-200/60",
+  toggle_off: "text-rose-600 hover:bg-rose-50 border border-rose-200/60",
+  password:   "text-amber-600 hover:bg-amber-50 border border-amber-200/60",
+  duplicate:  "text-indigo-600 hover:bg-indigo-50 border border-indigo-200/60",
 };
 
 /* ------------------------------------------------------------------ */
-/*  Chart Brand Color                                                  */
+/*  Button Tokens (Height 40px, Padding 12–16px, Radius 8px)          */
 /* ------------------------------------------------------------------ */
 
-/** Brand primary color for chart lines/bars — ServicePlus Blue */
-export const CHART_PRIMARY = "#1356C0";
-export const CHART_PRIMARY_LIGHT = "rgba(19, 86, 192, 0.15)";
+export const BUTTON_STYLES = {
+  primary: "h-10 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-sm shadow-xs transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer",
+  secondary: "h-10 px-4 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm shadow-xs transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer",
+  iconButton: "size-9 rounded-lg flex items-center justify-center transition-colors cursor-pointer shrink-0",
+} as const;
+
+/* ------------------------------------------------------------------ */
+/*  Chart Colors                                                      */
+/* ------------------------------------------------------------------ */
+
+export const CHART_PRIMARY = "#00B4D8";
+export const CHART_PRIMARY_LIGHT = "rgba(0, 180, 216, 0.15)";

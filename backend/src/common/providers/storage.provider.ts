@@ -10,4 +10,5 @@ export interface StorageProvider {
   getObject(
     path: string,
   ): Promise<{ buffer: Buffer; contentType: string } | null>;
+  deleteObject(path: string): Promise<boolean>;
 }

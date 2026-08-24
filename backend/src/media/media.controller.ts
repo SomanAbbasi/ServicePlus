@@ -43,6 +43,15 @@ export class MediaController {
     );
   }
 
+  @Post('delete')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async deleteFile(@Body() dto: { url?: string; path?: string }) {
+    const target = dto?.url || dto?.path;
+    if (!target) return { ok: false };
+    const ok = await this.mediaService.deleteFile(target);
+    return { ok };
+  }
+
   @Get('file/*path')
   async getFile(
     @Req() req: Request,

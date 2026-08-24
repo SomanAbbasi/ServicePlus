@@ -50,8 +50,10 @@ function SearchPage() {
   const { data } = useSuspenseQuery(searchQuery(q));
   const sliderRef = useRef<HTMLDivElement>(null);
 
-  const services = "services" in data ? data.services : [];
-  const categories = "categories" in data ? data.categories : [];
+  const rawServices = "services" in data ? data.services : [];
+  const rawCategories = "categories" in data ? data.categories : [];
+  const categories = rawCategories.filter((c: any) => c.is_active !== false && c.isActive !== false && c.isActive !== 0);
+  const services = rawServices.filter((s: any) => s.is_active !== false && s.isActive !== false && s.isActive !== 0);
   const listings = ("listings" in data ? data.listings : []) as {
     category_id: string;
     service_id: string;

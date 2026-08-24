@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Send, Upload, X, Info } from "lucide-react";
 import { toast } from "sonner";
 import { compressImageFile } from "@/frontend/lib/image-compression";
+import { resolveImageUrl } from "@/frontend/lib/api-client";
+import { FALLBACK_IMAGE } from "@/frontend/components/icons";
 
 export const Route = createFileRoute("/admin/services/create")({ component: AddServicePage });
 
@@ -50,6 +52,14 @@ function AddServicePage() {
   const [categoryId, setCategoryId] = useState("");
   const [bookingType, setBookingType] = useState("hourly");
   const [basePrice, setBasePrice] = useState("0");
+  const [hourlyRate, setHourlyRate] = useState("");
+  const [materialsPrice, setMaterialsPrice] = useState("");
+  const [materialsLabelEn, setMaterialsLabelEn] = useState("");
+  const [materialsLabelAr, setMaterialsLabelAr] = useState("");
+  const [minHours, setMinHours] = useState(1);
+  const [maxHours, setMaxHours] = useState(8);
+  const [maxProfessionals, setMaxProfessionals] = useState(4);
+  const [extraProfessionalPct, setExtraProfessionalPct] = useState(100);
   const [durationMinutes, setDurationMinutes] = useState("0");
   const [isActive, setIsActive] = useState(true);
 
@@ -118,7 +128,15 @@ function AddServicePage() {
         description: descEn.trim() || undefined,
         description_ar: descAr.trim() || undefined,
         booking_type: bookingType,
-        base_price: parseFloat(basePrice) || 0,
+        base_price: parseFloat(basePrice) || (hourlyRate ? parseFloat(hourlyRate) : 0),
+        hourly_rate: hourlyRate ? parseFloat(hourlyRate) : undefined,
+        materials_price: parseFloat(materialsPrice) || 0,
+        materials_label_en: materialsLabelEn.trim() || undefined,
+        materials_label_ar: materialsLabelAr.trim() || undefined,
+        min_hours: Number(minHours) || 1,
+        max_hours: Number(maxHours) || 8,
+        max_professionals: Number(maxProfessionals) || 4,
+        extra_professional_pct: Number(extraProfessionalPct) || 100,
         duration_minutes: parseInt(durationMinutes) || 0,
         image_url: finalImageUrl,
         is_active: isActive,
@@ -176,8 +194,15 @@ function AddServicePage() {
 
               {imagePreview && (
                 <div className="flex items-center gap-2 ms-auto">
-                  <div className="relative size-12 rounded-full overflow-hidden border-2 border-slate-200 shrink-0 shadow-xs">
-                    <img src={imagePreview} alt="Preview" className="size-full object-cover" />
+                  <div className="relative size-12 rounded-full overflow-hidden border-2 border-slate-200 shrink-0 shadow-xs bg-slate-100 flex items-center justify-center">
+                    <img
+                      src={resolveImageUrl(imagePreview) || FALLBACK_IMAGE}
+                      alt="Preview"
+                      className="size-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+                      }}
+                    />
                   </div>
                   <Button
                     type="button"
@@ -268,6 +293,17 @@ function AddServicePage() {
                   data-lpignore="true"
                 />
               </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-700">Cleaning Materials Label (English)</Label>
+                <Input
+                  placeholder="e.g. Need cleaning materials? Powered by Jif"
+                  value={materialsLabelEn}
+                  onChange={(e) => setMaterialsLabelEn(e.target.value)}
+                  className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                  autoComplete="off"
+                />
+              </div>
             </div>
           )}
 
@@ -315,6 +351,17 @@ function AddServicePage() {
                   data-lpignore="true"
                 />
               </div>
+
+              <div className="space-y-1.5 text-right">
+                <Label className="text-xs font-bold text-slate-700">عنوان مواد التنظيف (عربي)</Label>
+                <Input
+                  placeholder="مثال: هل تحتاج إلى مواد تنظيف؟"
+                  value={materialsLabelAr}
+                  onChange={(e) => setMaterialsLabelAr(e.target.value)}
+                  className="h-11 bg-white border-slate-200 rounded-lg text-xs text-right"
+                  autoComplete="off"
+                />
+              </div>
             </div>
           )}
 
@@ -352,7 +399,7 @@ function AddServicePage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="hourly" className="text-xs font-semibold">
-                      Hourly Rate
+                      Hourly Rate (How many hours / pros / materials)
                     </SelectItem>
                     <SelectItem value="fixed" className="text-xs font-semibold">
                       Fixed Price
@@ -364,32 +411,116 @@ function AddServicePage() {
                 </Select>
               </div>
 
-              {/* Base Price */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-slate-700">Base Price (AED)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  value={basePrice}
-                  onChange={(e) => setBasePrice(e.target.value)}
-                  className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                />
-              </div>
+              {/* Hourly Pricing & Limits Configuration */}
+              {bookingType === "hourly" ? (
+                <>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">Hourly Rate (AED / Hour)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="e.g. 39"
+                      value={hourlyRate === "0" ? "" : hourlyRate}
+                      onChange={(e) => {
+                        setHourlyRate(e.target.value);
+                        if (!basePrice || basePrice === "0") setBasePrice(e.target.value);
+                      }}
+                      className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                    />
+                  </div>
 
-              {/* Estimated Duration */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-slate-700">Estimated Duration (Minutes)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={durationMinutes}
-                  onChange={(e) => setDurationMinutes(e.target.value)}
-                  className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                />
-              </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">Cleaning Materials Price (AED)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="e.g. 20 (0 if free/disabled)"
+                      value={materialsPrice === "0" ? "" : materialsPrice}
+                      onChange={(e) => setMaterialsPrice(e.target.value)}
+                      className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">Hours Range (Min - Max)</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        type="number"
+                        min="1"
+                        max="24"
+                        placeholder="Min (1)"
+                        value={minHours || ""}
+                        onChange={(e) => setMinHours(Number(e.target.value) || 1)}
+                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                      />
+                      <Input
+                        type="number"
+                        min="1"
+                        max="24"
+                        placeholder="Max (8)"
+                        value={maxHours || ""}
+                        onChange={(e) => setMaxHours(Number(e.target.value) || 8)}
+                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">Max Professionals & Multiplier (%)</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        type="number"
+                        min="1"
+                        max="10"
+                        placeholder="Max Pros (4)"
+                        value={maxProfessionals || ""}
+                        onChange={(e) => setMaxProfessionals(Number(e.target.value) || 4)}
+                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                      />
+                      <Input
+                        type="number"
+                        min="0"
+                        max="500"
+                        placeholder="Multiplier % (100)"
+                        value={extraProfessionalPct || ""}
+                        onChange={(e) => setExtraProfessionalPct(Number(e.target.value) || 100)}
+                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Base Price */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">Base Price (AED)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={basePrice === "0" ? "" : basePrice}
+                      onChange={(e) => setBasePrice(e.target.value)}
+                      className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                    />
+                  </div>
+
+                  {/* Estimated Duration */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">Estimated Duration (Minutes)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="60"
+                      value={durationMinutes === "0" ? "" : durationMinutes}
+                      onChange={(e) => setDurationMinutes(e.target.value)}
+                      className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Active Switch */}

@@ -11,9 +11,12 @@ import { Label } from "@/frontend/components/ui/label";
 import { Textarea } from "@/frontend/components/ui/textarea";
 import { Switch } from "@/frontend/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
-import { Save, Upload, X } from "lucide-react";
+import { Save, SlidersHorizontal, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { compressImageFile } from "@/frontend/lib/image-compression";
+import { OptionsManager } from "@/frontend/components/admin/OptionsManager";
+import { resolveImageUrl } from "@/frontend/lib/api-client";
+import { FALLBACK_IMAGE } from "@/frontend/components/icons";
 
 export const Route = createFileRoute("/admin/services/edit")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -37,6 +40,7 @@ function EditServicePage() {
   const service = services.find((s) => s.id === id || String(s.id) === String(id)) ?? AdminDataStore.getServices().find((s) => s.id === id || String(s.id) === String(id));
 
   const [activeTab, setActiveTab] = useState<"en" | "ar">("en");
+  const [optionsOpen, setOptionsOpen] = useState(false);
 
   // English fields
   const [nameEn, setNameEn] = useState("");
@@ -52,6 +56,14 @@ function EditServicePage() {
   const [categoryId, setCategoryId] = useState("");
   const [bookingType, setBookingType] = useState("hourly");
   const [basePrice, setBasePrice] = useState("0");
+  const [hourlyRate, setHourlyRate] = useState("");
+  const [materialsPrice, setMaterialsPrice] = useState("");
+  const [materialsLabelEn, setMaterialsLabelEn] = useState("");
+  const [materialsLabelAr, setMaterialsLabelAr] = useState("");
+  const [minHours, setMinHours] = useState(1);
+  const [maxHours, setMaxHours] = useState(8);
+  const [maxProfessionals, setMaxProfessionals] = useState(4);
+  const [extraProfessionalPct, setExtraProfessionalPct] = useState(100);
   const [durationMinutes, setDurationMinutes] = useState("0");
   const [isActive, setIsActive] = useState(true);
 
@@ -72,6 +84,14 @@ function EditServicePage() {
       setCategoryId(service.category_id || service.categoryId || "");
       setBookingType(service.booking_type || service.bookingType || "hourly");
       setBasePrice(String(service.base_price ?? service.basePrice ?? "0"));
+      setHourlyRate(String(service.hourly_rate ?? service.hourlyRate ?? ""));
+      setMaterialsPrice(String(service.materials_price ?? service.materialsPrice ?? ""));
+      setMaterialsLabelEn((service as any).materials_label_en || (service as any).materialsLabelEn || "");
+      setMaterialsLabelAr((service as any).materials_label_ar || (service as any).materialsLabelAr || "");
+      setMinHours(Number((service as any).min_hours ?? (service as any).minHours ?? 1));
+      setMaxHours(Number((service as any).max_hours ?? (service as any).maxHours ?? 8));
+      setMaxProfessionals(Number((service as any).max_professionals ?? (service as any).maxProfessionals ?? 4));
+      setExtraProfessionalPct(Number((service as any).extra_professional_pct ?? (service as any).extraProfessionalPct ?? 100));
       setDurationMinutes(String(service.duration_minutes ?? service.durationMinutes ?? "60"));
       setIsActive(service.is_active ?? service.isActive ?? true);
       const existingImg = service.imageUrl || service.image_url || null;
@@ -149,6 +169,22 @@ function EditServicePage() {
         booking_type: bookingType,
         basePrice: parseFloat(basePrice) || 0,
         base_price: parseFloat(basePrice) || 0,
+        hourlyRate: hourlyRate ? parseFloat(hourlyRate) : undefined,
+        hourly_rate: hourlyRate ? parseFloat(hourlyRate) : undefined,
+        materialsPrice: parseFloat(materialsPrice) || 0,
+        materials_price: parseFloat(materialsPrice) || 0,
+        materialsLabelEn: materialsLabelEn.trim() || undefined,
+        materials_label_en: materialsLabelEn.trim() || undefined,
+        materialsLabelAr: materialsLabelAr.trim() || undefined,
+        materials_label_ar: materialsLabelAr.trim() || undefined,
+        minHours: Number(minHours) || 1,
+        min_hours: Number(minHours) || 1,
+        maxHours: Number(maxHours) || 8,
+        max_hours: Number(maxHours) || 8,
+        maxProfessionals: Number(maxProfessionals) || 4,
+        max_professionals: Number(maxProfessionals) || 4,
+        extraProfessionalPct: Number(extraProfessionalPct) || 100,
+        extra_professional_pct: Number(extraProfessionalPct) || 100,
         durationMinutes: parseInt(durationMinutes, 10) || 0,
         duration_minutes: parseInt(durationMinutes, 10) || 0,
         imageUrl: finalImageUrl,
@@ -171,19 +207,32 @@ function EditServicePage() {
   return (
     <div className="space-y-6 text-slate-800 max-w-5xl">
       {/* Breadcrumbs */}
-      <div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
-          <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
-            Dashboard
-          </Link>
-          <span>/</span>
-          <Link to="/admin/services" className="text-cyan-600 hover:underline font-semibold">
-            Services
-          </Link>
-          <span>/</span>
-          <span className="text-slate-600">Edit Service</span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
+            <Link to="/admin" className="text-cyan-600 hover:underline font-semibold">
+              Dashboard
+            </Link>
+            <span>/</span>
+            <Link to="/admin/services" className="text-cyan-600 hover:underline font-semibold">
+              Services
+            </Link>
+            <span>/</span>
+            <span className="text-slate-600">Edit Service</span>
+          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Edit Service Offering</h1>
         </div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Edit Service Offering</h1>
+
+        {service && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setOptionsOpen(true)}
+            className="border-cyan-500 bg-cyan-50/50 hover:bg-cyan-100 text-cyan-900 font-bold text-xs h-10 px-4 rounded-xl shadow-2xs shrink-0"
+          >
+            <SlidersHorizontal className="size-4 me-2 text-cyan-600" /> Manage Options & Packages
+          </Button>
+        )}
       </div>
 
       {/* Main Edit Card matching Add New Service layout */}
@@ -210,8 +259,15 @@ function EditServicePage() {
 
               {imagePreview && (
                 <div className="flex items-center gap-2 ms-auto">
-                  <div className="relative size-12 rounded-full overflow-hidden border-2 border-slate-200 shrink-0 shadow-xs">
-                    <img src={imagePreview} alt="Preview" className="size-full object-cover" />
+                  <div className="relative size-12 rounded-full overflow-hidden border-2 border-slate-200 shrink-0 shadow-xs bg-slate-100 flex items-center justify-center">
+                    <img
+                      src={resolveImageUrl(imagePreview) || FALLBACK_IMAGE}
+                      alt="Preview"
+                      className="size-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+                      }}
+                    />
                   </div>
                   <Button
                     type="button"
@@ -299,6 +355,17 @@ function EditServicePage() {
                   name="service_desc_en"
                 />
               </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-700">Cleaning Materials Label (English)</Label>
+                <Input
+                  placeholder="e.g. Need cleaning materials? Powered by Jif"
+                  value={materialsLabelEn}
+                  onChange={(e) => setMaterialsLabelEn(e.target.value)}
+                  className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                  autoComplete="off"
+                />
+              </div>
             </div>
           )}
 
@@ -343,6 +410,17 @@ function EditServicePage() {
                   name="service_desc_ar"
                 />
               </div>
+
+              <div className="space-y-1.5 text-right">
+                <Label className="text-xs font-bold text-slate-700">عنوان مواد التنظيف (عربي)</Label>
+                <Input
+                  placeholder="مثال: هل تحتاج إلى مواد تنظيف؟"
+                  value={materialsLabelAr}
+                  onChange={(e) => setMaterialsLabelAr(e.target.value)}
+                  className="h-11 bg-white border-slate-200 rounded-lg text-xs text-right"
+                  autoComplete="off"
+                />
+              </div>
             </div>
           )}
 
@@ -380,7 +458,7 @@ function EditServicePage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="hourly" className="text-xs font-semibold">
-                      Hourly Rate
+                      Hourly Rate (How many hours / pros / materials)
                     </SelectItem>
                     <SelectItem value="fixed" className="text-xs font-semibold">
                       Fixed Price
@@ -392,32 +470,116 @@ function EditServicePage() {
                 </Select>
               </div>
 
-              {/* Base Price */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-slate-700">Base Price (AED)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  value={basePrice}
-                  onChange={(e) => setBasePrice(e.target.value)}
-                  className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                />
-              </div>
+              {/* Hourly Pricing & Limits Configuration */}
+              {bookingType === "hourly" ? (
+                <>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">Hourly Rate (AED / Hour)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="e.g. 39"
+                      value={hourlyRate === "0" ? "" : hourlyRate}
+                      onChange={(e) => {
+                        setHourlyRate(e.target.value);
+                        if (!basePrice || basePrice === "0") setBasePrice(e.target.value);
+                      }}
+                      className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                    />
+                  </div>
 
-              {/* Estimated Duration */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-slate-700">Estimated Duration (Minutes)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={durationMinutes}
-                  onChange={(e) => setDurationMinutes(e.target.value)}
-                  className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                />
-              </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">Cleaning Materials Price (AED)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="e.g. 20 (0 if free/disabled)"
+                      value={materialsPrice === "0" ? "" : materialsPrice}
+                      onChange={(e) => setMaterialsPrice(e.target.value)}
+                      className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">Hours Range (Min - Max)</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        type="number"
+                        min="1"
+                        max="24"
+                        placeholder="Min (1)"
+                        value={minHours || ""}
+                        onChange={(e) => setMinHours(Number(e.target.value) || 1)}
+                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                      />
+                      <Input
+                        type="number"
+                        min="1"
+                        max="24"
+                        placeholder="Max (8)"
+                        value={maxHours || ""}
+                        onChange={(e) => setMaxHours(Number(e.target.value) || 8)}
+                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">Max Professionals & Multiplier (%)</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        type="number"
+                        min="1"
+                        max="10"
+                        placeholder="Max Pros (4)"
+                        value={maxProfessionals || ""}
+                        onChange={(e) => setMaxProfessionals(Number(e.target.value) || 4)}
+                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                      />
+                      <Input
+                        type="number"
+                        min="0"
+                        max="500"
+                        placeholder="Multiplier % (100)"
+                        value={extraProfessionalPct || ""}
+                        onChange={(e) => setExtraProfessionalPct(Number(e.target.value) || 100)}
+                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Base Price */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">Base Price (AED)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={basePrice === "0" ? "" : basePrice}
+                      onChange={(e) => setBasePrice(e.target.value)}
+                      className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                    />
+                  </div>
+
+                  {/* Estimated Duration */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-700">Estimated Duration (Minutes)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="60"
+                      value={durationMinutes === "0" ? "" : durationMinutes}
+                      onChange={(e) => setDurationMinutes(e.target.value)}
+                      className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Active Switch */}
@@ -452,6 +614,15 @@ function EditServicePage() {
           </div>
         </form>
       </Card>
+
+      {/* Options Manager Sheet */}
+      {service && (
+        <OptionsManager
+          service={optionsOpen ? service : null}
+          onClose={() => setOptionsOpen(false)}
+        />
+      )}
     </div>
   );
 }
+

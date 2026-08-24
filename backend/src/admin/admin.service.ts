@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { sanitizeInput } from '../common/utils';
+import { MediaService } from '../media/media.service';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type InputJsonValue = string | number | boolean | Record<string, any> | InputJsonValue[];
@@ -15,7 +16,29 @@ function slugify(value: string): string {
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mediaService: MediaService,
+  ) {}
+
+  private safeDeleteMedia(urls: (string | null | undefined)[]) {
+    for (const url of urls) {
+      if (url && typeof url === 'string' && !url.startsWith('data:') && !url.startsWith('blob:')) {
+        this.mediaService.deleteFile(url).catch(() => {});
+      }
+    }
+  }
+
+  private extractSubOptionImages(description?: string | null): string[] {
+    if (!description || !description.includes('sub_options')) return [];
+    try {
+      const parsed = JSON.parse(description);
+      if (Array.isArray(parsed?.sub_options)) {
+        return parsed.sub_options.map((s: any) => s.imageUrl || s.image_url).filter(Boolean);
+      }
+    } catch {}
+    return [];
+  }
 
   async getOverview() {
     const now = new Date();
@@ -207,6 +230,10 @@ export class AdminService {
           originalPrice: true,
           hourlyRate: true,
           materialsPrice: true,
+          extraProfessionalPct: true,
+          minHours: true,
+          maxHours: true,
+          maxProfessionals: true,
           bookingType: true,
           durationMinutes: true,
           isActive: true,
@@ -255,6 +282,10 @@ export class AdminService {
         original_price: s.originalPrice,
         hourly_rate: s.hourlyRate,
         materials_price: s.materialsPrice,
+        extra_professional_pct: s.extraProfessionalPct,
+        min_hours: s.minHours,
+        max_hours: s.maxHours,
+        max_professionals: s.maxProfessionals,
         short_description: s.shortDescription,
         duration_minutes: s.durationMinutes,
         booking_type: s.bookingType,
@@ -298,6 +329,15 @@ export class AdminService {
       if (raw[key] !== undefined) patch[key] = raw[key];
     }
     if (data.slug) patch.slug = slugify(data.slug);
+
+    if (patch.imageUrl !== undefined || patch.image_url !== undefined) {
+      const newImg = patch.imageUrl || patch.image_url;
+      const existing = await this.prisma.service.findUnique({ where: { id }, select: { imageUrl: true } });
+      if (existing?.imageUrl && existing.imageUrl !== newImg) {
+        this.safeDeleteMedia([existing.imageUrl]);
+      }
+    }
+
     if (patch.isActive === true) {
       const existing = await this.prisma.service.findUnique({
         where: { id },
@@ -356,6 +396,21 @@ export class AdminService {
       throw new BadRequestException(
         `This service has ${count} booking(s). Disable it instead.`,
       );
+
+    const service = await this.prisma.service.findUnique({
+      where: { id },
+      include: {
+        variants: true,
+        optionGroups: true,
+      },
+    });
+
+    const imagesToDelete: string[] = [
+      service?.imageUrl,
+      ...(service?.optionGroups?.map((g) => g.imageUrl) || []),
+      ...(service?.variants?.flatMap((v) => [v.imageUrl, ...this.extractSubOptionImages(v.description)]) || []),
+    ].filter(Boolean) as string[];
+
     await this.prisma.serviceListing.deleteMany({ where: { serviceId: id } });
     await this.prisma.serviceRelation.deleteMany({ where: { serviceId: id } });
     await this.prisma.addonService.deleteMany({ where: { serviceId: id } });
@@ -363,7 +418,9 @@ export class AdminService {
     await this.prisma.serviceOptionGroup.deleteMany({
       where: { serviceId: id },
     });
-    return this.prisma.service.delete({ where: { id } });
+    const res = await this.prisma.service.delete({ where: { id } });
+    this.safeDeleteMedia(imagesToDelete);
+    return res;
   }
 
   async duplicateService(id: string) {
@@ -394,6 +451,21 @@ export class AdminService {
       if (raw[key] !== undefined) patch[key] = raw[key];
     }
     if (data.slug) patch.slug = slugify(data.slug);
+
+    if (patch.imageUrl !== undefined || patch.image_url !== undefined || patch.icon !== undefined) {
+      const newImg = patch.imageUrl || patch.image_url;
+      const existing = await this.prisma.serviceCategory.findUnique({
+        where: { id },
+        select: { imageUrl: true, icon: true },
+      });
+      if (existing?.imageUrl && newImg && existing.imageUrl !== newImg) {
+        this.safeDeleteMedia([existing.imageUrl]);
+      }
+      if (existing?.icon && patch.icon && existing.icon !== patch.icon && existing.icon.includes('/')) {
+        this.safeDeleteMedia([existing.icon]);
+      }
+    }
+
     const result = await this.prisma.serviceCategory.update({
       where: { id },
       data: patch,
@@ -436,11 +508,20 @@ export class AdminService {
       throw new BadRequestException(
         `${count} service(s) belong to this category. Move them first.`,
       );
+
+    const cat = await this.prisma.serviceCategory.findUnique({
+      where: { id },
+      select: { imageUrl: true, icon: true },
+    });
+    const imagesToDelete = [cat?.imageUrl, cat?.icon?.includes('/') ? cat.icon : null].filter(Boolean) as string[];
+
     await this.prisma.serviceListing.deleteMany({ where: { categoryId: id } });
     await this.prisma.professionalSkill.deleteMany({
       where: { categoryId: id },
     });
-    return this.prisma.serviceCategory.delete({ where: { id } });
+    const res = await this.prisma.serviceCategory.delete({ where: { id } });
+    this.safeDeleteMedia(imagesToDelete);
+    return res;
   }
 
   async setServiceListing(
@@ -501,6 +582,15 @@ export class AdminService {
       if (raw[key] !== undefined) patch[key] = raw[key];
     }
     if (data.slug) patch.slug = slugify(data.slug);
+
+    if (patch.imageUrl !== undefined || patch.image_url !== undefined) {
+      const newImg = patch.imageUrl || patch.image_url;
+      const existing = await this.prisma.addon.findUnique({ where: { id }, select: { imageUrl: true } });
+      if (existing?.imageUrl && newImg && existing.imageUrl !== newImg) {
+        this.safeDeleteMedia([existing.imageUrl]);
+      }
+    }
+
     return this.prisma.addon.update({ where: { id }, data: patch });
   }
 
@@ -528,8 +618,14 @@ export class AdminService {
       throw new BadRequestException(
         `This add-on is used in ${count} booking(s). Disable it instead.`,
       );
+
+    const addon = await this.prisma.addon.findUnique({ where: { id }, select: { imageUrl: true } });
     await this.prisma.addonService.deleteMany({ where: { addonId: id } });
-    return this.prisma.addon.delete({ where: { id } });
+    const res = await this.prisma.addon.delete({ where: { id } });
+    if (addon?.imageUrl) {
+      this.safeDeleteMedia([addon.imageUrl]);
+    }
+    return res;
   }
 
   async setAddonService(
@@ -861,13 +957,35 @@ export class AdminService {
     const raw = sanitizeInput(data);
     const payload: any = {};
     const validFields = [
-      'userId', 'fullName', 'phone', 'email', 'photoUrl', 'cityId', 'status',
+      'userId', 'fullName', 'phone', 'email', 'photoUrl', 'cityId',
       'rating', 'completedJobs', 'experienceYears', 'workStart', 'workEnd',
-      'latitude', 'longitude', 'notes', 'isActive',
+      'latitude', 'longitude', 'notes',
     ];
     for (const key of validFields) {
       if (raw[key] !== undefined) payload[key] = raw[key];
     }
+
+    // Map status safely to ProfessionalStatus enum
+    if (raw.status !== undefined) {
+      const s = String(raw.status).toUpperCase();
+      if (s === 'ACTIVATED' || s === 'AVAILABLE' || s === 'ACTIVE') {
+        payload.status = 'AVAILABLE';
+        payload.isActive = true;
+      } else if (s === 'DEACTIVATED' || s === 'INACTIVE' || s === 'SUSPENDED') {
+        payload.status = 'SUSPENDED';
+        payload.isActive = false;
+      } else if (['BUSY', 'OFFLINE', 'ON_LEAVE'].includes(s)) {
+        payload.status = s;
+      }
+    }
+
+    if (raw.isActive !== undefined) {
+      payload.isActive = Boolean(raw.isActive);
+      if (!payload.status) {
+        payload.status = payload.isActive ? 'AVAILABLE' : 'SUSPENDED';
+      }
+    }
+
     return this.prisma.professional.update({ where: { id }, data: payload });
   }
 
@@ -1078,6 +1196,16 @@ export class AdminService {
   async upsertOptionGroup(data: Record<string, any>) {
     if (data.id) {
       const patch = sanitizeInput(data);
+      const newImg = patch.imageUrl || patch.image_url;
+      if (newImg !== undefined) {
+        const existing = await this.prisma.serviceOptionGroup.findUnique({
+          where: { id: data.id },
+          select: { imageUrl: true },
+        });
+        if (existing?.imageUrl && existing.imageUrl !== newImg) {
+          this.safeDeleteMedia([existing.imageUrl]);
+        }
+      }
       return this.prisma.serviceOptionGroup.update({
         where: { id: data.id },
         data: patch,
@@ -1091,16 +1219,43 @@ export class AdminService {
   }
 
   async deleteOptionGroup(id: string) {
+    const group = await this.prisma.serviceOptionGroup.findUnique({
+      where: { id },
+      select: { imageUrl: true },
+    });
     await this.prisma.serviceVariant.updateMany({
       where: { groupId: id },
       data: { groupId: null },
     });
-    return this.prisma.serviceOptionGroup.delete({ where: { id } });
+    const res = await this.prisma.serviceOptionGroup.delete({ where: { id } });
+    if (group?.imageUrl) {
+      this.safeDeleteMedia([group.imageUrl]);
+    }
+    return res;
   }
 
   async upsertVariant(data: Record<string, any>) {
     if (data.id) {
       const patch = sanitizeInput(data);
+      const newImg = patch.imageUrl || patch.image_url;
+      const existing = await this.prisma.serviceVariant.findUnique({
+        where: { id: data.id },
+      });
+      if (existing) {
+        const toDelete: string[] = [];
+        if (existing.imageUrl && newImg !== undefined && existing.imageUrl !== newImg) {
+          toDelete.push(existing.imageUrl);
+        }
+        // If sub-option images were removed or updated
+        const oldSubImages = this.extractSubOptionImages(existing.description);
+        const newSubImages = this.extractSubOptionImages(patch.description);
+        for (const oldSubImg of oldSubImages) {
+          if (!newSubImages.includes(oldSubImg)) {
+            toDelete.push(oldSubImg);
+          }
+        }
+        this.safeDeleteMedia(toDelete);
+      }
       return this.prisma.serviceVariant.update({
         where: { id: data.id },
         data: patch,
@@ -1111,7 +1266,13 @@ export class AdminService {
   }
 
   async deleteVariant(id: string) {
-    return this.prisma.serviceVariant.delete({ where: { id } });
+    const v = await this.prisma.serviceVariant.findUnique({
+      where: { id },
+    });
+    const imagesToDelete = [v?.imageUrl, ...this.extractSubOptionImages(v?.description)].filter(Boolean) as string[];
+    const res = await this.prisma.serviceVariant.delete({ where: { id } });
+    this.safeDeleteMedia(imagesToDelete);
+    return res;
   }
 
   /* ============================================================ ENTERPRISE ADMIN METHODS */

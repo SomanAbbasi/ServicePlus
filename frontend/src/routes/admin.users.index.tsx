@@ -16,21 +16,10 @@ import { Label } from "@/frontend/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
 import { AdminDateInput } from "@/frontend/components/admin/AdminDateInput";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/frontend/components/ui/dropdown-menu";
-import {
-  Calendar,
   Check,
   ChevronsUpDown,
-  Download,
   Eye,
-  Filter,
   KeyRound,
-  MoreVertical,
-  Plus,
   RotateCcw,
   Search,
   Send,
@@ -39,7 +28,15 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, PageActions, StatusBadge, ActionIconButton, downloadCsv } from "@/frontend/components/admin/shell";
+import {
+  PageHeader,
+  PageActions,
+  StatusBadge,
+  ActionIconButton,
+  TablePagination,
+  downloadCsv,
+} from "@/frontend/components/admin/shell";
+import { TYPOGRAPHY } from "@/frontend/lib/design-tokens";
 
 export const Route = createFileRoute("/admin/users/")({ component: AdminUsersPage });
 
@@ -71,8 +68,11 @@ function AdminUsersPage() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Sorting state
-  const [sortField, setSortField] = useState<string>("id");
-  const [sortAsc, setSortAsc] = useState<boolean>(true);
+  const [sortField, setSortField] = useState<string>("registeredOn");
+  const [sortAsc, setSortAsc] = useState<boolean>(false);
+
+  // Optimistic Status overrides
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, boolean>>({});
 
   // Action modals state
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
@@ -137,9 +137,11 @@ function AdminUsersPage() {
         const matchPhone = (u.phone || "").toLowerCase().includes(qPhone);
         if (!matchPhone) return false;
       }
+      const isAct = statusOverrides[u.id] !== undefined ? statusOverrides[u.id] : u.status === "Activated";
+      const currentStatus = isAct ? "Activated" : "Deactivated";
       const statusFilter = appliedFilters.status !== "all" ? appliedFilters.status : searchStatus;
-      if (statusFilter !== "all") {
-        if (u.status !== statusFilter) return false;
+      if (statusFilter !== "all" && currentStatus !== statusFilter) {
+        return false;
       }
       const start = appliedFilters.startDate || startDate;
       if (start) {
@@ -165,7 +167,7 @@ function AdminUsersPage() {
     });
 
     return list;
-  }, [users, appliedFilters, searchName, searchEmail, searchPhone, searchStatus, startDate, endDate, sortField, sortAsc]);
+  }, [users, appliedFilters, searchName, searchEmail, searchPhone, searchStatus, startDate, endDate, sortField, sortAsc, statusOverrides]);
 
   const totalPages = Math.ceil(filteredUsers.length / pageSize) || 1;
   const paginatedUsers = useMemo(() => {
@@ -188,172 +190,182 @@ function AdminUsersPage() {
   const handleToggleUserStatus = async (userOrId: AdminUser | string) => {
     const userId = typeof userOrId === "string" ? userOrId : userOrId.id;
     const targetUser = users.find((u) => u.id === userId);
-    const nextStatus = targetUser?.status === "Activated" ? "Deactivated" : "Activated";
-    await updateAdminUser(userId, { status: nextStatus });
-    toast.success(`User ${targetUser?.fullName || targetUser?.email || "account"} is now ${nextStatus}`);
-    queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    const isCurrentlyActive = statusOverrides[userId] !== undefined
+      ? statusOverrides[userId]
+      : targetUser?.status === "Activated";
+    const nextIsActive = !isCurrentlyActive;
+    const nextStatus = nextIsActive ? "Activated" : "Deactivated";
+
+    // Immediate optimistic update
+    setStatusOverrides((prev) => ({ ...prev, [userId]: nextIsActive }));
+
+    try {
+      await updateAdminUser(userId, { status: nextStatus });
+      toast.success(`User ${targetUser?.fullName || targetUser?.email || "account"} is now ${nextStatus}`);
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    } catch {
+      setStatusOverrides((prev) => ({ ...prev, [userId]: isCurrentlyActive }));
+      toast.error("Failed to update status");
+    }
   };
 
   const handleDeleteUser = async (userOrId: AdminUser | string) => {
     const userId = typeof userOrId === "string" ? userOrId : userOrId.id;
-    const targetUser = users.find((u) => u.id === userId);
     await deleteAdminUser(userId);
-    toast.success(`User ${targetUser?.fullName || targetUser?.email || "account"} deleted successfully`);
-    setActiveAction(null);
+    toast.success("User account deleted successfully");
     queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
   };
 
-  const handleUpdateUser = async (userId: string, updatedData: Partial<AdminUser>) => {
-    await updateAdminUser(userId, updatedData);
+  const handleUpdateUser = async (userId: string, updated: Partial<AdminUser>) => {
+    await updateAdminUser(userId, updated);
     toast.success("User profile updated successfully");
-    setActiveAction(null);
     queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+  };
+
+  const handleExportCsv = () => {
+    const exportData = filteredUsers.map((u, index) => {
+      const isAct = statusOverrides[u.id] !== undefined ? statusOverrides[u.id] : u.status === "Activated";
+      return {
+        "#": index + 1,
+        "Name": u.fullName || "—",
+        "Email": u.email || "—",
+        "Phone Number": u.phone || "—",
+        "Wallet Balance (AED)": (typeof u.walletBalance === "number" ? u.walletBalance : 0).toFixed(2),
+        "Status": isAct ? "Activated" : "Deactivated",
+        "Registered On": u.registeredOn || u.createdAt?.slice(0, 10) || "—",
+      };
+    });
+    downloadCsv(`users_export_${new Date().toISOString().slice(0, 10)}.csv`, exportData);
+    toast.success(`Exported ${exportData.length} records to CSV`);
   };
 
   return (
     <div className="space-y-5 text-slate-800">
       <PageHeader
-  title="User Management"
-  breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Users" }]}
-  actions={
-    <PageActions
-      onSearchToggle={() => setIsSearchOpen((v) => !v)}
-      isSearchOpen={isSearchOpen}
-      onExport={() => downloadCsv("users-list.csv", filteredUsers.map((u, i) => ({ "#": i + 1, "Name": u.fullName || "", "E-mail": u.email || "", "Phone Number": u.phone || "", "Wallet Balance": (typeof u.walletBalance === "number" ? u.walletBalance : 0).toFixed(2), "Status": u.status || "Activated", "Registered On": u.registeredOn || u.createdAt?.slice(0, 10) || "" })))}
-      addNewLabel="Add New User"
-      addNewTo="/admin/users/create"
-    />
-  }
-/>
+        title="Users Management"
+        description="Search, view profiles, manage wallet balances, and configure user statuses"
+        breadcrumbs={[{ label: "Dashboard", to: "/admin" }, { label: "Users Management" }]}
+        actions={
+          <PageActions
+            onSearchToggle={() => setIsSearchOpen((v) => !v)}
+            isSearchOpen={isSearchOpen}
+            onExport={handleExportCsv}
+            addNewLabel="Add New User"
+            addNewTo="/admin/users/create"
+          />
+        }
+      />
 
-      {/* Collapsible Search & Filter Card */}
+      {/* Expandable Search & Filter Bar */}
       {isSearchOpen && (
-        <Card className="p-5 bg-white border-slate-200/90 rounded-2xl shadow-xs animate-in fade-in slide-in-from-top-2 duration-200">
+        <Card className="p-5 bg-white border-slate-200/90 rounded-2xl shadow-xs animate-in fade-in-50 duration-150">
           <form onSubmit={handleApplyFilter} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Filter Users Directory
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSearchOpen(false)}
+                className="h-7 text-xs text-slate-400 hover:text-slate-700"
+              >
+                <X className="size-3.5 me-1" /> Close
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-600">Search Name</Label>
+                <Label className="text-xs font-bold text-slate-700">Name</Label>
                 <Input
-                  placeholder="Search Name"
+                  placeholder="Filter by name..."
                   value={searchName}
                   onChange={(e) => setSearchName(e.target.value)}
-                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
+                  className="h-10 text-xs bg-slate-50 border-slate-200 rounded-lg focus:bg-white"
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-600">Search Email</Label>
+                <Label className="text-xs font-bold text-slate-700">Email</Label>
                 <Input
-                  placeholder="Search Email"
+                  placeholder="Filter by email..."
                   value={searchEmail}
                   onChange={(e) => setSearchEmail(e.target.value)}
-                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
+                  className="h-10 text-xs bg-slate-50 border-slate-200 rounded-lg focus:bg-white"
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-600">Search Phone Number</Label>
+                <Label className="text-xs font-bold text-slate-700">Phone</Label>
                 <Input
-                  placeholder="Search Phone Number"
+                  placeholder="Filter by phone..."
                   value={searchPhone}
                   onChange={(e) => setSearchPhone(e.target.value)}
-                  className="h-10 text-xs bg-white border-slate-200 rounded-lg"
+                  className="h-10 text-xs bg-slate-50 border-slate-200 rounded-lg focus:bg-white"
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-600">Status</Label>
+                <Label className="text-xs font-bold text-slate-700">Status</Label>
                 <Select value={searchStatus} onValueChange={setSearchStatus}>
-                  <SelectTrigger className="h-10 text-xs bg-white border-slate-200 rounded-lg">
-                    <SelectValue placeholder="Select Status" />
+                  <SelectTrigger className="h-10 text-xs bg-slate-50 border-slate-200 rounded-lg focus:bg-white">
+                    <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all" className="text-xs font-semibold">Select Status (All)</SelectItem>
-                    <SelectItem value="Activated" className="text-xs text-emerald-600 font-bold">Activated</SelectItem>
-                    <SelectItem value="Deactivated" className="text-xs text-rose-600 font-bold">Deactivated</SelectItem>
+                    <SelectItem value="all" className="text-xs font-semibold">
+                      All Statuses
+                    </SelectItem>
+                    <SelectItem value="Activated" className="text-xs font-semibold">
+                      Activated
+                    </SelectItem>
+                    <SelectItem value="Deactivated" className="text-xs font-semibold">
+                      Deactivated
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-600">Start Date</Label>
-                <AdminDateInput
-                  placeholder="Start Date"
-                  value={startDate}
-                  onChange={setStartDate}
-                />
+                <Label className="text-xs font-bold text-slate-700">Registered From</Label>
+                <AdminDateInput value={startDate} onChange={setStartDate} placeholder="Start date" />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-semibold text-slate-600">End Date</Label>
-                <AdminDateInput
-                  placeholder="End Date"
-                  value={endDate}
-                  onChange={setEndDate}
-                />
+                <Label className="text-xs font-bold text-slate-700">Registered To</Label>
+                <AdminDateInput value={endDate} onChange={setEndDate} placeholder="End date" />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2.5 pt-2">
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
                 onClick={handleResetFilter}
-                className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs h-9 px-4 rounded-lg"
+                className="h-10 px-4 text-xs font-bold border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50"
               >
                 <RotateCcw className="size-3.5 me-1.5" /> Reset
               </Button>
               <Button
                 type="submit"
-                size="sm"
-                className="font-bold text-xs h-9 px-5 rounded-lg shadow-sm"
+                className="h-10 px-5 text-xs font-bold bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg shadow-xs"
               >
-                <Filter className="size-3.5 me-1.5" /> Filter
+                <Search className="size-3.5 me-1.5" /> Apply Filters
               </Button>
             </div>
           </form>
         </Card>
       )}
 
-      {/* Main Table Card */}
-      <Card className="p-5 bg-white border-slate-200/90 rounded-2xl shadow-xs">
-        {/* Table Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-            <span>Show</span>
-            <Select
-              value={pageSize.toString()}
-              onValueChange={(val) => {
-                setPageSize(Number(val));
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger className="h-8 w-20 text-xs bg-slate-50 rounded-lg">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10" className="text-xs">10</SelectItem>
-                <SelectItem value="25" className="text-xs">25</SelectItem>
-                <SelectItem value="50" className="text-xs">50</SelectItem>
-              </SelectContent>
-            </Select>
-            <span>entries</span>
-          </div>
-
-          <div className="text-xs text-slate-400 font-medium">
-            Total {filteredUsers.length} user{filteredUsers.length === 1 ? "" : "s"}
-          </div>
-        </div>
-
-        {/* Data Table */}
-        <div className="overflow-x-auto mt-2">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="text-slate-500 font-semibold border-b border-slate-200">
-              <tr>
-                <th className="px-3 py-3 w-10 text-center">#</th>
+      {/* Main Users Table Card with Sticky Actions Column */}
+      <Card className="bg-white border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-start border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-700 font-semibold text-[13px]">
+                <th className="px-3.5 py-3.5 text-center w-12">#</th>
                 <th
-                  className="px-3 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  className="px-3.5 py-3.5 text-start cursor-pointer select-none hover:text-cyan-700 transition-colors"
                   onClick={() => handleSort("fullName")}
                 >
                   <div className="flex items-center gap-1">
@@ -361,7 +373,7 @@ function AdminUsersPage() {
                   </div>
                 </th>
                 <th
-                  className="px-3 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  className="px-3.5 py-3.5 text-start cursor-pointer select-none hover:text-cyan-700 transition-colors"
                   onClick={() => handleSort("email")}
                 >
                   <div className="flex items-center gap-1">
@@ -369,7 +381,7 @@ function AdminUsersPage() {
                   </div>
                 </th>
                 <th
-                  className="px-3 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  className="px-3.5 py-3.5 text-start cursor-pointer select-none hover:text-cyan-700 transition-colors"
                   onClick={() => handleSort("phone")}
                 >
                   <div className="flex items-center gap-1">
@@ -377,19 +389,15 @@ function AdminUsersPage() {
                   </div>
                 </th>
                 <th
-                  className="px-3 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  className="px-3.5 py-3.5 text-start cursor-pointer select-none hover:text-cyan-700 transition-colors"
                   onClick={() => handleSort("walletBalance")}
                 >
                   <div className="flex items-center gap-1">
-                    <div>
-                      <div>Wallet</div>
-                      <div className="text-[11px] font-normal text-slate-400">Balance</div>
-                    </div>
-                    <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0 ms-1" />
+                    Wallet Balance <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
                   </div>
                 </th>
                 <th
-                  className="px-3 py-3 text-center cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  className="px-3.5 py-3.5 text-center cursor-pointer select-none hover:text-cyan-700 transition-colors"
                   onClick={() => handleSort("status")}
                 >
                   <div className="flex items-center justify-center gap-1">
@@ -397,41 +405,41 @@ function AdminUsersPage() {
                   </div>
                 </th>
                 <th
-                  className="px-3 py-3 cursor-pointer select-none hover:text-slate-900 transition-colors"
+                  className="px-3.5 py-3.5 text-start cursor-pointer select-none hover:text-cyan-700 transition-colors"
                   onClick={() => handleSort("registeredOn")}
                 >
                   <div className="flex items-center gap-1">
-                    <div>
-                      <div>Registered</div>
-                      <div className="text-[11px] font-normal text-slate-400">On</div>
-                    </div>
-                    <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0 ms-1" />
+                    Registered On <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
                   </div>
                 </th>
-                <th className="px-3 py-3 text-center w-16">
-                  <div className="flex items-center justify-center gap-1 text-slate-600 font-bold">
-                    Action <ChevronsUpDown className="size-3.5 text-slate-400 shrink-0" />
+
+                {/* Sticky Action Column on Right */}
+                <th className="sticky end-0 bg-slate-50 z-10 px-4 py-3.5 text-center min-w-[210px] border-s border-slate-200">
+                  <div className="flex items-center justify-center gap-1 text-slate-700 font-bold">
+                    Action
                   </div>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+            <tbody className="divide-y divide-slate-100 text-[14px] text-slate-800">
               {isPending ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                  <td colSpan={8} className="py-12 text-center text-slate-400 font-medium">
                     Loading users directory...
                   </td>
                 </tr>
               ) : paginatedUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                  <td colSpan={8} className="py-12 text-center text-slate-400 font-medium">
                     No users found matching your search or filter criteria.
                   </td>
                 </tr>
               ) : (
                 paginatedUsers.map((user, idx) => {
                   const globalIdx = (currentPage - 1) * pageSize + idx + 1;
-                  const isActivated = user.status === "Activated";
+                  const isActivated = statusOverrides[user.id] !== undefined
+                    ? statusOverrides[user.id]
+                    : user.status === "Activated";
                   const displayName = user.fullName || user.email?.split("@")[0] || user.phone || "User";
                   const rawDate = user.registeredOn || user.createdAt;
                   let registeredDate = "—";
@@ -457,40 +465,70 @@ function AdminUsersPage() {
                   }
 
                   return (
-                    <tr key={user.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="px-3 py-3.5 text-center font-medium text-slate-500">{globalIdx}</td>
-                      <td className="px-3 py-3.5 font-medium text-slate-800 truncate max-w-[150px]">
+                    <tr key={user.id} className="group hover:bg-slate-50/80 transition-colors">
+                      <td className="px-3.5 py-3.5 text-center font-bold text-slate-400">{globalIdx}</td>
+                      <td className="px-3.5 py-3.5 font-medium text-slate-900 truncate max-w-[150px]">
                         {displayName}
                       </td>
-                      <td className="px-3 py-3.5 text-slate-600 truncate max-w-[180px]">
+                      <td className="px-3.5 py-3.5 text-slate-600 truncate max-w-[180px]">
                         {user.email || "—"}
                       </td>
-                      <td className="px-3 py-3.5 text-slate-600 whitespace-nowrap">
+                      <td className="px-3.5 py-3.5 text-slate-600 font-mono whitespace-nowrap">
                         {user.phone || "—"}
                       </td>
-                      <td className="px-3 py-3.5 font-medium text-slate-800 whitespace-nowrap">
-                        <div className="text-[11px] text-slate-500 font-semibold">AED</div>
-                        <div className="font-bold text-slate-900">
-                          {(typeof user.walletBalance === "number" ? user.walletBalance : 0).toFixed(2)}
-                        </div>
+                      <td className="px-3.5 py-3.5 font-medium text-slate-800 whitespace-nowrap">
+                        <span className="font-extrabold text-slate-900">
+                          AED {(typeof user.walletBalance === "number" ? user.walletBalance : 0).toFixed(2)}
+                        </span>
                       </td>
-                      <td className="px-3 py-3.5 text-center whitespace-nowrap">
-                        <StatusBadge status={user.status || "Activated"} />
+                      <td className="px-3.5 py-3.5 text-center whitespace-nowrap">
+                        <StatusBadge status={isActivated ? "Activated" : "Deactivated"} />
                       </td>
-                      <td className="px-3 py-3.5 text-slate-700 text-xs whitespace-nowrap">
+                      <td className="px-3.5 py-3.5 text-slate-700 text-xs whitespace-nowrap font-mono">
                         <div>{registeredDate}</div>
                         <div className="text-[11px] text-slate-400 font-normal">{registeredTime}</div>
                       </td>
 
-                      {/* 6 Action Icons */}
-                      <td className="px-2 py-3 text-center align-middle">
-                        <div className="flex items-center gap-1">
-                          <ActionIconButton icon={isActivated ? X : Check} label={isActivated ? "Deactivate" : "Activate"} action={isActivated ? "toggle_off" : "toggle_on"} onClick={() => handleOpenAction(user, "toggle_status")} />
-                          <ActionIconButton icon={Sliders} label="Edit" action="edit" to="/admin/users/edit" search={{ id: user.id }} />
-                          <ActionIconButton icon={Eye} label="View" action="view" onClick={() => handleOpenAction(user, "info")} />
-                          <ActionIconButton icon={KeyRound} label="Password" action="password" onClick={() => handleOpenAction(user, "password")} />
-                          <ActionIconButton icon={Trash2} label="Delete" action="delete" onClick={() => handleOpenAction(user, "delete")} />
-                          <ActionIconButton icon={Send} label="Send" action="send" onClick={() => handleOpenAction(user, "send_credentials")} />
+                      {/* Sticky 6 Action Icons */}
+                      <td className="sticky end-0 bg-white group-hover:bg-slate-50/90 z-10 px-3 py-3 text-center align-middle border-s border-slate-200/80 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.03)]">
+                        <div className="flex items-center justify-center gap-1">
+                          <ActionIconButton
+                            icon={isActivated ? X : Check}
+                            label={isActivated ? "Deactivate" : "Activate"}
+                            action={isActivated ? "toggle_off" : "toggle_on"}
+                            onClick={() => handleToggleUserStatus(user)}
+                          />
+                          <ActionIconButton
+                            icon={Sliders}
+                            label="Edit"
+                            action="edit"
+                            to="/admin/users/edit"
+                            search={{ id: user.id }}
+                          />
+                          <ActionIconButton
+                            icon={Eye}
+                            label="View Info"
+                            action="view"
+                            onClick={() => handleOpenAction(user, "info")}
+                          />
+                          <ActionIconButton
+                            icon={KeyRound}
+                            label="Change Password"
+                            action="password"
+                            onClick={() => handleOpenAction(user, "password")}
+                          />
+                          <ActionIconButton
+                            icon={Trash2}
+                            label="Delete"
+                            action="delete"
+                            onClick={() => handleOpenAction(user, "delete")}
+                          />
+                          <ActionIconButton
+                            icon={Send}
+                            label="Send Credentials"
+                            action="send"
+                            onClick={() => handleOpenAction(user, "send_credentials")}
+                          />
                         </div>
                       </td>
                     </tr>
@@ -501,49 +539,15 @@ function AdminUsersPage() {
           </table>
         </div>
 
-        {/* Pagination Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100 text-xs text-slate-500 font-medium">
-          <div>
-            Showing {filteredUsers.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} to{" "}
-            {Math.min(currentPage * pageSize, filteredUsers.length)} of {filteredUsers.length} entries
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-              className="h-8 px-2 text-xs rounded-lg"
-            >
-              ‹
-            </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <Button
-                key={p}
-                type="button"
-                variant={p === currentPage ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCurrentPage(p)}
-                className={`h-8 w-8 p-0 text-xs font-bold rounded-lg ${
-                  p === currentPage ? "" : "text-slate-600"
-                }`}
-              >
-                {p}
-              </Button>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="h-8 px-2 text-xs rounded-lg"
-            >
-              ›
-            </Button>
-          </div>
-        </div>
+        {/* Standard Table Pagination */}
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={filteredUsers.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </Card>
 
       {/* Action Modals */}

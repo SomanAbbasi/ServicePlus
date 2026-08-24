@@ -22,6 +22,38 @@ export interface CategorySummary {
   seo_description?: string | null;
 }
 
+export interface ServiceVariantSummary {
+  id: string;
+  group_id?: string | null;
+  groupId?: string | null;
+  name: string;
+  name_ar?: string | null;
+  nameAr?: string | null;
+  description?: string | null;
+  description_ar?: string | null;
+  descriptionAr?: string | null;
+  image_url?: string | null;
+  imageUrl?: string | null;
+  price: number;
+  original_price?: number | null;
+  originalPrice?: number | null;
+  duration_minutes?: number | null;
+  durationMinutes?: number | null;
+  max_quantity?: number;
+  maxQuantity?: number;
+}
+
+export interface ServiceOptionGroupSummary {
+  id: string;
+  name: string;
+  name_ar?: string | null;
+  nameAr?: string | null;
+  image_url?: string | null;
+  imageUrl?: string | null;
+  sort_order?: number;
+  options?: ServiceVariantSummary[];
+}
+
 export interface ServiceSummary {
   id: string;
   slug: string;
@@ -36,6 +68,9 @@ export interface ServiceSummary {
   category_id: string;
   name_ar?: string | null;
   is_featured?: boolean;
+  variants?: ServiceVariantSummary[];
+  option_groups?: ServiceOptionGroupSummary[];
+  optionGroups?: ServiceOptionGroupSummary[];
 }
 
 export interface QuoteInput {
@@ -83,8 +118,8 @@ export async function getHomeCatalog() {
 
   const catalog = AdminDataStore.getCatalog();
   return {
-    categories: (catalog.categories ?? []) as unknown as CategorySummary[],
-    services: (catalog.services ?? []) as unknown as ServiceSummary[],
+    categories: (catalog.categories ?? []).filter((c: any) => c.is_active !== false && c.isActive !== false && c.isActive !== 0) as unknown as CategorySummary[],
+    services: (catalog.services ?? []).filter((s: any) => s.is_active !== false && s.isActive !== false && s.isActive !== 0) as unknown as ServiceSummary[],
     listings: catalog.listings ?? [],
     featured_coupon: null,
   };
@@ -106,14 +141,14 @@ export async function getServiceDetail(slug: string) {
   }
 
   const catalog = AdminDataStore.getCatalog();
-  const svc = (catalog.services ?? []).find((s: any) => s.slug === slug || s.id === slug) as any;
+  const svc = (catalog.services ?? []).find((s: any) => (s.slug === slug || s.id === slug) && (s.is_active !== false && s.isActive !== false)) as any;
   if (!svc) return null;
 
   return {
     service: svc,
     variants: [],
     option_groups: [],
-    related: (catalog.services ?? []).filter((s: any) => s.category_id === svc.category_id && s.id !== svc.id) as unknown as ServiceSummary[],
+    related: (catalog.services ?? []).filter((s: any) => s.category_id === svc.category_id && s.id !== svc.id && s.is_active !== false && s.isActive !== false) as unknown as ServiceSummary[],
     addons: [],
   };
 }
@@ -131,10 +166,10 @@ export async function getCategory(slug: string) {
   }
 
   const catalog = AdminDataStore.getCatalog();
-  const cat = (catalog.categories ?? []).find((c: any) => c.slug === slug || c.id === slug) as any;
+  const cat = (catalog.categories ?? []).find((c: any) => (c.slug === slug || c.id === slug) && (c.is_active !== false && c.isActive !== false)) as any;
   if (!cat) return null;
 
-  const svcs = (catalog.services ?? []).filter((s: any) => s.category_id === cat.id) as unknown as ServiceSummary[];
+  const svcs = (catalog.services ?? []).filter((s: any) => s.category_id === cat.id && s.is_active !== false && s.isActive !== false) as unknown as ServiceSummary[];
   return {
     category: cat as CategorySummary,
     services: svcs,
@@ -147,7 +182,12 @@ export async function searchServices(q: string) {
       `/services/search?q=${encodeURIComponent(q)}`,
       { skipAuth: true },
     );
-    if (res) return res;
+    if (res) {
+      return {
+        services: (res.services ?? []).filter((s: any) => s.is_active !== false && s.isActive !== false),
+        categories: (res.categories ?? []).filter((c: any) => c.is_active !== false && c.isActive !== false),
+      };
+    }
   } catch (err) {
     console.warn("[searchServices] Remote fetch fallback to local store:", err);
   }
@@ -155,11 +195,13 @@ export async function searchServices(q: string) {
   const catalog = AdminDataStore.getCatalog();
   const lower = q.toLowerCase();
   const svcs = (catalog.services ?? []).filter((s: any) =>
-    String(s.name ?? "").toLowerCase().includes(lower) ||
-    String(s.description ?? "").toLowerCase().includes(lower)
+    (s.is_active !== false && s.isActive !== false && s.isActive !== 0) &&
+    (String(s.name ?? "").toLowerCase().includes(lower) ||
+    String(s.description ?? "").toLowerCase().includes(lower))
   ) as unknown as ServiceSummary[];
 
   const cats = (catalog.categories ?? []).filter((c: any) =>
+    (c.is_active !== false && c.isActive !== false && c.isActive !== 0) &&
     String(c.name ?? "").toLowerCase().includes(lower)
   ) as unknown as CategorySummary[];
 
@@ -460,9 +502,12 @@ export async function getAdminProfessionals(): Promise<AdminProfessional[]> {
     const local = localList.find((l) => l.id === item.id);
     const prefOverride = preferredMap[item.id] !== undefined ? preferredMap[item.id] : (local?.isPreferred ?? item.isPreferred);
     const resolvedName = local?.name || local?.fullName || item.name || item.fullName || "Tasha Mcdonald";
+    const resolvedStatus = local?.status ?? (item.status === "AVAILABLE" || item.status === "Activated" || item.isActive ? "Activated" : "Deactivated");
     return {
       ...item,
       ...(local || {}),
+      status: resolvedStatus,
+      isActive: resolvedStatus === "Activated",
       isPreferred: Boolean(prefOverride),
       name: resolvedName,
       fullName: resolvedName,
@@ -902,7 +947,18 @@ export async function createProfessional(data: Record<string, unknown>): Promise
 export async function updateProfessional(data: Record<string, unknown>): Promise<{ ok: boolean }> {
   if (data.id) {
     const proId = String(data.id);
-    AdminDataStore.updateProfessional(proId, data as Partial<AdminProfessional>);
+    const patch: Partial<AdminProfessional> = { ...(data as Partial<AdminProfessional>) };
+    if (data.status !== undefined) {
+      const isAct = data.status === "Activated" || data.status === "AVAILABLE" || data.status === "ACTIVE";
+      patch.status = isAct ? "Activated" : "Deactivated";
+      patch.isActive = isAct;
+    } else if (data.isActive !== undefined) {
+      const isAct = Boolean(data.isActive);
+      patch.status = isAct ? "Activated" : "Deactivated";
+      patch.isActive = isAct;
+    }
+    AdminDataStore.updateProfessional(proId, patch);
+
     if (data.isPreferred !== undefined) {
       try {
         const stored = typeof window !== "undefined" ? localStorage.getItem("serviceplus_preferred_pros") : null;
@@ -915,7 +971,13 @@ export async function updateProfessional(data: Record<string, unknown>): Promise
     }
   }
   try {
-    if (getAccessToken()) await post<{ ok: boolean }>("/admin/professional/update", data);
+    if (getAccessToken()) {
+      await post<{ ok: boolean }>("/admin/professional/update", {
+        ...data,
+        status: data.status === "Deactivated" || data.isActive === false ? "SUSPENDED" : "AVAILABLE",
+        isActive: data.status === "Deactivated" || data.isActive === false ? false : true,
+      });
+    }
   } catch {}
   return { ok: true };
 }
@@ -1274,4 +1336,8 @@ export function searchPlaces(query: string) {
 
 export function uploadMedia(filename: string, contentType: string, dataBase64: string) {
   return post<{ url: string }>("/media/upload", { filename, contentType, dataBase64 });
+}
+
+export function deleteMedia(url: string) {
+  return post<{ ok: boolean }>("/media/delete", { url });
 }

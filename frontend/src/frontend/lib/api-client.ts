@@ -65,6 +65,7 @@ export function snakeizeKeys<T>(input: T): T {
 /** Resolve a relative image path (e.g. "/images/catalog/...") to a full backend URL. */
 export function resolveImageUrl(url: string | null | undefined): string {
   if (!url) return "";
+  if (url.startsWith("data:") || url.startsWith("blob:")) return url;
   // If the URL is an inaccessible .r2.dev URL, proxy through backend endpoint
   if (url.includes(".r2.dev/")) {
     const r2Path = url.replace(/^https?:\/\/[^/]+\.r2\.dev\/?/, "");

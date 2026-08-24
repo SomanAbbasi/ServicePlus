@@ -1,11 +1,13 @@
+import { useState, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, Star } from "lucide-react";
 import { FALLBACK_IMAGE } from "@/frontend/components/icons";
 import { formatMoney, num } from "@/frontend/lib/money";
 import { useLocale } from "@/frontend/lib/locale";
 import { localizedText } from "@/frontend/lib/i18n-content";
 import { resolveImageUrl } from "@/frontend/lib/api-client";
-import type { ServiceSummary } from "@/frontend/lib/api-services";
+import { ServiceOptionsModal } from "@/frontend/components/ServiceOptionsModal";
+import type { ServiceSummary, ServiceVariantSummary } from "@/frontend/lib/api-services";
 
 export function ServiceCard({
   service,
@@ -18,6 +20,8 @@ export function ServiceCard({
 }) {
   const { locale, t } = useLocale();
   const isAr = locale === "ar";
+  const [optionsModalOpen, setOptionsModalOpen] = useState(false);
+
   const svcRecord = service as unknown as Record<string, unknown>;
   const name = localizedText(svcRecord, "name", locale) ?? service.name;
   const description =
@@ -28,9 +32,40 @@ export function ServiceCard({
   const imageUrl = resolveImageUrl(service.image_url) || FALLBACK_IMAGE;
   const rating = service.rating ?? 4.8;
 
+  // Extract all variants to determine option count and starting price
+  const variants: ServiceVariantSummary[] = useMemo(() => {
+    if (Array.isArray(service.variants) && service.variants.length > 0) {
+      return service.variants;
+    }
+    const groups = service.option_groups || service.optionGroups || [];
+    const fromGroups: ServiceVariantSummary[] = [];
+    for (const g of groups) {
+      if (Array.isArray(g.options)) {
+        fromGroups.push(...g.options);
+      }
+    }
+    return fromGroups;
+  }, [service]);
+
+  const optionCount = variants.length;
+  const hasOptions = optionCount > 0 || service.booking_type === "variant";
+
+  // Calculate starting price
+  const minPrice = useMemo(() => {
+    if (variants.length > 0) {
+      const prices = variants.map((v) => Number(v.price || 0)).filter((p) => p > 0);
+      if (prices.length > 0) {
+        return Math.min(...prices);
+      }
+    }
+    return Number(service.base_price || 0);
+  }, [variants, service.base_price]);
+
   return (
-    <div
-      className={`group flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-cyan-500/40 ${className}`}
+    <Link
+      to="/booking/$slug"
+      params={{ slug: service.slug }}
+      className={`group flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-cyan-500/40 cursor-pointer ${className}`}
     >
       {/* Image Container with Badges */}
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
@@ -60,7 +95,17 @@ export function ServiceCard({
         </div>
 
         <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-slate-100 flex items-center justify-between gap-1.5">
-          {service.base_price && Number(service.base_price) > 0 ? (
+          {/* Price section: "Starts at AED X" or standard price */}
+          {hasOptions && minPrice > 0 ? (
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                {isAr ? "يبدأ من" : "Starts at"}
+              </span>
+              <span className="text-xs sm:text-sm font-extrabold text-slate-900">
+                AED {minPrice.toFixed(0)}
+              </span>
+            </div>
+          ) : service.base_price && Number(service.base_price) > 0 ? (
             <span className="text-xs sm:text-sm font-extrabold text-slate-900">
               AED {Number(service.base_price).toFixed(0)}
             </span>
@@ -68,17 +113,14 @@ export function ServiceCard({
             <span className="text-[10px] sm:text-xs font-bold text-cyan-700">Best Price</span>
           )}
 
-          <Link
-            to="/booking/$slug"
-            params={{ slug: service.slug }}
-            className="inline-flex items-center justify-center gap-1 rounded-full bg-cyan-500 px-2.5 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-extrabold text-white transition-all hover:bg-cyan-600 shadow-xs active:scale-95 shrink-0"
-          >
+          {/* Consistent "Book now ->" Action button for all services */}
+          <div className="inline-flex items-center justify-center gap-1 rounded-full bg-cyan-500 hover:bg-cyan-600 px-3 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-extrabold text-white transition-all shadow-xs group-hover:bg-cyan-600 active:scale-95 shrink-0">
             <span>{t("bookNow")}</span>
             {isAr ? <ArrowLeft className="size-3" /> : <ArrowRight className="size-3" />}
-          </Link>
+          </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 

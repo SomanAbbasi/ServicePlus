@@ -55,8 +55,12 @@ import {
 } from "@/frontend/components/ui/dialog";
 import { useLocale } from "@/frontend/lib/locale";
 import { localizedText } from "@/frontend/lib/i18n-content";
+import { parseOptionPayload, SubOption } from "@/frontend/lib/sub-options";
 
 export const Route = createFileRoute("/booking/$slug")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    variants: search.variants ? String(search.variants) : undefined,
+  }),
   head: ({ params }) => ({
     meta: [
       { title: "Book your service — ServicePlus" },
@@ -97,6 +101,7 @@ const FREQUENCY_LIST = [
 
 function BookingWizard() {
   const { slug } = Route.useParams();
+  const searchParams = Route.useSearch();
   const navigate = useNavigate();
   const { t, locale } = useLocale();
   const isAr = locale === "ar";
@@ -116,6 +121,23 @@ function BookingWizard() {
   const [selectedAddonDetail, setSelectedAddonDetail] = useState<any | null>(null);
   const [optionQty, setOptionQty] = useState<Record<string, number>>({});
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
+
+  // Initialize optionQty from search params if passed (from ServiceOptionsModal)
+  useEffect(() => {
+    if (searchParams?.variants) {
+      const parsed: Record<string, number> = {};
+      const pairs = searchParams.variants.split(",");
+      for (const pair of pairs) {
+        const [id, qtyStr] = pair.split(":");
+        if (id) {
+          parsed[id] = Number(qtyStr) || 1;
+        }
+      }
+      if (Object.keys(parsed).length > 0) {
+        setOptionQty((prev) => ({ ...prev, ...parsed }));
+      }
+    }
+  }, [searchParams?.variants]);
 
   // Scroll references for date & time sliders
   const dateSliderRef = useRef<HTMLDivElement>(null);
@@ -193,14 +215,100 @@ function BookingWizard() {
 
   const addonPayload = useMemo(() => addonIds.map((id) => ({ id, quantity: 1 })), [addonIds]);
 
-  const optionGroups: any[] = (detail as any)?.option_groups ?? [];
-  const allVariants: any[] = (detail as any)?.variants ?? [];
-  const ungroupedOptions = allVariants.filter((v) => !v.group_id);
-  const hasOptions = optionGroups.length > 0 || ungroupedOptions.length > 0;
-  const selectedGroupId = activeGroup ?? optionGroups[0]?.id ?? null;
-  const visibleOptions = selectedGroupId
-    ? (optionGroups.find((g) => g.id === selectedGroupId)?.options ?? [])
-    : ungroupedOptions;
+  const [selectedPackageOption, setSelectedPackageOption] = useState<any | null>(null);
+
+  const optionGroups: any[] = useMemo(() => {
+    return (detail as any)?.optionGroups ?? (detail as any)?.option_groups ?? [];
+  }, [detail]);
+
+  const allVariants: any[] = useMemo(() => {
+    return (detail as any)?.variants ?? [];
+  }, [detail]);
+
+  const ungroupedOptions = useMemo(() => {
+    return allVariants.filter((v) => !v.group_id && !v.groupId);
+  }, [allVariants]);
+
+  const hasOptions = optionGroups.length > 0 || allVariants.length > 0;
+
+  const activeSelectedGroup = useMemo(() => {
+    if (activeGroup) {
+      return optionGroups.find((g) => String(g.id) === String(activeGroup)) || null;
+    }
+    return optionGroups[0] || null;
+  }, [activeGroup, optionGroups]);
+
+  const selectedGroupId = activeSelectedGroup?.id ?? null;
+
+  const visibleOptions = useMemo(() => {
+    if (selectedGroupId) {
+      const foundGroup = optionGroups.find((g) => String(g.id) === String(selectedGroupId));
+      if (foundGroup?.options && foundGroup.options.length > 0) {
+        return foundGroup.options;
+      }
+      const matched = allVariants.filter(
+        (v) => String(v.group_id) === String(selectedGroupId) || String(v.groupId) === String(selectedGroupId)
+      );
+      if (matched.length > 0) return matched;
+    }
+    if (optionGroups.length > 0) {
+      const first = optionGroups[0];
+      if (first?.options && first.options.length > 0) {
+        return first.options;
+      }
+      const matched = allVariants.filter(
+        (v) => String(v.group_id) === String(first.id) || String(v.groupId) === String(first.id)
+      );
+      if (matched.length > 0) return matched;
+    }
+    return ungroupedOptions.length > 0 ? ungroupedOptions : allVariants;
+  }, [selectedGroupId, optionGroups, allVariants, ungroupedOptions]);
+
+  const allOptionsAndSubOptions = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        nameAr?: string;
+        price: number;
+        durationMinutes?: number;
+        description?: string;
+        imageUrl?: string;
+        groupName?: string;
+        groupNameAr?: string;
+      }
+    >();
+    allVariants.forEach((v: any) => {
+      const vGroup = optionGroups.find((g) => String(g.id) === String(v.group_id || v.groupId));
+      map.set(String(v.id), {
+        id: String(v.id),
+        name: v.name,
+        nameAr: v.name_ar || v.nameAr,
+        price: Number(v.price || 0),
+        durationMinutes: Number(v.duration_minutes || v.durationMinutes || 0),
+        description: v.description,
+        imageUrl: v.image_url || v.imageUrl,
+        groupName: vGroup?.name,
+        groupNameAr: vGroup?.name_ar || vGroup?.nameAr,
+      });
+      const parsed = parseOptionPayload(v);
+      parsed.subOptions.forEach((sub) => {
+        map.set(String(sub.id), {
+          id: String(sub.id),
+          name: `${v.name} - ${sub.name}`,
+          nameAr: `${v.name_ar || v.nameAr || v.name} - ${sub.nameAr || sub.name}`,
+          price: Number(sub.price || 0),
+          durationMinutes: Number(sub.durationMinutes || 0),
+          description: sub.description,
+          imageUrl: sub.imageUrl,
+          groupName: vGroup?.name,
+          groupNameAr: vGroup?.name_ar || vGroup?.nameAr,
+        });
+      });
+    });
+    return map;
+  }, [allVariants, optionGroups]);
 
   const variantPayload = useMemo(
     () =>
@@ -209,6 +317,21 @@ function BookingWizard() {
         .map(([id, quantity]) => ({ id, quantity })),
     [optionQty],
   );
+
+  const totalOptionsDurationMinutes = useMemo(() => {
+    let totalMin = 0;
+    Object.entries(optionQty).forEach(([vId, q]) => {
+      if (q > 0) {
+        const v = allOptionsAndSubOptions.get(vId) || allVariants.find((item: any) => item.id === vId);
+        if (v && v.durationMinutes) {
+          totalMin += Number(v.durationMinutes) * q;
+        } else if (v && (v.duration_minutes || v.durationMinutes)) {
+          totalMin += Number(v.duration_minutes || v.durationMinutes) * q;
+        }
+      }
+    });
+    return totalMin;
+  }, [optionQty, allOptionsAndSubOptions, allVariants]);
 
   const setQty = (id: string, next: number) =>
     setOptionQty((prev) => {
@@ -386,14 +509,35 @@ function BookingWizard() {
     return step + 1;
   }, [step, hasAddons]);
 
+  const svcObj = (detail?.service ?? {}) as any;
+  const isHourlyBooking = svcObj.booking_type === "hourly" || svcObj.bookingType === "hourly" || !hasOptions;
+  const minH = Math.max(1, Number(svcObj.min_hours ?? svcObj.minHours ?? 1));
+  const maxH = Math.max(minH, Number(svcObj.max_hours ?? svcObj.maxHours ?? 8));
+  const hoursList = useMemo(() => {
+    const list: number[] = [];
+    for (let i = minH; i <= maxH; i++) list.push(i);
+    return list.length ? list : [1, 2, 3, 4, 5, 6, 7, 8];
+  }, [minH, maxH]);
+
+  const maxPros = Math.max(1, Number(svcObj.max_professionals ?? svcObj.maxProfessionals ?? 4));
+  const prosList = useMemo(() => {
+    const list: number[] = [];
+    for (let i = 1; i <= maxPros; i++) list.push(i);
+    return list.length ? list : [1, 2, 3, 4];
+  }, [maxPros]);
+
+  const svcMaterialsPrice = Number(svcObj.materials_price ?? svcObj.materialsPrice ?? 0);
+  const materialsLabel = isAr
+    ? (svcObj.materials_label_ar || svcObj.materialsLabelAr || "هل تحتاج مواد تنظيف؟")
+    : (svcObj.materials_label_en || svcObj.materialsLabelEn || "Need cleaning materials?");
+
   const canContinue = useMemo(() => {
-    if (step === 0 && hasOptions) return variantPayload.length > 0;
+    if (step === 0 && !isHourlyBooking) return variantPayload.length > 0;
     if (step === 2) return Boolean(slotStart);
     if (step === 3) return Boolean(addressId || manualAddress.trim() || savedLoc?.address);
     return true;
-  }, [step, slotStart, addressId, manualAddress, savedLoc, hasOptions, variantPayload.length]);
+  }, [step, isHourlyBooking, slotStart, addressId, manualAddress, savedLoc, variantPayload.length]);
 
-  const svcObj = (detail?.service ?? {}) as Record<string, unknown>;
   const serviceTitle = (localizedText(svcObj, "name", locale) ?? (svcObj.name as string) ?? (isAr ? "تنظيف المنازل" : "Home Cleaning")) as string;
   const displayAddress =
     manualAddress.trim() || (savedLoc?.address ? savedLoc.address : (isAr ? "دبي، الإمارات العربية المتحدة" : "Dubai, UAE"));
@@ -480,14 +624,13 @@ function BookingWizard() {
                       <div className="h-24 rounded-2xl bg-slate-100" />
                     </div>
                   </div>
-                ) : hasOptions ? (
-                  /* Deep Cleaning / Multi-Group Sub-Category Selector */
-                  <div className="space-y-5">
-                    {/* Horizontal Group Selector Chips (Matching Reference UI) */}
+                ) : hasOptions && !isHourlyBooking ? (
+                  <div className="space-y-6">
+                    {/* Horizontal Group Selector Carousel (Matching Reference Image 2) */}
                     {optionGroups.length > 0 && (
-                      <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none snap-x">
+                      <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none snap-x">
                         {optionGroups.map((g) => {
-                          const isGroupSelected = selectedGroupId === g.id;
+                          const isGroupSelected = String(selectedGroupId) === String(g.id);
                           const groupImg = resolveImageUrl(g.imageUrl || g.image_url) || FALLBACK_IMAGE;
                           const groupName = localizedText(g, "name", locale) ?? g.name;
                           return (
@@ -495,90 +638,174 @@ function BookingWizard() {
                               key={g.id}
                               type="button"
                               onClick={() => setActiveGroup(g.id)}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-2xl border transition-all shrink-0 text-start snap-start ${
+                              className={`flex flex-col items-center p-2 rounded-2xl border transition-all shrink-0 text-center snap-start w-24 sm:w-28 cursor-pointer select-none ${
                                 isGroupSelected
-                                  ? "border-cyan-500 bg-cyan-50/80 ring-2 ring-cyan-500/20 shadow-2xs font-extrabold text-cyan-900"
-                                  : "border-slate-200 bg-white hover:border-slate-300 text-slate-700 font-bold"
+                                  ? "border-cyan-500 bg-cyan-50/70 ring-2 ring-cyan-500/30 shadow-xs font-extrabold text-cyan-950"
+                                  : "border-slate-200 bg-white hover:border-slate-300 text-slate-700 font-bold shadow-2xs"
                               }`}
                             >
-                              <img src={groupImg} alt={groupName} className="size-8 rounded-xl object-cover shrink-0" />
-                              <span className="text-xs max-w-[120px] sm:max-w-none truncate">{groupName}</span>
+                              <div className="size-16 sm:size-20 rounded-xl overflow-hidden bg-slate-100 mb-1.5 border border-slate-100 flex items-center justify-center">
+                                <img src={groupImg} alt={groupName} className="size-full object-cover" />
+                              </div>
+                              <span className="text-xs font-bold leading-tight truncate w-full px-1">{groupName}</span>
                             </button>
                           );
                         })}
                       </div>
                     )}
 
+                    {/* Active Group Title Header (Matching Reference Image 2) */}
+                    {activeSelectedGroup && (
+                      <div className="pt-1 pb-1">
+                        <h2 className="text-lg sm:text-xl font-extrabold text-slate-900">
+                          {localizedText(activeSelectedGroup, "name", locale) ?? activeSelectedGroup.name}
+                        </h2>
+                      </div>
+                    )}
+
                     {/* Visible Package Options under Active Group */}
                     <div className="space-y-3 pt-1">
-                      {visibleOptions.map((opt: any) => {
-                        const qty = optionQty[opt.id] || 0;
-                        const optImg = resolveImageUrl(opt.imageUrl || opt.image_url) || FALLBACK_IMAGE;
-                        const optOriginal = opt.originalPrice || opt.original_price;
-                        const optName = localizedText(opt, "name", locale) ?? opt.name;
-                        const optDesc = localizedText(opt, "description", locale) ?? opt.description;
+                      {visibleOptions.length === 0 ? (
+                        <div className="py-8 text-center text-slate-400 text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                          {isAr ? "لا توجد خيارات متاحة في هذه المجموعة حالياً." : "No options available in this group."}
+                        </div>
+                      ) : (
+                        visibleOptions.map((opt: any) => {
+                          const parsed = parseOptionPayload(opt);
+                          const hasSubs = parsed.hasSubOptions;
+                          const optImg = resolveImageUrl(opt.imageUrl || opt.image_url) || FALLBACK_IMAGE;
+                          const optOriginal = opt.originalPrice || opt.original_price;
+                          const optDuration = opt.durationMinutes || opt.duration_minutes;
+                          const optName = localizedText(opt, "name", locale) ?? opt.name;
+                          const optDesc = localizedText(parsed, "description", locale) ?? parsed.description;
 
-                        return (
-                          <div
-                            key={opt.id}
-                            className="flex flex-row items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 transition-all shadow-2xs"
-                          >
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                              <div className="size-12 sm:size-16 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100">
-                                <img src={optImg} alt={optName} className="size-full object-cover" />
-                              </div>
-                              <div className="min-w-0 space-y-0.5">
-                                <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 leading-snug">{optName}</h4>
-                                {optDesc && (
-                                  <p className="text-[11px] sm:text-xs text-slate-500 leading-tight line-clamp-2">
-                                    {optDesc}
-                                  </p>
-                                )}
-                                <div className="flex items-center gap-2 pt-0.5">
-                                  <span className="text-xs sm:text-sm font-extrabold text-slate-900">
-                                    AED {Number(opt.price).toFixed(0)}
-                                  </span>
-                                  {optOriginal && (
-                                    <span className="text-[10px] sm:text-xs text-slate-400 line-through font-semibold">
-                                      AED {Number(optOriginal).toFixed(0)}
+                          if (hasSubs) {
+                            const subIds = parsed.subOptions.map((s) => s.id);
+                            const totalPackageQty = subIds.reduce((sum, sId) => sum + (optionQty[sId] || 0), 0);
+
+                            return (
+                              <div
+                                key={opt.id}
+                                className="flex flex-row items-center justify-between gap-4 p-4 sm:p-5 rounded-3xl border border-slate-100/90 bg-white hover:border-slate-200 hover:shadow-xs transition-all shadow-2xs"
+                              >
+                                <div className="flex items-center gap-4 min-w-0 flex-1">
+                                  <div className="flex flex-col items-center shrink-0">
+                                    <div className="size-20 sm:size-24 rounded-2xl overflow-hidden bg-slate-100 border border-slate-100 flex items-center justify-center">
+                                      <img src={optImg} alt={optName} className="size-full object-cover" />
+                                    </div>
+                                    <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-[#9b51e0] text-white mt-1.5 text-center shadow-2xs">
+                                      {parsed.subOptions.length} {isAr ? "خيارات" : "Options"}
                                     </span>
-                                  )}
+                                  </div>
+
+                                  <div className="min-w-0 space-y-1">
+                                    <h4 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">{optName}</h4>
+                                    {optDesc && (
+                                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-2">
+                                        {optDesc}
+                                      </p>
+                                    )}
+                                    <div className="flex items-center gap-2 pt-1 text-xs">
+                                      <span className="text-sm sm:text-base font-extrabold text-slate-900">
+                                        {isAr ? "يبدأ من" : "Starts at"} AED {Number(parsed.lowestPrice).toFixed(0)}
+                                      </span>
+                                      {Boolean(optDuration && Number(optDuration) > 0) && (
+                                        <>
+                                          <span className="text-slate-400">•</span>
+                                          <span className="text-slate-500 font-semibold">{Number(optDuration)} min</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="shrink-0">
+                                  <Button
+                                    type="button"
+                                    onClick={() => setSelectedPackageOption(opt)}
+                                    className="bg-[#00B4D8] hover:bg-[#0096c7] text-white font-extrabold text-xs sm:text-sm px-5 py-2.5 sm:px-6 sm:py-3 rounded-full shadow-xs flex items-center gap-1.5 transition-transform active:scale-95 cursor-pointer"
+                                  >
+                                    {totalPackageQty > 0 ? (
+                                      <span>{totalPackageQty} {isAr ? "محدد" : "Selected"}</span>
+                                    ) : (
+                                      <span>{isAr ? "إضافة +" : "Add +"}</span>
+                                    )}
+                                  </Button>
                                 </div>
                               </div>
-                            </div>
+                            );
+                          }
 
-                            <div className="shrink-0">
-                              {qty === 0 ? (
-                                <Button
-                                  type="button"
-                                  onClick={() => setQty(opt.id, 1)}
-                                  className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs px-3.5 py-1.5 sm:px-5 sm:py-2 rounded-full shadow-2xs"
-                                >
-                                  {isAr ? "إضافة +" : "Add +"}
-                                </Button>
-                              ) : (
-                                <div className="flex items-center gap-1.5 rounded-full border border-cyan-500 bg-cyan-50 px-1.5 py-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => setQty(opt.id, qty - 1)}
-                                    className="grid size-5 sm:size-6 place-items-center rounded-full bg-white text-cyan-800 font-bold text-xs shadow-2xs"
-                                  >
-                                    -
-                                  </button>
-                                  <span className="text-xs font-extrabold text-cyan-900 px-1">{qty}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => setQty(opt.id, qty + 1)}
-                                    className="grid size-5 sm:size-6 place-items-center rounded-full bg-cyan-600 text-white font-bold text-xs shadow-2xs"
-                                  >
-                                    +
-                                  </button>
+                          const qty = optionQty[opt.id] || 0;
+
+                          return (
+                            <div
+                              key={opt.id}
+                              className="flex flex-row items-center justify-between gap-4 p-4 sm:p-5 rounded-3xl border border-slate-100/90 bg-white hover:border-slate-200 hover:shadow-xs transition-all shadow-2xs"
+                            >
+                              <div className="flex items-center gap-4 min-w-0 flex-1">
+                                <div className="size-20 sm:size-24 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100 flex items-center justify-center">
+                                  <img src={optImg} alt={optName} className="size-full object-cover" />
                                 </div>
-                              )}
+                                <div className="min-w-0 space-y-1">
+                                  <h4 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">{optName}</h4>
+                                  {optDesc && (
+                                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-2">
+                                      {optDesc}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center gap-2 pt-1 text-xs">
+                                    <span className="text-sm sm:text-base font-extrabold text-slate-900">
+                                      AED {Number(opt.price).toFixed(0)}
+                                    </span>
+                                    {Boolean(optOriginal && Number(optOriginal) > 0) && (
+                                      <span className="text-xs sm:text-sm text-slate-400 line-through font-semibold">
+                                        AED {Number(optOriginal).toFixed(0)}
+                                      </span>
+                                    )}
+                                    {Boolean(optDuration && Number(optDuration) > 0) && (
+                                      <>
+                                        <span className="text-slate-400">•</span>
+                                        <span className="text-slate-500 font-semibold">{Number(optDuration)} min</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="shrink-0">
+                                {qty === 0 ? (
+                                  <Button
+                                    type="button"
+                                    onClick={() => setQty(opt.id, 1)}
+                                    className="bg-[#00B4D8] hover:bg-[#0096c7] text-white font-extrabold text-xs sm:text-sm px-5 py-2.5 sm:px-6 sm:py-3 rounded-full shadow-xs active:scale-95 cursor-pointer"
+                                  >
+                                    {isAr ? "إضافة +" : "Add +"}
+                                  </Button>
+                                ) : (
+                                  <div className="flex items-center gap-2 rounded-full border border-[#00B4D8] bg-cyan-50/60 px-2 py-1.5 shadow-2xs">
+                                    <button
+                                      type="button"
+                                      onClick={() => setQty(opt.id, qty - 1)}
+                                      className="grid size-6 place-items-center rounded-full bg-white text-cyan-800 font-bold text-xs shadow-2xs hover:bg-slate-50 cursor-pointer"
+                                    >
+                                      -
+                                    </button>
+                                    <span className="text-xs font-extrabold text-cyan-950 px-1">{qty}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setQty(opt.id, qty + 1)}
+                                      className="grid size-6 place-items-center rounded-full bg-[#00B4D8] text-white font-bold text-xs shadow-2xs hover:bg-[#0096c7] cursor-pointer"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })
+                      )}
                     </div>
 
                     <div className="pt-4 border-t border-slate-100">
@@ -604,7 +831,7 @@ function BookingWizard() {
                         <Info className="size-4 text-slate-400 shrink-0" />
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((h) => (
+                        {hoursList.map((h) => (
                           <button
                             key={h}
                             type="button"
@@ -629,7 +856,7 @@ function BookingWizard() {
                         </Label>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {[1, 2, 3, 4].map((p) => (
+                        {prosList.map((p) => (
                           <button
                             key={p}
                             type="button"
@@ -648,10 +875,11 @@ function BookingWizard() {
 
                     {/* 3. Cleaning Materials Selector */}
                     <div>
-                      <div className="mb-3">
+                      <div className="mb-3 flex items-center gap-2">
                         <Label className="text-xs sm:text-sm font-bold text-slate-900">
-                          {isAr ? "هل تحتاج مواد تنظيف؟" : "Need cleaning materials?"}
+                          {materialsLabel}
                         </Label>
+                        <Info className="size-4 text-slate-400 shrink-0" />
                       </div>
                       <div className="flex flex-wrap gap-2.5">
                         <button
@@ -675,6 +903,7 @@ function BookingWizard() {
                           }`}
                         >
                           {isAr ? "نعم، يرجى توفيرها" : "Yes, please"}
+                          {svcMaterialsPrice > 0 ? ` (+AED ${svcMaterialsPrice})` : ""}
                         </button>
                       </div>
                     </div>
@@ -1125,6 +1354,129 @@ function BookingWizard() {
                   </div>
                 )}
 
+                {/* Clear Payment Details Breakdown Box (Transparent Order Details) */}
+                <div className="rounded-2xl border border-cyan-200/80 bg-cyan-50/40 p-4 sm:p-5 space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-cyan-100">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="size-4 text-cyan-600 shrink-0" />
+                      <h3 className="text-xs sm:text-sm font-extrabold text-slate-900">
+                        {isAr ? "تفاصيل الدفع والحساب الكاملة" : "Clear Payment Details & Breakdown"}
+                      </h3>
+                    </div>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
+                      <ShieldCheck className="size-3" />
+                      {isAr ? "دفع آمن ومضمون" : "100% Secure"}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 text-xs text-slate-700">
+                    {/* Main Service or Options Lines */}
+                    {Object.entries(optionQty).some(([, q]) => q > 0) ? (
+                      <div className="space-y-1.5 pb-2 border-b border-cyan-100/70">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                          {isAr ? "الباقات والخيارات المحددة:" : "Selected Options & Packages:"}
+                        </span>
+                        {Object.entries(optionQty)
+                          .filter(([, q]) => q > 0)
+                          .map(([vId, q]) => {
+                            const v = allVariants.find((item: any) => item.id === vId);
+                            if (!v) return null;
+                            const unitP = Number(v.price || v.base_price || 0);
+                            const itemPrice = unitP * q;
+                            const vName = localizedText(v, "name", locale) ?? v.name;
+                            return (
+                              <div key={vId} className="flex justify-between items-center py-0.5">
+                                <div className="min-w-0 pr-2">
+                                  <span className="font-bold text-slate-800">{vName}</span>
+                                  <span className="text-slate-400 font-semibold ms-1 text-[11px]">
+                                    (AED {unitP.toFixed(0)} × {q})
+                                  </span>
+                                </div>
+                                <span className="font-extrabold text-slate-900 shrink-0">
+                                  AED {itemPrice.toFixed(2)}
+                                </span>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    ) : (
+                      (quote?.breakdown as any)?.subtotal !== undefined && Number((quote?.breakdown as any)?.subtotal) > 0 && (
+                        <div className="flex justify-between items-center py-0.5">
+                          <span className="font-semibold text-slate-700">
+                            {serviceTitle} ({hours} {isAr ? "ساعات" : "hrs"} × {professionals} {isAr ? "محترف" : "pro"})
+                          </span>
+                          <span className="font-extrabold text-slate-900">
+                            AED {Number((quote?.breakdown as any)?.subtotal || 0).toFixed(2)}
+                          </span>
+                        </div>
+                      )
+                    )}
+
+                    {/* Addons Line Items if any */}
+                    {addonIds.length > 0 && (
+                      <div className="space-y-1 py-1 border-b border-cyan-100/70">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                          {isAr ? "الخدمات الإضافية:" : "Add-on Services:"}
+                        </span>
+                        {addons
+                          .filter((a: any) => addonIds.includes(a.id))
+                          .map((a: any) => {
+                            const aName = localizedText(a, "name", locale) ?? a.name;
+                            const aPrice = Number(a.price || 0);
+                            return (
+                              <div key={a.id} className="flex justify-between items-center py-0.5">
+                                <span className="font-semibold text-slate-700">{aName}</span>
+                                <span className="font-bold text-cyan-800">
+                                  +AED {aPrice.toFixed(2)}
+                                </span>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    )}
+
+                    {/* Materials fee if any */}
+                    {materials && (
+                      <div className="flex justify-between items-center py-0.5">
+                        <span className="text-slate-600 font-semibold">{isAr ? "مواد التنظيف" : "Cleaning Materials"}</span>
+                        <span className="font-bold text-slate-800">
+                          AED {Number((quote?.breakdown as any)?.materials || 0).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Frequency Discount Line if any */}
+                    {(quote?.breakdown as any)?.frequencyDiscount !== undefined && Number((quote?.breakdown as any)?.frequencyDiscount) > 0 && (
+                      <div className="flex justify-between items-center py-0.5 text-emerald-700 font-bold">
+                        <span className="inline-flex items-center gap-1">
+                          <RefreshCw className="size-3 text-emerald-600" />
+                          {isAr ? `خصم التكرار (${frequencyTitle})` : `Frequency Discount (${frequencyTitle})`}
+                        </span>
+                        <span>-AED {Number((quote?.breakdown as any)?.frequencyDiscount || 0).toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Coupon Discount Line if any */}
+                    {(quote?.breakdown as any)?.discount ? (
+                      <div className="flex justify-between items-center py-0.5 text-emerald-700 font-bold">
+                        <span className="inline-flex items-center gap-1">
+                          <Tag className="size-3 text-emerald-600" />
+                          {isAr ? `خصم الكوبون (${appliedCoupon})` : `Coupon Discount (${appliedCoupon})`}
+                        </span>
+                        <span>-AED {Number((quote?.breakdown as any)?.discount || 0).toFixed(2)}</span>
+                      </div>
+                    ) : null}
+
+                    {/* Total Row */}
+                    <div className="flex justify-between items-center pt-2.5 border-t border-cyan-200 text-sm font-black text-slate-900">
+                      <span>{isAr ? "المبلغ الإجمالي للدفع:" : "Total Payable Amount:"}</span>
+                      <span className="text-base sm:text-lg font-black text-cyan-900 font-mono">
+                        AED {Number((quote?.breakdown as any)?.total || 0).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Coupon Code */}
                 <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-2">
                   <Label className="text-xs font-extrabold text-slate-800">{t("booking.applyCoupon")}</Label>
@@ -1296,43 +1648,77 @@ function BookingWizard() {
               <div className="flex justify-between items-center gap-2">
                 <span className="text-slate-400 font-semibold shrink-0">{t("booking.row.duration")}</span>
                 <span className="font-bold text-slate-800 text-end">
-                  {isAr ? `${hours} ساعات` : `${hours} hours`}
+                  {isHourlyBooking
+                    ? isAr ? `${hours} ساعات` : `${hours} hours`
+                    : totalOptionsDurationMinutes > 0
+                    ? totalOptionsDurationMinutes >= 60
+                      ? isAr
+                        ? `${Math.floor(totalOptionsDurationMinutes / 60)} س ${totalOptionsDurationMinutes % 60 > 0 ? `${totalOptionsDurationMinutes % 60} د` : ""}`
+                        : `${Math.floor(totalOptionsDurationMinutes / 60)} hr${Math.floor(totalOptionsDurationMinutes / 60) > 1 ? "s" : ""} ${totalOptionsDurationMinutes % 60 > 0 ? `${totalOptionsDurationMinutes % 60} min` : ""}`
+                      : isAr ? `${totalOptionsDurationMinutes} دقيقة` : `${totalOptionsDurationMinutes} mins`
+                    : "—"}
                 </span>
               </div>
 
               <div className="flex justify-between items-center gap-2">
                 <span className="text-slate-400 font-semibold shrink-0">{t("booking.row.when")}</span>
                 <span className="font-bold text-slate-800 text-end">
-                  {formattedDateString}, {formattedTimeRange}
+                  {slotStart ? `${formattedDateString}, ${formattedTimeRange}` : isAr ? "يحدد لاحقاً" : "To be selected"}
                 </span>
               </div>
 
-              <div className="flex justify-between items-center gap-2">
-                <span className="text-slate-400 font-semibold shrink-0">{t("booking.row.pros")}</span>
-                <span className="font-bold text-slate-800 text-end">{professionals}</span>
-              </div>
+              {isHourlyBooking && (
+                <>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-slate-400 font-semibold shrink-0">{t("booking.row.pros")}</span>
+                    <span className="font-bold text-slate-800 text-end">{professionals}</span>
+                  </div>
 
-              <div className="flex justify-between items-center gap-2">
-                <span className="text-slate-400 font-semibold shrink-0">{t("booking.row.materials")}</span>
-                <span className="font-bold text-slate-800 text-end">{materials ? (isAr ? "نعم" : "Yes") : (isAr ? "لا" : "No")}</span>
-              </div>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-slate-400 font-semibold shrink-0">{t("booking.row.materials")}</span>
+                    <span className="font-bold text-slate-800 text-end">
+                      {materials ? (isAr ? "نعم" : "Yes") : (isAr ? "لا" : "No")}
+                      {materials && svcMaterialsPrice > 0 ? ` (+AED ${svcMaterialsPrice})` : ""}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {/* Special Instructions in Booking Details */}
+              {instructions.trim() && (
+                <div className="pt-2 border-t border-slate-100 space-y-1">
+                  <span className="text-slate-400 font-semibold block">{isAr ? "التعليمات الخاصة:" : "Special Instructions:"}</span>
+                  <p className="font-bold text-slate-800 text-xs italic bg-slate-50 p-2.5 rounded-xl border border-slate-100 leading-snug break-words">
+                    "{instructions.trim()}"
+                  </p>
+                </div>
+              )}
 
               {/* Selected Options/Variants List */}
               {Object.entries(optionQty).some(([, q]) => q > 0) && (
-                <div className="pt-2 border-t border-slate-100 space-y-1.5">
-                  <span className="text-slate-400 font-semibold block mb-1">{t("booking.selectedPackageOptions")}</span>
+                <div className="pt-2 border-t border-slate-100 space-y-2">
+                  <span className="text-slate-400 font-semibold block text-xs mb-1">{t("booking.selectedPackageOptions")}</span>
                   {Object.entries(optionQty)
                     .filter(([, q]) => q > 0)
                     .map(([vId, q]) => {
-                      const v = allVariants.find((item: any) => item.id === vId);
+                      const v = allOptionsAndSubOptions.get(vId) || allVariants.find((item: any) => String(item.id) === String(vId));
                       if (!v) return null;
-                      const itemPrice = Number(v.price || v.base_price || 0) * q;
+                      const itemPrice = Number(v.price || 0) * q;
                       const vName = localizedText(v, "name", locale) ?? v.name;
+                      const itemDuration = v.durationMinutes || v.duration_minutes;
                       return (
-                        <div key={vId} className="flex justify-between items-center text-xs">
-                          <span className="font-bold text-slate-700 truncate me-2">
-                            {vName} {q > 1 ? `(x${q})` : ""}
-                          </span>
+                        <div key={vId} className="flex justify-between items-start text-xs py-1 border-b border-slate-50 last:border-b-0">
+                          <div className="min-w-0 me-2 space-y-0.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-slate-800">{vName}</span>
+                              <span className="text-[11px] font-bold text-cyan-700 bg-cyan-50 px-1.5 py-0.2 rounded shrink-0">x{q}</span>
+                            </div>
+                            {itemDuration && Number(itemDuration) > 0 ? (
+                              <p className="text-[11px] text-slate-400 font-medium">
+                                ⏱️ {Number(itemDuration) * q} min
+                              </p>
+                            ) : null}
+                          </div>
                           <span className="font-extrabold text-cyan-600 shrink-0">
                             +AED {itemPrice.toFixed(0)}
                           </span>
@@ -1366,12 +1752,18 @@ function BookingWizard() {
               <div className="mt-6 pt-4 border-t border-slate-100 space-y-2">
                 <h3 className="font-extrabold text-slate-900 text-sm mb-3">{t("booking.paymentSummary")}</h3>
                 
-                {(quote?.breakdown as any)?.subtotal !== undefined && Number((quote?.breakdown as any)?.subtotal) > 0 && (
+                {((quote?.breakdown as any)?.subtotal !== undefined && Number((quote?.breakdown as any)?.subtotal) > 0) || isHourlyBooking ? (
                   <div className="flex justify-between items-center text-xs text-slate-600">
                     <span>{t("booking.baseServiceLine")}</span>
-                    <span>AED {Number((quote?.breakdown as any)?.subtotal || 0).toFixed(2)}</span>
+                    <span>
+                      AED{" "}
+                      {Number(
+                        (quote?.breakdown as any)?.subtotal ??
+                          (Number(svcObj.hourly_rate ?? svcObj.hourlyRate ?? svcObj.base_price ?? 39) * hours * professionals)
+                      ).toFixed(2)}
+                    </span>
                   </div>
-                )}
+                ) : null}
 
                 {(quote?.breakdown as any)?.items !== undefined && Number((quote?.breakdown as any)?.items) > 0 && (
                   <div className="flex justify-between items-center text-xs text-slate-600">
@@ -1384,6 +1776,25 @@ function BookingWizard() {
                   <div className="flex justify-between items-center text-xs text-slate-600">
                     <span>{t("booking.addons")}</span>
                     <span>AED {Number((quote?.breakdown as any)?.addons || 0).toFixed(2)}</span>
+                  </div>
+                )}
+
+                {materials && (
+                  <div className="flex justify-between items-center text-xs text-slate-600">
+                    <span>{isAr ? "مواد التنظيف" : "Cleaning Materials"}</span>
+                    <span>
+                      AED{" "}
+                      {Number(
+                        (quote?.breakdown as any)?.materials ?? svcMaterialsPrice
+                      ).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
+                {(quote?.breakdown as any)?.frequencyDiscount !== undefined && Number((quote?.breakdown as any)?.frequencyDiscount) > 0 && (
+                  <div className="flex justify-between items-center text-xs text-emerald-600 font-bold">
+                    <span>{isAr ? "خصم التكرار" : "Frequency Discount"}</span>
+                    <span>-AED {Number((quote?.breakdown as any)?.frequencyDiscount || 0).toFixed(2)}</span>
                   </div>
                 )}
 
@@ -1717,6 +2128,110 @@ function BookingWizard() {
             >
               {isAr ? "عرض حجوزاتي" : "View My Bookings"}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* PACKAGE MULTI-OPTIONS MODAL (MATCHING IMAGE 4) */}
+      <Dialog open={Boolean(selectedPackageOption)} onOpenChange={(open) => !open && setSelectedPackageOption(null)}>
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto bg-white rounded-3xl p-5 sm:p-6 border-slate-100 shadow-2xl">
+          <DialogHeader className="flex flex-row items-center justify-between pb-3 border-b border-slate-100 space-y-0">
+            <DialogTitle className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+              {localizedText(selectedPackageOption, "name", locale) ?? selectedPackageOption?.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3.5 pt-3">
+            {selectedPackageOption &&
+              parseOptionPayload(selectedPackageOption).subOptions.map((sub: SubOption) => {
+                const qty = optionQty[sub.id] || 0;
+                const subImg = resolveImageUrl(sub.imageUrl) || FALLBACK_IMAGE;
+                const subName = localizedText(sub, "name", locale) ?? sub.name;
+                const subDesc = localizedText(sub, "description", locale) ?? sub.description;
+                const hasDuration = Boolean(sub.durationMinutes && Number(sub.durationMinutes) > 0);
+
+                return (
+                  <div
+                    key={sub.id}
+                    className="flex flex-row items-center justify-between gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl bg-[#F8F9FA] border border-slate-100 hover:border-slate-200 hover:shadow-2xs transition-all"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                      {sub.imageUrl ? (
+                        <div className="size-16 sm:size-20 rounded-2xl overflow-hidden bg-white border border-slate-100 flex items-center justify-center shrink-0 shadow-2xs">
+                          <img src={subImg} alt={subName} className="size-full object-cover" />
+                        </div>
+                      ) : hasDuration ? (
+                        <div className="size-16 sm:size-20 rounded-2xl bg-rose-50/90 border border-rose-100/80 p-2 flex flex-col items-center justify-center shrink-0 text-center shadow-2xs">
+                          <span className="text-[10px] sm:text-[11px] text-rose-500 font-semibold leading-tight">
+                            {isAr ? "فردي" : "Single"}
+                          </span>
+                          <span className="text-lg sm:text-2xl font-black text-rose-700 leading-none my-0.5">
+                            {sub.durationMinutes}
+                          </span>
+                          <span className="text-[10px] sm:text-[11px] text-rose-600 font-semibold leading-tight">
+                            {isAr ? "دقيقة" : "Min"}
+                          </span>
+                        </div>
+                      ) : null}
+
+                      <div className="min-w-0 space-y-1">
+                        <h4 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">{subName}</h4>
+                        {subDesc ? (
+                          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-2">
+                            {subDesc}
+                          </p>
+                        ) : null}
+                        <div className="flex items-center gap-2 pt-1 text-xs sm:text-sm">
+                          <span className="font-extrabold text-slate-900">
+                            AED {Number(sub.price).toFixed(0)}
+                          </span>
+                          {Boolean(sub.originalPrice && Number(sub.originalPrice) > 0) && (
+                            <span className="text-slate-400 line-through font-semibold text-xs sm:text-sm">
+                              AED {Number(sub.originalPrice).toFixed(0)}
+                            </span>
+                          )}
+                          {hasDuration && (
+                            <>
+                              <span className="text-slate-400">•</span>
+                              <span className="text-slate-500 font-semibold">{Number(sub.durationMinutes)} min</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 flex justify-end">
+                      {qty === 0 ? (
+                        <Button
+                          type="button"
+                          onClick={() => setQty(sub.id, 1)}
+                          className="bg-[#00B4D8] hover:bg-[#0096c7] text-white font-extrabold text-xs sm:text-sm px-5 py-2 sm:px-6 sm:py-2.5 rounded-full shadow-xs active:scale-95 cursor-pointer"
+                        >
+                          {isAr ? "إضافة +" : "Add +"}
+                        </Button>
+                      ) : (
+                        <div className="flex items-center gap-2 rounded-full border border-[#00B4D8] bg-cyan-50/60 px-2 py-1.5 shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => setQty(sub.id, qty - 1)}
+                            className="grid size-6 place-items-center rounded-full bg-white text-cyan-800 font-bold text-xs shadow-2xs hover:bg-slate-50 cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <span className="text-xs font-extrabold text-cyan-950 px-1">{qty}</span>
+                          <button
+                            type="button"
+                            onClick={() => setQty(sub.id, qty + 1)}
+                            className="grid size-6 place-items-center rounded-full bg-[#00B4D8] text-white font-bold text-xs shadow-2xs hover:bg-[#0096c7] cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </DialogContent>
       </Dialog>
