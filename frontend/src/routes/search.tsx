@@ -71,12 +71,19 @@ function SearchPage() {
 
   const grouped = sortedCategories
     .map((cat) => {
-      const listed = listings
-        .filter((l) => l.category_id === cat.id)
-        .sort((a, b) => a.sort_order - b.sort_order)
-        .map((l) => byId.get(l.service_id))
-        .filter((s): s is (typeof services)[number] => Boolean(s));
-      const items = listed.length ? listed : services.filter((s) => s.category_id === cat.id);
+      const catServices = services.filter(
+        (s) => (s.category_id || (s as any).categoryId) === cat.id
+      );
+      const catListingOrder = new Map(
+        listings
+          .filter((l) => (l.category_id || (l as any).categoryId) === cat.id)
+          .map((l) => [l.service_id || (l as any).serviceId, l.sort_order ?? (l as any).sortOrder ?? 0])
+      );
+      const items = [...catServices].sort((a, b) => {
+        const orderA = catListingOrder.has(a.id) ? catListingOrder.get(a.id)! : (a.sort_order ?? (a as any).sortOrder ?? 0);
+        const orderB = catListingOrder.has(b.id) ? catListingOrder.get(b.id)! : (b.sort_order ?? (b as any).sortOrder ?? 0);
+        return orderA - orderB;
+      });
       return { cat, items };
     })
     .filter((g) => g.items.length > 0);

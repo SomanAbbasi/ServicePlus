@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getAdminCatalog, updateService, uploadMedia } from "@/frontend/lib/api-services";
 import { AdminService, AdminDataStore } from "@/frontend/lib/admin-mock-data";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
@@ -8,7 +8,6 @@ import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { Card } from "@/frontend/components/ui/card";
 import { Label } from "@/frontend/components/ui/label";
-import { Textarea } from "@/frontend/components/ui/textarea";
 import { Switch } from "@/frontend/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
 import { Save, SlidersHorizontal, Upload, X } from "lucide-react";
@@ -32,10 +31,6 @@ function EditServicePage() {
   const { data: catalogData } = useAdminQuery("catalog", getAdminCatalog);
   const services: AdminService[] = (catalogData as any)?.services ?? AdminDataStore.getServices();
   const allCategories = (catalogData as any)?.categories ?? AdminDataStore.getCategories();
-  // Filter only active categories for selection
-  const categories = (allCategories as any[]).filter(
-    (c) => c.is_active === true || c.isActive === true || c.status === "Activated"
-  );
 
   const service = services.find((s) => s.id === id || String(s.id) === String(id)) ?? AdminDataStore.getServices().find((s) => s.id === id || String(s.id) === String(id));
 
@@ -45,12 +40,10 @@ function EditServicePage() {
   // English fields
   const [nameEn, setNameEn] = useState("");
   const [shortDescEn, setShortDescEn] = useState("");
-  const [descEn, setDescEn] = useState("");
 
   // Arabic fields
   const [nameAr, setNameAr] = useState("");
   const [shortDescAr, setShortDescAr] = useState("");
-  const [descAr, setDescAr] = useState("");
 
   // Configuration fields
   const [categoryId, setCategoryId] = useState("");
@@ -73,16 +66,24 @@ function EditServicePage() {
   const [isCompressing, setIsCompressing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // All categories available in the system
+  const categories = useMemo(() => {
+    const list = ((catalogData as any)?.categories ?? AdminDataStore.getCategories()) as any[];
+    if (!Array.isArray(list)) return [];
+    return list;
+  }, [catalogData]);
+
   useEffect(() => {
     if (service) {
       setNameEn(service.name || "");
       setNameAr(service.name_ar || service.nameAr || "");
       setShortDescEn(service.short_description || service.shortDescription || "");
       setShortDescAr((service as any).short_description_ar || (service as any).shortDescriptionAr || "");
-      setDescEn(service.description || "");
-      setDescAr(service.description_ar || service.descriptionAr || "");
-      setCategoryId(service.category_id || service.categoryId || "");
-      setBookingType(service.booking_type || service.bookingType || "hourly");
+      const catId = service.category_id ?? service.categoryId ?? (service as any).category?.id ?? "";
+      if (catId) setCategoryId(String(catId));
+      const rawType = String(service.booking_type || service.bookingType || "hourly").toLowerCase();
+      const normalizedType = rawType === "fixed" || rawType === "package" ? "fixed" : rawType === "variant" || rawType === "options" ? "variant" : "hourly";
+      setBookingType(normalizedType);
       setBasePrice(String(service.base_price ?? service.basePrice ?? "0"));
       setHourlyRate(String(service.hourly_rate ?? service.hourlyRate ?? ""));
       setMaterialsPrice(String(service.materials_price ?? service.materialsPrice ?? ""));
@@ -162,9 +163,6 @@ function EditServicePage() {
         short_description: shortDescEn.trim() || undefined,
         shortDescriptionAr: shortDescAr.trim() || undefined,
         short_description_ar: shortDescAr.trim() || undefined,
-        description: descEn.trim() || undefined,
-        description_ar: descAr.trim() || undefined,
-        descriptionAr: descAr.trim() || undefined,
         bookingType: bookingType,
         booking_type: bookingType,
         basePrice: parseFloat(basePrice) || 0,
@@ -344,19 +342,6 @@ function EditServicePage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-slate-700">Full Description (English)</Label>
-                <Textarea
-                  placeholder="Detailed description of what is included in this service"
-                  value={descEn}
-                  onChange={(e) => setDescEn(e.target.value)}
-                  rows={4}
-                  className="bg-white border-slate-200 rounded-lg text-xs"
-                  autoComplete="off"
-                  name="service_desc_en"
-                />
-              </div>
-
-              <div className="space-y-1.5">
                 <Label className="text-xs font-bold text-slate-700">Cleaning Materials Label (English)</Label>
                 <Input
                   placeholder="e.g. Need cleaning materials? Powered by Jif"
@@ -399,19 +384,6 @@ function EditServicePage() {
               </div>
 
               <div className="space-y-1.5 text-right">
-                <Label className="text-xs font-bold text-slate-700">الوصف التفصيلي (عربي)</Label>
-                <Textarea
-                  placeholder="وصف تفصيلي للخدمة وما تشمله من مزايا"
-                  value={descAr}
-                  onChange={(e) => setDescAr(e.target.value)}
-                  rows={4}
-                  className="bg-white border-slate-200 rounded-lg text-xs text-right"
-                  autoComplete="off"
-                  name="service_desc_ar"
-                />
-              </div>
-
-              <div className="space-y-1.5 text-right">
                 <Label className="text-xs font-bold text-slate-700">عنوان مواد التنظيف (عربي)</Label>
                 <Input
                   placeholder="مثال: هل تحتاج إلى مواد تنظيف؟"
@@ -430,18 +402,25 @@ function EditServicePage() {
               General Configuration & Pricing
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Category (Active Only) */}
+              {/* Category */}
               <div className="space-y-1.5">
                 <Label className="text-xs font-bold text-slate-700">
                   Category <span className="text-red-500">*</span>
                 </Label>
-                <Select value={categoryId} onValueChange={setCategoryId} required>
+                <Select
+                  key={`cat-select-${service?.id || "svc"}-${categoryId || "none"}`}
+                  value={categoryId ? String(categoryId) : undefined}
+                  onValueChange={setCategoryId}
+                  required
+                >
                   <SelectTrigger className="h-11 bg-white border-slate-200 rounded-lg text-xs font-semibold">
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder="Select category">
+                      {categories.find((c) => String(c.id) === String(categoryId))?.name}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id} className="text-xs font-semibold">
+                      <SelectItem key={String(c.id)} value={String(c.id)} className="text-xs font-semibold">
                         {c.name}
                       </SelectItem>
                     ))}
@@ -452,9 +431,21 @@ function EditServicePage() {
               {/* Booking Type */}
               <div className="space-y-1.5">
                 <Label className="text-xs font-bold text-slate-700">Booking Type</Label>
-                <Select value={bookingType} onValueChange={setBookingType}>
+                <Select
+                  key={`booking-type-select-${service?.id || "svc"}-${bookingType || "none"}`}
+                  value={bookingType}
+                  onValueChange={setBookingType}
+                >
                   <SelectTrigger className="h-11 bg-white border-slate-200 rounded-lg text-xs font-semibold">
-                    <SelectValue placeholder="Select booking type" />
+                    <SelectValue placeholder="Select booking type">
+                      {bookingType === "hourly"
+                        ? "Hourly Rate (How many hours / pros / materials)"
+                        : bookingType === "fixed"
+                        ? "Fixed Price"
+                        : bookingType === "variant"
+                        ? "Options & Variants"
+                        : bookingType}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="hourly" className="text-xs font-semibold">
@@ -474,7 +465,9 @@ function EditServicePage() {
               {bookingType === "hourly" ? (
                 <>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-700">Hourly Rate (AED / Hour)</Label>
+                    <Label className="text-xs font-bold text-slate-700">
+                      Hourly Rate per Worker (AED / Hour)
+                    </Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -485,7 +478,7 @@ function EditServicePage() {
                         setHourlyRate(e.target.value);
                         if (!basePrice || basePrice === "0") setBasePrice(e.target.value);
                       }}
-                      className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                      className="h-11 bg-white border-slate-200 rounded-lg text-xs font-semibold"
                     />
                   </div>
 
@@ -505,49 +498,44 @@ function EditServicePage() {
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-slate-700">Hours Range (Min - Max)</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        type="number"
-                        min="1"
-                        max="24"
-                        placeholder="Min (1)"
-                        value={minHours || ""}
-                        onChange={(e) => setMinHours(Number(e.target.value) || 1)}
-                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                      />
-                      <Input
-                        type="number"
-                        min="1"
-                        max="24"
-                        placeholder="Max (8)"
-                        value={maxHours || ""}
-                        onChange={(e) => setMaxHours(Number(e.target.value) || 8)}
-                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                      />
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-slate-400 font-medium">Minimum Hours</span>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="24"
+                          placeholder="Min (1)"
+                          value={minHours || ""}
+                          onChange={(e) => setMinHours(Number(e.target.value) || 1)}
+                          className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-slate-400 font-medium">Maximum Hours</span>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="24"
+                          placeholder="Max (8)"
+                          value={maxHours || ""}
+                          onChange={(e) => setMaxHours(Number(e.target.value) || 8)}
+                          className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                        />
+                      </div>
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-700">Max Professionals & Multiplier (%)</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        type="number"
-                        min="1"
-                        max="10"
-                        placeholder="Max Pros (4)"
-                        value={maxProfessionals || ""}
-                        onChange={(e) => setMaxProfessionals(Number(e.target.value) || 4)}
-                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                      />
-                      <Input
-                        type="number"
-                        min="0"
-                        max="500"
-                        placeholder="Multiplier % (100)"
-                        value={extraProfessionalPct || ""}
-                        onChange={(e) => setExtraProfessionalPct(Number(e.target.value) || 100)}
-                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                      />
-                    </div>
+                    <Label className="text-xs font-bold text-slate-700">Max Workers (1-10)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="10"
+                      placeholder="Max Pros (4)"
+                      value={maxProfessionals || ""}
+                      onChange={(e) => setMaxProfessionals(Number(e.target.value) || 4)}
+                      className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                    />
                   </div>
                 </>
               ) : (

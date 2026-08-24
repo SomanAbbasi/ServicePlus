@@ -149,7 +149,7 @@ function Home() {
   const activeCategory = categories.find((c) => c.slug === selectedCatSlug);
   const featuredOnly = services.filter((s) => s.is_featured || (s as any).isFeatured);
   const filteredServices = selectedCatSlug
-    ? services.filter((s) => s.category_id === activeCategory?.id)
+    ? services.filter((s) => (s.category_id || (s as any).categoryId) === activeCategory?.id)
     : featuredOnly.length > 0
     ? featuredOnly
     : services;

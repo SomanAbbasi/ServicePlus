@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { createService, getAdminCatalog, uploadMedia } from "@/frontend/lib/api-services";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
 import { useQueryClient } from "@tanstack/react-query";
@@ -7,10 +7,9 @@ import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { Card } from "@/frontend/components/ui/card";
 import { Label } from "@/frontend/components/ui/label";
-import { Textarea } from "@/frontend/components/ui/textarea";
 import { Switch } from "@/frontend/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
-import { Send, Upload, X, Info } from "lucide-react";
+import { Send, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { compressImageFile } from "@/frontend/lib/image-compression";
 import { resolveImageUrl } from "@/frontend/lib/api-client";
@@ -32,21 +31,22 @@ function AddServicePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: catalogData } = useAdminQuery("catalog", getAdminCatalog);
-  const categories = ((catalogData?.categories ?? []) as any[]).filter(
-    (c) => c.status !== "Deactivated" && c.is_active !== false && c.isActive !== false,
-  );
+  const categories = useMemo(() => {
+    const list = ((catalogData?.categories ?? []) as any[]);
+    return list.filter(
+      (c) => c.status !== "Deactivated" && c.is_active !== false && c.isActive !== false,
+    );
+  }, [catalogData]);
 
   const [activeTab, setActiveTab] = useState<"en" | "ar">("en");
 
   // English fields
   const [nameEn, setNameEn] = useState("");
   const [shortDescEn, setShortDescEn] = useState("");
-  const [descEn, setDescEn] = useState("");
 
   // Arabic fields
   const [nameAr, setNameAr] = useState("");
   const [shortDescAr, setShortDescAr] = useState("");
-  const [descAr, setDescAr] = useState("");
 
   // Configuration fields
   const [categoryId, setCategoryId] = useState("");
@@ -125,8 +125,6 @@ function AddServicePage() {
         category_id: categoryId,
         short_description: shortDescEn.trim() || undefined,
         short_description_ar: shortDescAr.trim() || undefined,
-        description: descEn.trim() || undefined,
-        description_ar: descAr.trim() || undefined,
         booking_type: bookingType,
         base_price: parseFloat(basePrice) || (hourlyRate ? parseFloat(hourlyRate) : 0),
         hourly_rate: hourlyRate ? parseFloat(hourlyRate) : undefined,
@@ -281,20 +279,6 @@ function AddServicePage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-slate-700">Full Description (English)</Label>
-                <Textarea
-                  placeholder="Detailed description of what is included in this service"
-                  value={descEn}
-                  onChange={(e) => setDescEn(e.target.value)}
-                  rows={4}
-                  className="bg-white border-slate-200 rounded-lg text-xs"
-                  autoComplete="off"
-                  name="service_desc_en"
-                  data-lpignore="true"
-                />
-              </div>
-
-              <div className="space-y-1.5">
                 <Label className="text-xs font-bold text-slate-700">Cleaning Materials Label (English)</Label>
                 <Input
                   placeholder="e.g. Need cleaning materials? Powered by Jif"
@@ -339,20 +323,6 @@ function AddServicePage() {
               </div>
 
               <div className="space-y-1.5 text-right">
-                <Label className="text-xs font-bold text-slate-700">الوصف التفصيلي (عربي)</Label>
-                <Textarea
-                  placeholder="وصف تفصيلي للخدمة وما تشمله من مزايا"
-                  value={descAr}
-                  onChange={(e) => setDescAr(e.target.value)}
-                  rows={4}
-                  className="bg-white border-slate-200 rounded-lg text-xs text-right"
-                  autoComplete="off"
-                  name="service_desc_ar"
-                  data-lpignore="true"
-                />
-              </div>
-
-              <div className="space-y-1.5 text-right">
                 <Label className="text-xs font-bold text-slate-700">عنوان مواد التنظيف (عربي)</Label>
                 <Input
                   placeholder="مثال: هل تحتاج إلى مواد تنظيف؟"
@@ -376,13 +346,13 @@ function AddServicePage() {
                 <Label className="text-xs font-bold text-slate-700">
                   Category <span className="text-red-500">*</span>
                 </Label>
-                <Select value={categoryId} onValueChange={setCategoryId} required>
+                <Select value={categoryId ? String(categoryId) : undefined} onValueChange={setCategoryId} required>
                   <SelectTrigger className="h-11 bg-white border-slate-200 rounded-lg text-xs font-semibold">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id} className="text-xs font-semibold">
+                      <SelectItem key={String(c.id)} value={String(c.id)} className="text-xs font-semibold">
                         {c.name}
                       </SelectItem>
                     ))}
@@ -415,7 +385,9 @@ function AddServicePage() {
               {bookingType === "hourly" ? (
                 <>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-700">Hourly Rate (AED / Hour)</Label>
+                    <Label className="text-xs font-bold text-slate-700">
+                      Hourly Rate per Worker (AED / Hour)
+                    </Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -426,7 +398,7 @@ function AddServicePage() {
                         setHourlyRate(e.target.value);
                         if (!basePrice || basePrice === "0") setBasePrice(e.target.value);
                       }}
-                      className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                      className="h-11 bg-white border-slate-200 rounded-lg text-xs font-semibold"
                     />
                   </div>
 
@@ -446,49 +418,44 @@ function AddServicePage() {
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-slate-700">Hours Range (Min - Max)</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        type="number"
-                        min="1"
-                        max="24"
-                        placeholder="Min (1)"
-                        value={minHours || ""}
-                        onChange={(e) => setMinHours(Number(e.target.value) || 1)}
-                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                      />
-                      <Input
-                        type="number"
-                        min="1"
-                        max="24"
-                        placeholder="Max (8)"
-                        value={maxHours || ""}
-                        onChange={(e) => setMaxHours(Number(e.target.value) || 8)}
-                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                      />
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-slate-400 font-medium">Minimum Hours</span>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="24"
+                          placeholder="Min (1)"
+                          value={minHours || ""}
+                          onChange={(e) => setMinHours(Number(e.target.value) || 1)}
+                          className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-slate-400 font-medium">Maximum Hours</span>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="24"
+                          placeholder="Max (8)"
+                          value={maxHours || ""}
+                          onChange={(e) => setMaxHours(Number(e.target.value) || 8)}
+                          className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                        />
+                      </div>
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-700">Max Professionals & Multiplier (%)</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        type="number"
-                        min="1"
-                        max="10"
-                        placeholder="Max Pros (4)"
-                        value={maxProfessionals || ""}
-                        onChange={(e) => setMaxProfessionals(Number(e.target.value) || 4)}
-                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                      />
-                      <Input
-                        type="number"
-                        min="0"
-                        max="500"
-                        placeholder="Multiplier % (100)"
-                        value={extraProfessionalPct || ""}
-                        onChange={(e) => setExtraProfessionalPct(Number(e.target.value) || 100)}
-                        className="h-11 bg-white border-slate-200 rounded-lg text-xs"
-                      />
-                    </div>
+                    <Label className="text-xs font-bold text-slate-700">Max Workers (1-10)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="10"
+                      placeholder="Max Pros (4)"
+                      value={maxProfessionals || ""}
+                      onChange={(e) => setMaxProfessionals(Number(e.target.value) || 4)}
+                      className="h-11 bg-white border-slate-200 rounded-lg text-xs"
+                    />
                   </div>
                 </>
               ) : (

@@ -15,6 +15,7 @@ import { Save, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { compressImageFile } from "@/frontend/lib/image-compression";
 import { resolveImageUrl } from "@/frontend/lib/api-client";
+import { FALLBACK_IMAGE } from "@/frontend/components/icons";
 
 export const Route = createFileRoute("/admin/addons/edit")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -202,8 +203,15 @@ function EditAddonPage() {
 
               {imageUrl && (
                 <div className="flex items-center gap-3">
-                  <div className="size-12 rounded-full overflow-hidden border border-slate-200 shrink-0 shadow-xs">
-                    <img src={resolveImageUrl(imageUrl)} alt="Preview" className="size-full object-cover" />
+                  <div className="size-12 rounded-full overflow-hidden border border-slate-200 shrink-0 shadow-xs bg-slate-100 flex items-center justify-center">
+                    <img
+                      src={resolveImageUrl(imageUrl) || FALLBACK_IMAGE}
+                      alt="Preview"
+                      className="size-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+                      }}
+                    />
                   </div>
                   <Button
                     type="button"

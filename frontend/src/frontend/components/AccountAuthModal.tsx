@@ -37,9 +37,11 @@ const COUNTRIES: CountryCode[] = [
 export function AccountAuthModal({
   open,
   onClose,
+  onSuccess,
 }: {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }) {
   const { setAuth } = useAuth();
   const { location } = useSavedLocation();
@@ -316,9 +318,11 @@ export function AccountAuthModal({
       });
       toast.success("Account setup complete!");
       onClose();
+      onSuccess?.();
     } catch {
       toast.success("Account logged in!");
       onClose();
+      onSuccess?.();
     } finally {
       setLoading(false);
     }

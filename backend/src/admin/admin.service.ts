@@ -226,6 +226,9 @@ export class AdminService {
           nameAr: true,
           slug: true,
           shortDescription: true,
+          shortDescriptionAr: true,
+          description: true,
+          descriptionAr: true,
           basePrice: true,
           originalPrice: true,
           hourlyRate: true,
@@ -241,6 +244,7 @@ export class AdminService {
           sortOrder: true,
           categoryId: true,
           imageUrl: true,
+          icon: true,
         },
       }),
       this.prisma.serviceCategory.findMany({
@@ -356,7 +360,18 @@ export class AdminService {
         }
       }
     }
-    return this.prisma.service.update({ where: { id }, data: patch });
+    const updated = await this.prisma.service.update({ where: { id }, data: patch });
+    if (patch.categoryId) {
+      await this.prisma.serviceListing.deleteMany({ where: { serviceId: id } });
+      await this.prisma.serviceListing.create({
+        data: {
+          categoryId: patch.categoryId,
+          serviceId: id,
+          sortOrder: updated.sortOrder || 0,
+        },
+      });
+    }
+    return updated;
   }
 
   async createService(data: Record<string, any>) {
@@ -387,7 +402,17 @@ export class AdminService {
         payload.isActive = false;
       }
     }
-    return this.prisma.service.create({ data: payload, select: { id: true } });
+    const created = await this.prisma.service.create({ data: payload, select: { id: true, categoryId: true, sortOrder: true } });
+    if (created.categoryId) {
+      await this.prisma.serviceListing.create({
+        data: {
+          categoryId: created.categoryId,
+          serviceId: created.id,
+          sortOrder: created.sortOrder || 0,
+        },
+      });
+    }
+    return created;
   }
 
   async deleteService(id: string) {

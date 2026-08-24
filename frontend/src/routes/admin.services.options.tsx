@@ -528,7 +528,7 @@ function AdminServiceOptionsPage() {
                       alt="Group"
                       className="size-full object-cover"
                       onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = "";
+                        (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
                       }}
                     />
                   ) : (
@@ -931,7 +931,7 @@ function AdminServiceOptionsPage() {
                                         alt={sub.name || "Sub-option"}
                                         className="size-full object-cover"
                                         onError={(e) => {
-                                          (e.currentTarget as HTMLImageElement).src = "";
+                                          (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
                                         }}
                                       />
                                     ) : (
@@ -1041,7 +1041,7 @@ function AdminServiceOptionsPage() {
                         alt="Option"
                         className="size-full object-cover"
                         onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = "";
+                          (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
                         }}
                       />
                     ) : (
@@ -1250,7 +1250,14 @@ function AdminServiceOptionsPage() {
                   >
                     <div className="space-y-2">
                       <div className="h-24 rounded-xl overflow-hidden bg-slate-100 relative border border-slate-100">
-                        <img src={img} alt={g.name} className="size-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <img
+                          src={img}
+                          alt={g.name}
+                          className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+                          }}
+                        />
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-slate-900 truncate leading-snug">{g.name}</h4>
@@ -1342,8 +1349,15 @@ function AdminServiceOptionsPage() {
                   className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="size-12 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0 shadow-2xs">
-                      <img src={img} alt={opt.name} className="size-full object-cover" />
+                    <div className="size-12 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0 shadow-2xs flex items-center justify-center">
+                      <img
+                        src={img}
+                        alt={opt.name}
+                        className="size-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+                        }}
+                      />
                     </div>
 
                     <div className="min-w-0 space-y-0.5">

@@ -3,6 +3,7 @@ import { ImagePlus, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { uploadMedia } from "@/frontend/lib/api-services";
 import { resolveImageUrl } from "@/frontend/lib/api-client";
+import { FALLBACK_IMAGE } from "@/frontend/components/icons";
 import { compressImageFile } from "@/frontend/lib/image-compression";
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
@@ -97,7 +98,14 @@ export function ImageUploader({
           {busy ? (
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           ) : value ? (
-            <img src={resolveImageUrl(value)} alt="" className="size-full object-cover" />
+            <img
+              src={resolveImageUrl(value) || FALLBACK_IMAGE}
+              alt=""
+              className="size-full object-cover"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+              }}
+            />
           ) : (
             <ImagePlus className="size-5 text-muted-foreground" />
           )}

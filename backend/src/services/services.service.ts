@@ -406,7 +406,7 @@ export class ServicesService {
     } as const;
 
     const listings = await this.prisma.serviceListing.findMany({
-      where: { categoryId: category.id },
+      where: { categoryId: category.id, service: { categoryId: category.id } },
       orderBy: { sortOrder: 'asc' },
       select: {
         sortOrder: true,
@@ -414,7 +414,7 @@ export class ServicesService {
       },
     });
 
-    let services = listings.map((row) => row.service).filter((s: any) => s?.isActive) as any[];
+    let services = listings.map((row) => row.service).filter((s: any) => s?.isActive && s?.categoryId === category.id) as any[];
     if (!services.length) {
       services = await this.prisma.service.findMany({
         where: { categoryId: category.id, isActive: true },

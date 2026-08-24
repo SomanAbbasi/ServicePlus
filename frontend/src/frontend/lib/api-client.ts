@@ -64,15 +64,21 @@ export function snakeizeKeys<T>(input: T): T {
 
 /** Resolve a relative image path (e.g. "/images/catalog/...") to a full backend URL. */
 export function resolveImageUrl(url: string | null | undefined): string {
-  if (!url) return "";
-  if (url.startsWith("data:") || url.startsWith("blob:")) return url;
+  if (!url || typeof url !== "string") return "";
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === "null" || trimmed === "undefined") return "";
+  if (trimmed.startsWith("data:") || trimmed.startsWith("blob:")) return trimmed;
   // If the URL is an inaccessible .r2.dev URL, proxy through backend endpoint
-  if (url.includes(".r2.dev/")) {
-    const r2Path = url.replace(/^https?:\/\/[^/]+\.r2\.dev\/?/, "");
+  if (trimmed.includes(".r2.dev/")) {
+    const r2Path = trimmed.replace(/^https?:\/\/[^/]+\.r2\.dev\/?/, "");
     return `${API_ORIGIN}/api/media/file/${r2Path}`;
   }
-  if (url.startsWith("http://") || url.startsWith("https://")) return url;
-  return `${API_ORIGIN}${url.startsWith("/") ? "" : "/"}${url}`;
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+  if (trimmed.startsWith("catalog/") || trimmed.startsWith("/catalog/")) {
+    const cleanPath = trimmed.replace(/^\/+/, "");
+    return `${API_ORIGIN}/api/media/file/${cleanPath}`;
+  }
+  return `${API_ORIGIN}${trimmed.startsWith("/") ? "" : "/"}${trimmed}`;
 }
 
 /* ---------------------------------------------------------------- errors */

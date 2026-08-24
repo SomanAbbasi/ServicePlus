@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -99,6 +99,28 @@ const FREQUENCY_LIST = [
   { id: "multiple_times_a_week", title: "Multiple Times a Week", titleAr: "عدة مرات في الأسبوع", badge: "Up to 25% off", badgeAr: "خصم حتى 25%", popular: false },
 ];
 
+const getContextualGroupImage = (group: any) => {
+  const url = resolveImageUrl(group.imageUrl || group.image_url);
+  if (url && !url.includes("fallback") && !url.includes("placeholder") && !url.includes("9156060e") && !url.includes("homeclean.webp")) {
+    return url;
+  }
+  const name = String(group.name || "").toLowerCase();
+  if (name.includes("sofa")) return "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80";
+  if (name.includes("carpet") || name.includes("rug")) return "https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=400&q=80";
+  if (name.includes("mattress") || name.includes("bed")) return "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80";
+  if (name.includes("combo")) return "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&q=80";
+  if (name.includes("curtain")) return "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=400&q=80";
+  if (name.includes("bundle")) return "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&q=80";
+  if (name.includes("outdoor") || name.includes("swing")) return "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80";
+  if (name.includes("hair")) return "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&q=80";
+  if (name.includes("nail")) return "https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=400&q=80";
+  if (name.includes("facial") || name.includes("skin")) return "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&q=80";
+  if (name.includes("massage") || name.includes("spa")) return "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&q=80";
+  if (name.includes("shoe")) return "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&q=80";
+  if (name.includes("ac")) return "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&q=80";
+  return url || "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80";
+};
+
 function BookingWizard() {
   const { slug } = Route.useParams();
   const searchParams = Route.useSearch();
@@ -181,11 +203,45 @@ function BookingWizard() {
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [otpSending, setOtpSending] = useState(false);
 
-  // Payment Options
+  // Payment Options & Realtime Card Formatting
+  const queryClient = useQueryClient();
   const [paymentMethod, setPaymentMethod] = useState("card"); // card
   const [cardNumber, setCardNumber] = useState("");
   const [cardExp, setCardExp] = useState("");
   const [cardCvv, setCardCvv] = useState("");
+
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
+    const parts = raw.match(/.{1,4}/g);
+    setCardNumber(parts ? parts.join(" ") : raw);
+  };
+
+  const handleCardExpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let raw = e.target.value.replace(/\D/g, "").slice(0, 4);
+    if (raw.length >= 2) {
+      const mm = parseInt(raw.slice(0, 2), 10);
+      if (mm > 12) raw = "12" + raw.slice(2);
+      else if (mm === 0 && raw.length >= 2) raw = "01" + raw.slice(2);
+    }
+    if (raw.length > 2) {
+      setCardExp(`${raw.slice(0, 2)}/${raw.slice(2)}`);
+    } else {
+      setCardExp(raw);
+    }
+  };
+
+  const handleCardCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 4);
+    setCardCvv(raw);
+  };
+
+  const detectedCardBrand = useMemo(() => {
+    const raw = cardNumber.replace(/\s/g, "");
+    if (raw.startsWith("4")) return "visa";
+    if (/^5[1-5]|^2[2-7]/.test(raw)) return "mastercard";
+    if (/^3[47]/.test(raw)) return "amex";
+    return null;
+  }, [cardNumber]);
 
   const [idempotencyKey] = useState(() => `bk_${Math.random().toString(36).slice(2)}`);
   const [error, setError] = useState<string | null>(null);
@@ -281,18 +337,19 @@ function BookingWizard() {
     >();
     allVariants.forEach((v: any) => {
       const vGroup = optionGroups.find((g) => String(g.id) === String(v.group_id || v.groupId));
+      const parsed = parseOptionPayload(v);
       map.set(String(v.id), {
         id: String(v.id),
         name: v.name,
         nameAr: v.name_ar || v.nameAr,
         price: Number(v.price || 0),
         durationMinutes: Number(v.duration_minutes || v.durationMinutes || 0),
-        description: v.description,
+        description: parsed.description,
+        descriptionAr: parsed.descriptionAr,
         imageUrl: v.image_url || v.imageUrl,
         groupName: vGroup?.name,
         groupNameAr: vGroup?.name_ar || vGroup?.nameAr,
       });
-      const parsed = parseOptionPayload(v);
       parsed.subOptions.forEach((sub) => {
         map.set(String(sub.id), {
           id: String(sub.id),
@@ -427,6 +484,9 @@ function BookingWizard() {
     onSuccess: (res: any) => {
       const bookingNum = res?.bookingNumber || "SP-BOOKING";
       const totalAmount = Number((quote?.breakdown as any)?.total || 0);
+      void queryClient.invalidateQueries({ queryKey: ["admin", "bookings"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin"] });
+      void queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
       toast.success(
         isAr ? `تم إرسال الطلب بنجاح! (رقم المرجع: ${bookingNum})` : `Order placed successfully! (Ref: ${bookingNum})`,
         { duration: 5000 }
@@ -439,6 +499,35 @@ function BookingWizard() {
     },
     onError: (err) => setError(err instanceof Error ? err.message : t("booking.failed")),
   });
+
+  // Handle Complete Order (with mandatory profile completion & card validation)
+  const handleCompleteOrder = () => {
+    // 1. Mandatory Profile Check
+    if (!user || (!user.phone && !(user as any).phone) || (!user.fullName && !(user as any).name)) {
+      toast.info(isAr ? "يرجى استكمال ملفك الشخصي لتأكيد الطلب" : "Please create / complete your profile to confirm your order");
+      setAuthModalOpen(true);
+      return;
+    }
+
+    // 2. Validate Card fields if card payment
+    if (paymentMethod === "card") {
+      const rawCard = cardNumber.replace(/\s/g, "");
+      if (rawCard.length < 15) {
+        toast.error(isAr ? "أدخل رقم بطاقة صحيح مكون من 16 رقمًا" : "Please enter a valid 16-digit card number");
+        return;
+      }
+      if (cardExp.length < 5) {
+        toast.error(isAr ? "أدخل تاريخ انتهاء صحيح (MM/YY)" : "Please enter a valid expiry date (MM/YY)");
+        return;
+      }
+      if (cardCvv.length < 3) {
+        toast.error(isAr ? "أدخل رمز الأمان CVV (3-4 أرقام)" : "Please enter a valid CVV (3-4 digits)");
+        return;
+      }
+    }
+
+    confirm.mutate();
+  };
 
   // Handle Apply Coupon
   const handleApplyCoupon = () => {
@@ -631,7 +720,7 @@ function BookingWizard() {
                       <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none snap-x">
                         {optionGroups.map((g) => {
                           const isGroupSelected = String(selectedGroupId) === String(g.id);
-                          const groupImg = resolveImageUrl(g.imageUrl || g.image_url) || FALLBACK_IMAGE;
+                          const groupImg = getContextualGroupImage(g);
                           const groupName = localizedText(g, "name", locale) ?? g.name;
                           return (
                             <button
@@ -1508,13 +1597,27 @@ function BookingWizard() {
                   <div className="flex items-center justify-between rounded-xl border-2 border-cyan-500 bg-cyan-50/50 p-3.5 shadow-2xs">
                     <div className="flex items-center gap-2.5">
                       <CardIcon className="size-4 text-slate-900" />
-                      <span className="text-xs font-extrabold text-slate-900">Credit / Debit Card</span>
+                      <span className="text-xs font-extrabold text-slate-900">
+                        {isAr ? "بطاقة ائتمان / خصم مباشر" : "Credit / Debit Card"}
+                      </span>
                     </div>
-                    {/* Card Logos: VISA, MasterCard, Amex */}
+                    {/* Dynamic Card Logos: VISA, MasterCard, Amex */}
                     <div className="flex items-center gap-1">
-                      <span className="rounded-md bg-blue-700 px-1.5 py-0.5 text-[9px] font-black italic text-white">VISA</span>
-                      <span className="rounded-md bg-red-600 px-1.5 py-0.5 text-[9px] font-black text-white">MC</span>
-                      <span className="rounded-md bg-cyan-700 px-1.5 py-0.5 text-[9px] font-black text-white">AMEX</span>
+                      <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-black italic transition-all ${
+                        detectedCardBrand === "visa" || !detectedCardBrand ? "bg-blue-700 text-white shadow-xs" : "bg-slate-200 text-slate-400"
+                      }`}>
+                        VISA
+                      </span>
+                      <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-black transition-all ${
+                        detectedCardBrand === "mastercard" || !detectedCardBrand ? "bg-red-600 text-white shadow-xs" : "bg-slate-200 text-slate-400"
+                      }`}>
+                        MC
+                      </span>
+                      <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-black transition-all ${
+                        detectedCardBrand === "amex" || !detectedCardBrand ? "bg-cyan-700 text-white shadow-xs" : "bg-slate-200 text-slate-400"
+                      }`}>
+                        AMEX
+                      </span>
                     </div>
                   </div>
 
@@ -1522,22 +1625,33 @@ function BookingWizard() {
                   <div className="space-y-3.5 pt-1">
                     <div>
                       <Label className="block text-xs font-semibold text-slate-400 mb-1">
-                        Card Number
+                        {isAr ? "رقم البطاقة" : "Card Number"}
                       </Label>
                       <div className="relative">
                         <Input
                           type="text"
+                          inputMode="numeric"
                           name="cc-number"
                           autoComplete="off"
                           value={cardNumber}
-                          onChange={(e) => setCardNumber(e.target.value)}
+                          onChange={handleCardNumberChange}
                           placeholder="1234 1234 1234 1234"
-                          className="text-xs rounded-xl border-slate-200 bg-white font-mono"
+                          className="text-xs rounded-xl border-slate-200 bg-white font-mono tracking-wider h-11"
                           maxLength={19}
                         />
-                        <div className="absolute right-3 top-2.5 flex items-center gap-1">
-                          <span className="rounded bg-blue-700 px-1 py-0.5 text-[8px] font-black text-white">VISA</span>
-                          <span className="rounded bg-red-600 px-1 py-0.5 text-[8px] font-black text-white">MC</span>
+                        <div className="absolute right-3 top-3 flex items-center gap-1">
+                          {detectedCardBrand === "visa" && (
+                            <span className="rounded bg-blue-700 px-1.5 py-0.5 text-[8px] font-black text-white">VISA</span>
+                          )}
+                          {detectedCardBrand === "mastercard" && (
+                            <span className="rounded bg-red-600 px-1.5 py-0.5 text-[8px] font-black text-white">MC</span>
+                          )}
+                          {detectedCardBrand === "amex" && (
+                            <span className="rounded bg-cyan-700 px-1.5 py-0.5 text-[8px] font-black text-white">AMEX</span>
+                          )}
+                          {!detectedCardBrand && (
+                            <span className="text-[10px] text-slate-400 font-mono">16 DIGITS</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1545,31 +1659,33 @@ function BookingWizard() {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="block text-xs font-semibold text-slate-400 mb-1">
-                          Exp. Date (MM/YY)
+                          {isAr ? "تاريخ الانتهاء (MM/YY)" : "Exp. Date (MM/YY)"}
                         </Label>
                         <Input
                           type="text"
+                          inputMode="numeric"
                           name="cc-exp"
                           autoComplete="off"
                           value={cardExp}
-                          onChange={(e) => setCardExp(e.target.value)}
+                          onChange={handleCardExpChange}
                           placeholder="MM/YY"
-                          className="text-xs rounded-xl border-slate-200 bg-white font-mono"
+                          className="text-xs rounded-xl border-slate-200 bg-white font-mono h-11"
                           maxLength={5}
                         />
                       </div>
                       <div>
                         <Label className="block text-xs font-semibold text-slate-400 mb-1">
-                          CVV Number
+                          {isAr ? "رمز التحقق (CVV)" : "CVV Number"}
                         </Label>
                         <Input
                           type="password"
+                          inputMode="numeric"
                           name="cc-csc"
                           autoComplete="off"
                           value={cardCvv}
-                          onChange={(e) => setCardCvv(e.target.value)}
+                          onChange={handleCardCvvChange}
                           placeholder="CVV"
-                          className="text-xs rounded-xl border-slate-200 bg-white font-mono"
+                          className="text-xs rounded-xl border-slate-200 bg-white font-mono h-11"
                           maxLength={4}
                         />
                       </div>
@@ -1577,13 +1693,13 @@ function BookingWizard() {
                   </div>
                 </div>
 
-                {/* Complete Order Gold Button (Image 3) */}
+                {/* Complete Order Gold Button (Matching Image 3) */}
                 <div className="pt-2 space-y-2.5">
                   <Button
                     type="button"
                     disabled={confirm.isPending}
-                    onClick={() => confirm.mutate()}
-                    className="w-full rounded-full bg-[#FFC836] hover:bg-[#f5be29] py-3.5 px-6 text-center text-sm font-extrabold text-slate-900 shadow-md transition-all active:scale-98 disabled:opacity-50"
+                    onClick={handleCompleteOrder}
+                    className="w-full rounded-full bg-[#FFC836] hover:bg-[#f5be29] py-3.5 px-6 text-center text-sm font-extrabold text-slate-900 shadow-md transition-all active:scale-98 disabled:opacity-50 h-12"
                   >
                     {confirm.isPending ? <Loader2 className="size-4 animate-spin me-2" /> : null}
                     {isAr ? "إتمام الحجز وتأكيد الطلب" : "Complete"}
@@ -1759,7 +1875,12 @@ function BookingWizard() {
                       AED{" "}
                       {Number(
                         (quote?.breakdown as any)?.subtotal ??
-                          (Number(svcObj.hourly_rate ?? svcObj.hourlyRate ?? svcObj.base_price ?? 39) * hours * professionals)
+                          (() => {
+                            const rate = Number(svcObj.hourly_rate ?? svcObj.hourlyRate ?? svcObj.base_price ?? 39);
+                            const extraPct = Number(svcObj.extra_professional_pct ?? svcObj.extraProfessionalPct ?? 100);
+                            const baseHours = rate * hours;
+                            return baseHours + ((baseHours * extraPct) / 100) * Math.max(0, professionals - 1);
+                          })()
                       ).toFixed(2)}
                     </span>
                   </div>
@@ -2075,6 +2196,7 @@ function BookingWizard() {
       <AccountAuthModal
         open={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
+        onSuccess={() => confirm.mutate()}
       />
 
       {/* ORDER PLACED SUCCESSFUL CONFIRMATION MODAL */}

@@ -11,6 +11,8 @@ import { Label } from "@/frontend/components/ui/label";
 import { Save, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { compressImageFile } from "@/frontend/lib/image-compression";
+import { resolveImageUrl } from "@/frontend/lib/api-client";
+import { FALLBACK_IMAGE } from "@/frontend/components/icons";
 
 export const Route = createFileRoute("/admin/categories/edit")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -166,8 +168,15 @@ function EditCategoryPage() {
 
               {imagePreview && (
                 <div className="flex items-center gap-2 ms-auto">
-                  <div className="relative size-12 rounded-full overflow-hidden border-2 border-slate-200 shrink-0 shadow-xs">
-                    <img src={imagePreview} alt="Preview" className="size-full object-cover" />
+                  <div className="relative size-12 rounded-full overflow-hidden border-2 border-slate-200 shrink-0 shadow-xs bg-slate-100 flex items-center justify-center">
+                    <img
+                      src={resolveImageUrl(imagePreview) || FALLBACK_IMAGE}
+                      alt="Preview"
+                      className="size-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+                      }}
+                    />
                   </div>
                   <Button
                     type="button"

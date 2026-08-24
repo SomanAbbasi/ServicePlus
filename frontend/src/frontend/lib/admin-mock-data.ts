@@ -335,7 +335,7 @@ const INITIAL_ROLES: AdminRole[] = [
    STORAGE ENGINE & CACHE CLEANSING
    ========================================================================== */
 
-const STORAGE_VERSION = "v5_clean_no_seed";
+const STORAGE_VERSION = "v6_furniture_clean_live";
 
 function getFromStorage<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;

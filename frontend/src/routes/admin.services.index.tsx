@@ -11,6 +11,7 @@ import {
   uploadMedia,
 } from "@/frontend/lib/api-services";
 import { resolveImageUrl } from "@/frontend/lib/api-client";
+import { FALLBACK_IMAGE } from "@/frontend/components/icons";
 import { ErrorState, TableSkeleton, PageHeader, PageActions, StatusBadge, ActionIconButton, downloadCsv } from "@/frontend/components/admin/shell";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
 import { OptionsManager } from "@/frontend/components/admin/OptionsManager";
@@ -837,8 +838,15 @@ function AdminServices() {
 
                 {editImageUrl && (
                   <div className="flex items-center gap-2">
-                    <div className="size-10 rounded-full overflow-hidden border border-slate-200 shrink-0 shadow-xs">
-                      <img src={resolveImageUrl(editImageUrl)} alt="" className="size-full object-cover" />
+                    <div className="size-10 rounded-full overflow-hidden border border-slate-200 shrink-0 shadow-xs bg-slate-100 flex items-center justify-center">
+                      <img
+                        src={resolveImageUrl(editImageUrl) || FALLBACK_IMAGE}
+                        alt=""
+                        className="size-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+                        }}
+                      />
                     </div>
                     <Button
                       type="button"
@@ -915,17 +923,6 @@ function AdminServices() {
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <Label className="text-xs font-bold text-slate-700">Full Description (English)</Label>
-                  <Textarea
-                    value={editDescEn}
-                    onChange={(e) => setEditDescEn(e.target.value)}
-                    placeholder="Detailed description of inclusions and service scope"
-                    rows={3}
-                    className="text-xs"
-                    autoComplete="off"
-                  />
-                </div>
               </div>
             )}
 
@@ -952,18 +949,6 @@ function AdminServices() {
                     onChange={(e) => setEditShortDescAr(e.target.value)}
                     placeholder="ملخص موجز لبطاقات العرض"
                     className="h-10 text-xs text-right"
-                    autoComplete="off"
-                  />
-                </div>
-
-                <div className="space-y-1 text-right">
-                  <Label className="text-xs font-bold text-slate-700">الوصف التفصيلي (عربي)</Label>
-                  <Textarea
-                    value={editDescAr}
-                    onChange={(e) => setEditDescAr(e.target.value)}
-                    placeholder="وصف تفصيلي للخدمة وما تشمله من مزايا"
-                    rows={3}
-                    className="text-xs text-right"
                     autoComplete="off"
                   />
                 </div>

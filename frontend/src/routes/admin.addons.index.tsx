@@ -12,6 +12,7 @@ import {
   uploadMedia,
 } from "@/frontend/lib/api-services";
 import { resolveImageUrl } from "@/frontend/lib/api-client";
+import { FALLBACK_IMAGE } from "@/frontend/components/icons";
 import { ErrorState, TableSkeleton, PageHeader, PageActions, StatusBadge, ActionIconButton, downloadCsv } from "@/frontend/components/admin/shell";
 import { useAdminQuery } from "@/frontend/components/admin/use-admin-query";
 import { Button } from "@/frontend/components/ui/button";
@@ -592,11 +593,14 @@ function AdminAddons() {
                       <td className="px-3 py-3.5 text-center">
                         <div className="flex items-center justify-center">
                           {imgUrl ? (
-                            <div className="size-10 rounded-full overflow-hidden border border-slate-200 shrink-0 shadow-2xs">
+                            <div className="size-10 rounded-full overflow-hidden border border-slate-200 shrink-0 shadow-2xs bg-slate-100 flex items-center justify-center">
                               <img
-                                src={resolveImageUrl(imgUrl)}
+                                src={resolveImageUrl(imgUrl) || FALLBACK_IMAGE}
                                 alt={a.name}
                                 className="size-full object-cover"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+                                }}
                               />
                             </div>
                           ) : (
@@ -778,8 +782,15 @@ function AdminAddons() {
 
                 {editImageUrl && (
                   <div className="flex items-center gap-2">
-                    <div className="size-10 rounded-full overflow-hidden border border-slate-200 shrink-0 shadow-xs">
-                      <img src={resolveImageUrl(editImageUrl)} alt="" className="size-full object-cover" />
+                    <div className="size-10 rounded-full overflow-hidden border border-slate-200 shrink-0 shadow-xs bg-slate-100 flex items-center justify-center">
+                      <img
+                        src={resolveImageUrl(editImageUrl) || FALLBACK_IMAGE}
+                        alt=""
+                        className="size-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+                        }}
+                      />
                     </div>
                     <Button
                       type="button"
