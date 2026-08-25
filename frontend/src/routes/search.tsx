@@ -13,11 +13,14 @@ interface SearchParams {
   q: string;
 }
 
-const searchQuery = (q: string) =>
-  queryOptions({
-    queryKey: ["search", q],
-    queryFn: () => (q.trim().length >= 2 ? searchServices(q) : getHomeCatalog()),
+const searchQuery = (q: string) => {
+  const hasQuery = Boolean(q && q.trim().length >= 2);
+  return queryOptions({
+    queryKey: hasQuery ? ["search", q.trim()] : ["home-catalog"],
+    queryFn: () => (hasQuery ? searchServices(q.trim()) : getHomeCatalog()),
+    staleTime: 5 * 60 * 1000,
   });
+};
 
 export const Route = createFileRoute("/search")({
   validateSearch: (search: Record<string, unknown>): SearchParams => ({
@@ -25,7 +28,11 @@ export const Route = createFileRoute("/search")({
   }),
   loaderDeps: ({ search }) => ({ q: search.q }),
   loader: async ({ context, deps }) => {
-    await context.queryClient.ensureQueryData(searchQuery(deps.q));
+    try {
+      await context.queryClient.ensureQueryData(searchQuery(deps.q));
+    } catch (err) {
+      console.warn("[Search Loader] Query error:", err);
+    }
   },
   head: () => ({
     meta: [

@@ -69,11 +69,11 @@ function AboutPage() {
       </div>
 
       <div className="mt-12 text-center">
-        <Link to="/">
-          <Button className="bg-cyan-600 font-bold text-white hover:bg-cyan-700 rounded-full px-8">
+        <Button asChild className="bg-cyan-600 font-bold text-white hover:bg-cyan-700 rounded-full px-8">
+          <Link to="/search" search={{ q: "" }} preload="intent">
             {isAr ? "تصفح جميع الخدمات" : "Browse All Services"}
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
     </div>
   );

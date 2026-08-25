@@ -61,6 +61,17 @@ export const Route = createFileRoute("/booking/$slug")({
   validateSearch: (search: Record<string, unknown>) => ({
     variants: search.variants ? String(search.variants) : undefined,
   }),
+  loader: async ({ context, params }) => {
+    try {
+      await context.queryClient.ensureQueryData({
+        queryKey: ["service", params.slug],
+        queryFn: () => getServiceDetail(params.slug),
+        staleTime: 5 * 60 * 1000,
+      });
+    } catch (err) {
+      console.warn("[Booking Loader] prefetch warning:", err);
+    }
+  },
   head: ({ params }) => ({
     meta: [
       { title: "Book your service — ServicePlus" },
@@ -116,6 +127,7 @@ const getContextualGroupImage = (group: any) => {
   if (name.includes("nail")) return "https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=400&q=80";
   if (name.includes("facial") || name.includes("skin")) return "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&q=80";
   if (name.includes("massage") || name.includes("spa")) return "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&q=80";
+  if (name.includes("baby") || name.includes("nanny") || name.includes("house help") || name.includes("home help")) return "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&q=80";
   if (name.includes("shoe")) return "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&q=80";
   if (name.includes("ac")) return "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&q=80";
   return url || "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80";
@@ -249,6 +261,7 @@ function BookingWizard() {
   const { data: detail, isPending: isDetailPending } = useQuery({
     queryKey: ["service", slug],
     queryFn: () => getServiceDetail(slug),
+    staleTime: 5 * 60 * 1000,
   });
 
   const addons = (detail?.addons ?? []) as any[];
@@ -421,6 +434,8 @@ function BookingWizard() {
         couponCode: appliedCoupon || null,
         frequency,
       }),
+    enabled: Boolean(detail?.service),
+    staleTime: 60 * 1000,
   });
 
   const duration = quote?.duration_minutes ?? 120;
@@ -599,7 +614,10 @@ function BookingWizard() {
   }, [step, hasAddons]);
 
   const svcObj = (detail?.service ?? {}) as any;
-  const isHourlyBooking = svcObj.booking_type === "hourly" || svcObj.bookingType === "hourly" || !hasOptions;
+  const isHourlyBooking = Boolean(
+    detail?.service &&
+      (svcObj.booking_type === "hourly" || svcObj.bookingType === "hourly" || !hasOptions)
+  );
   const minH = Math.max(1, Number(svcObj.min_hours ?? svcObj.minHours ?? 1));
   const maxH = Math.max(minH, Number(svcObj.max_hours ?? svcObj.maxHours ?? 8));
   const hoursList = useMemo(() => {
@@ -627,7 +645,9 @@ function BookingWizard() {
     return true;
   }, [step, isHourlyBooking, slotStart, addressId, manualAddress, savedLoc, variantPayload.length]);
 
-  const serviceTitle = (localizedText(svcObj, "name", locale) ?? (svcObj.name as string) ?? (isAr ? "تنظيف المنازل" : "Home Cleaning")) as string;
+  const serviceTitle = (detail?.service
+    ? (localizedText(svcObj, "name", locale) ?? (svcObj.name as string) ?? "")
+    : "") as string;
   const displayAddress =
     manualAddress.trim() || (savedLoc?.address ? savedLoc.address : (isAr ? "دبي، الإمارات العربية المتحدة" : "Dubai, UAE"));
 
@@ -676,9 +696,13 @@ function BookingWizard() {
 
         <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
           <div>
-            <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
-              {serviceTitle}
-            </h1>
+            {isDetailPending || !detail ? (
+              <div className="h-8 w-56 rounded-xl bg-slate-200 animate-pulse my-1" />
+            ) : (
+              <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+                {serviceTitle}
+              </h1>
+            )}
             {(detail?.service as any)?.rating ? (
               <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 font-semibold">
                 <div className="flex items-center gap-1 text-amber-500 font-extrabold">
@@ -1743,8 +1767,48 @@ function BookingWizard() {
               {t("booking.detailsTitle")}
             </h2>
 
-            <div className="mt-4 space-y-4 text-xs min-w-0">
-              <div className="min-w-0">
+            {isDetailPending || !detail ? (
+              <div className="mt-4 space-y-4 animate-pulse text-xs min-w-0">
+                <div className="space-y-1.5">
+                  <div className="h-3 w-16 bg-slate-200 rounded" />
+                  <div className="h-3.5 w-full bg-slate-100 rounded" />
+                  <div className="h-3.5 w-2/3 bg-slate-100 rounded" />
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <div className="flex justify-between items-center">
+                    <div className="h-3 w-16 bg-slate-200 rounded" />
+                    <div className="h-3.5 w-24 bg-slate-100 rounded" />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="h-3 w-16 bg-slate-200 rounded" />
+                    <div className="h-3.5 w-32 bg-slate-100 rounded" />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="h-3 w-16 bg-slate-200 rounded" />
+                    <div className="h-3.5 w-16 bg-slate-100 rounded" />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="h-3 w-20 bg-slate-200 rounded" />
+                    <div className="h-3.5 w-24 bg-slate-100 rounded" />
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-slate-100 space-y-3">
+                  <div className="h-4 w-28 bg-slate-200 rounded" />
+                  <div className="flex justify-between items-center">
+                    <div className="h-3 w-20 bg-slate-100 rounded" />
+                    <div className="h-3 w-16 bg-slate-100 rounded" />
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                    <div className="h-4 w-14 bg-slate-200 rounded" />
+                    <div className="h-4 w-20 bg-slate-200 rounded" />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 space-y-4 text-xs min-w-0">
+                <div className="min-w-0">
                 <span className="text-slate-400 font-semibold block mb-0.5">{t("booking.row.address")}</span>
                 <span className="font-bold text-slate-800 block leading-relaxed break-words max-w-full">
                   {displayAddress}
@@ -1831,7 +1895,13 @@ function BookingWizard() {
                             </div>
                             {itemDuration && Number(itemDuration) > 0 ? (
                               <p className="text-[11px] text-slate-400 font-medium">
-                                ⏱️ {Number(itemDuration) * q} min
+                                ⏱️ {Number(itemDuration) >= 60 && Number(itemDuration) % 60 === 0
+                                  ? isAr
+                                    ? `${(Number(itemDuration) * q) / 60} ${(Number(itemDuration) * q) / 60 === 2 ? "ساعتان" : (Number(itemDuration) * q) / 60 >= 3 && (Number(itemDuration) * q) / 60 <= 10 ? "ساعات" : "ساعة"}`
+                                    : `${(Number(itemDuration) * q) / 60} ${((Number(itemDuration) * q) / 60) === 1 ? "hour" : "hours"}`
+                                  : isAr
+                                  ? `${Number(itemDuration) * q} دقيقة`
+                                  : `${Number(itemDuration) * q} min`}
                               </p>
                             ) : null}
                           </div>
@@ -1934,6 +2004,7 @@ function BookingWizard() {
                 </div>
               </div>
             </div>
+            )}
           </aside>
         </div>
       </div>
@@ -2285,13 +2356,27 @@ function BookingWizard() {
                       ) : hasDuration ? (
                         <div className="size-16 sm:size-20 rounded-2xl bg-rose-50/90 border border-rose-100/80 p-2 flex flex-col items-center justify-center shrink-0 text-center shadow-2xs">
                           <span className="text-[10px] sm:text-[11px] text-rose-500 font-semibold leading-tight">
-                            {isAr ? "فردي" : "Single"}
+                            {isAr ? "المدة" : "Duration"}
                           </span>
                           <span className="text-lg sm:text-2xl font-black text-rose-700 leading-none my-0.5">
-                            {sub.durationMinutes}
+                            {Number(sub.durationMinutes) >= 60 && Number(sub.durationMinutes) % 60 === 0
+                              ? Number(sub.durationMinutes) / 60
+                              : sub.durationMinutes}
                           </span>
                           <span className="text-[10px] sm:text-[11px] text-rose-600 font-semibold leading-tight">
-                            {isAr ? "دقيقة" : "Min"}
+                            {Number(sub.durationMinutes) >= 60 && Number(sub.durationMinutes) % 60 === 0
+                              ? isAr
+                                ? Number(sub.durationMinutes) / 60 === 2
+                                  ? "ساعتان"
+                                  : Number(sub.durationMinutes) / 60 >= 3 && Number(sub.durationMinutes) / 60 <= 10
+                                  ? "ساعات"
+                                  : "ساعة"
+                                : Number(sub.durationMinutes) / 60 === 1
+                                ? "Hour"
+                                : "Hours"
+                              : isAr
+                              ? "دقيقة"
+                              : "Min"}
                           </span>
                         </div>
                       ) : null}
@@ -2315,7 +2400,15 @@ function BookingWizard() {
                           {hasDuration && (
                             <>
                               <span className="text-slate-400">•</span>
-                              <span className="text-slate-500 font-semibold">{Number(sub.durationMinutes)} min</span>
+                              <span className="text-slate-500 font-semibold">
+                                {Number(sub.durationMinutes) >= 60 && Number(sub.durationMinutes) % 60 === 0
+                                  ? isAr
+                                    ? `${Number(sub.durationMinutes) / 60} ${Number(sub.durationMinutes) / 60 === 2 ? "ساعتان" : Number(sub.durationMinutes) / 60 >= 3 && Number(sub.durationMinutes) / 60 <= 10 ? "ساعات" : "ساعة"}`
+                                    : `${Number(sub.durationMinutes) / 60} ${Number(sub.durationMinutes) / 60 === 1 ? "Hour" : "Hours"}`
+                                  : isAr
+                                  ? `${Number(sub.durationMinutes)} دقيقة`
+                                  : `${Number(sub.durationMinutes)} min`}
+                              </span>
                             </>
                           )}
                         </div>

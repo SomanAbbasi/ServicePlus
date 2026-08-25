@@ -327,12 +327,14 @@ function Home() {
 
         <div className="mt-10 text-center">
           <Button
+            asChild
             variant="outline"
             size="lg"
             className="rounded-full border-slate-300 font-extrabold text-slate-700 hover:bg-slate-100 px-8 py-3 text-xs"
-            onClick={() => void navigate({ to: "/search", search: { q: "" } })}
           >
-            {t("home.browseAll")}
+            <Link to="/search" search={{ q: "" }} preload="intent">
+              {t("home.browseAll")}
+            </Link>
           </Button>
         </div>
       </section>
@@ -393,11 +395,13 @@ function Home() {
 
               <div className="mt-8">
                 <Button
+                  asChild
                   size="lg"
                   className="bg-white text-cyan-800 font-bold hover:bg-cyan-50 shadow-md"
-                  onClick={() => void navigate({ to: "/search", search: { q: "" } })}
                 >
-                  {t("home.browseAll")}
+                  <Link to="/search" search={{ q: "" }} preload="intent">
+                    {t("home.browseAll")}
+                  </Link>
                 </Button>
               </div>
             </div>
