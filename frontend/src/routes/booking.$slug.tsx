@@ -58,9 +58,11 @@ import { localizedText } from "@/frontend/lib/i18n-content";
 import { parseOptionPayload, SubOption } from "@/frontend/lib/sub-options";
 
 export const Route = createFileRoute("/booking/$slug")({
+  ssr: false,
   validateSearch: (search: Record<string, unknown>) => ({
     variants: search.variants ? String(search.variants) : undefined,
   }),
+
   loader: async ({ context, params }) => {
     try {
       await context.queryClient.ensureQueryData({
@@ -693,9 +695,10 @@ function BookingWizard() {
             className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-cyan-600 transition-colors"
           >
             {isAr ? <ChevronRight className="size-4" /> : <ArrowLeft className="size-4" />}
-            <span>
+            <span suppressHydrationWarning>
               {isAr ? `الخطوة ${currentStepNumber} من ${totalSteps}` : `Step ${currentStepNumber} of ${totalSteps}`}
             </span>
+
           </Link>
         </div>
 
