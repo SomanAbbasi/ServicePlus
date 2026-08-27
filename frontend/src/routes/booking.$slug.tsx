@@ -1648,68 +1648,27 @@ function BookingWizard() {
 
                 {/* Payment Method Selector */}
                 <div className="space-y-3 pt-1">
-                  <Label className="text-sm font-extrabold text-slate-900">{isAr ? "طريقة الدفع" : "Payment Method"}</Label>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {/* Option 1: Cash / Card on Delivery */}
-                    <div
-                      onClick={() => setPaymentMethod("cash")}
-                      className={`relative flex flex-col p-4 rounded-2xl border cursor-pointer transition-all ${
-                        paymentMethod === "cash"
-                          ? "border-cyan-500 bg-cyan-50/60 ring-2 ring-cyan-500/20 shadow-xs"
-                          : "border-slate-200 bg-white hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-extrabold text-slate-900">
-                          {isAr ? "الدفع بعد انتهاء الخدمة" : "Pay After Service"}
-                        </span>
-                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
-                          {isAr ? "الأكثر تفضيلاً" : "Recommended"}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-500">
-                        {isAr ? "ادفع نقدًا أو بالبطاقة عند زيارة المحترف." : "Pay by cash or card upon completion."}
-                      </p>
-                    </div>
-
-                    {/* Option 2: Online Card Payment */}
-                    <div
-                      onClick={() => setPaymentMethod("card")}
-                      className={`relative flex flex-col p-4 rounded-2xl border cursor-pointer transition-all ${
-                        paymentMethod === "card"
-                          ? "border-cyan-500 bg-cyan-50/60 ring-2 ring-cyan-500/20 shadow-xs"
-                          : "border-slate-200 bg-white hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-extrabold text-slate-900">
-                          {isAr ? "بطاقة ائتمان / خصم مباشر" : "Credit / Debit Card"}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <span className="rounded bg-blue-700 px-1 py-0.2 text-[8px] font-black text-white">VISA</span>
-                          <span className="rounded bg-red-600 px-1 py-0.2 text-[8px] font-black text-white">MC</span>
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-slate-500">
-                        {isAr ? "دفع رقمي فوري وآمن 100%." : "Instant & secure digital card checkout."}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-extrabold text-slate-900">{isAr ? "طريقة الدفع" : "Payment Method"}</Label>
+                    <div className="flex items-center gap-1.5">
+                      <span className="rounded bg-blue-700 px-1.5 py-0.5 text-[9px] font-black text-white">VISA</span>
+                      <span className="rounded bg-red-600 px-1.5 py-0.5 text-[9px] font-black text-white">Mastercard</span>
                     </div>
                   </div>
 
-                  {/* Card Form Inputs (Only shown when card is selected) */}
-                  {paymentMethod === "card" && (
-                    <div className="rounded-2xl border border-cyan-200/80 bg-white p-4 space-y-3 mt-2 shadow-2xs">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs font-bold text-slate-700">{isAr ? "بيانات البطاقة" : "Card Details"}</Label>
-                        <button
-                          type="button"
-                          onClick={handleFillDemoCard}
-                          className="text-[11px] font-bold text-cyan-600 hover:underline cursor-pointer"
-                        >
-                          {isAr ? "تعبئة بطاقة تجريبية بنقرة واحدة" : "Auto-fill Demo Card"}
-                        </button>
-                      </div>
+                  {/* Card Form Inputs */}
+                  <div className="rounded-2xl border border-cyan-200/80 bg-white p-4 space-y-3 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-bold text-slate-700">{isAr ? "بيانات البطاقة (بطاقة ائتمان / خصم)" : "Card Details (Credit / Debit Card)"}</Label>
+                      <button
+                        type="button"
+                        onClick={handleFillDemoCard}
+                        className="text-[11px] font-bold text-cyan-600 hover:underline cursor-pointer"
+                      >
+                        {isAr ? "تعبئة بطاقة تجريبية بنقرة واحدة" : "Auto-fill Demo Card"}
+                      </button>
+                    </div>
+
 
                       <div>
                         <div className="relative">
@@ -1756,8 +1715,8 @@ function BookingWizard() {
                         </div>
                       </div>
                     </div>
-                  )}
                 </div>
+
 
                 {/* Complete Order Gold Button */}
                 <div className="pt-2 space-y-2.5">
@@ -2357,37 +2316,25 @@ function BookingWizard() {
               type="button"
               onClick={() => {
                 setOrderSuccessModal(null);
-                navigate({ to: "/admin" });
+                navigate({ to: "/dashboard" });
               }}
               className="w-full bg-[#0093A3] hover:bg-[#007b88] text-white font-extrabold py-3.5 rounded-full text-xs shadow-md"
             >
-              {isAr ? "عرض في لوحة تحكم الإدارة (Admin Dashboard)" : "View in Admin Dashboard"}
+              {isAr ? "عرض حجوزاتي وحسابي" : "View My Bookings & Status"}
             </Button>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setOrderSuccessModal(null);
-                  navigate({ to: "/admin/calendar" });
-                }}
-                className="text-xs font-bold rounded-full border-slate-300 hover:bg-slate-50"
-              >
-                {isAr ? "تقويم المواعيد" : "Admin Calendar"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setOrderSuccessModal(null);
-                  navigate({ to: "/" });
-                }}
-                className="text-xs font-bold rounded-full border-slate-300 hover:bg-slate-50"
-              >
-                {isAr ? "الرئيسية" : "Home"}
-              </Button>
-            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setOrderSuccessModal(null);
+                navigate({ to: "/" });
+              }}
+              className="w-full text-xs font-bold rounded-full border-slate-300 hover:bg-slate-50"
+            >
+              {isAr ? "العودة للرئيسية" : "Back to Home"}
+            </Button>
           </div>
+
         </DialogContent>
       </Dialog>
 

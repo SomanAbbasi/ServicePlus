@@ -176,7 +176,16 @@ export function AccountAuthModal({
   // Step 1 Submit: Send OTP
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone.trim()) {
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (!cleanPhone) {
+      toast.error("Please enter your phone number");
+      return;
+    }
+    if (selectedCountry.code === "+971" && (cleanPhone.length < 9 || cleanPhone.length > 10)) {
+      toast.error("Please enter a valid UAE 9-digit phone number (e.g. 50 123 4567)");
+      return;
+    }
+    if (cleanPhone.length < 6) {
       toast.error("Please enter a valid phone number");
       return;
     }
@@ -195,6 +204,7 @@ export function AccountAuthModal({
       setLoading(false);
     }
   };
+
 
   // Step 2 Submit: Verify OTP
   const handleOtpSubmit = async (e: React.FormEvent) => {
@@ -326,24 +336,34 @@ export function AccountAuthModal({
       toast.error("Please enter your full name");
       return;
     }
+    if (!email.trim() || !email.includes("@")) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
     setLoading(true);
     try {
       await updateProfile({
         fullName: fullName.trim(),
-        email: email.trim() || undefined,
+        email: email.trim(),
         gender,
       });
-      toast.success("Account setup complete!");
-      onClose();
-      onSuccess?.();
-    } catch {
-      toast.success("Account logged in!");
-      onClose();
-      onSuccess?.();
-    } finally {
-      setLoading(false);
-    }
+    } catch {}
+
+    const token = getAccessToken() || `auth_${Date.now()}`;
+    setAuth(token, undefined, {
+      id: `cust_${Date.now()}`,
+      phone: fullPhone,
+      email: email.trim(),
+      full_name: fullName.trim(),
+      avatar_url: null,
+    });
+
+    toast.success("Account setup complete!");
+    onClose();
+    onSuccess?.();
+    setLoading(false);
   };
+
 
   const filteredCountries = COUNTRIES.filter(
     (c) =>
@@ -394,12 +414,19 @@ export function AccountAuthModal({
                   {/* Phone Input */}
                   <input
                     type="tel"
+                    inputMode="numeric"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="50 123 4567"
-                    className="flex-1 bg-transparent px-3 py-2 text-sm font-semibold text-slate-900 placeholder:text-slate-300 focus:outline-none"
+                    onChange={(e) => {
+                      const maxLen = selectedCountry.code === "+971" ? 9 : 15;
+                      const clean = e.target.value.replace(/\D/g, "").slice(0, maxLen);
+                      setPhone(clean);
+                    }}
+                    placeholder={selectedCountry.code === "+971" ? "50 123 4567" : "123456789"}
+                    maxLength={selectedCountry.code === "+971" ? 9 : 15}
+                    className="flex-1 bg-transparent px-3 py-2 text-sm font-semibold text-slate-900 placeholder:text-slate-300 focus:outline-none font-mono"
                     autoFocus
                   />
+
                 </div>
 
                 {/* Country Dropdown Drawer */}
@@ -755,6 +782,7 @@ export function AccountAuthModal({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email Address"
                   className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-cyan-500 focus:outline-none"
+                  required
                 />
               </div>
 

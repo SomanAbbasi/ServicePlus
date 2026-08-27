@@ -78,12 +78,21 @@ export function AdminProfileMenu({ onLogout }: AdminProfileMenuProps) {
 
   const loadUserData = () => {
     if (typeof window === "undefined") return;
-    const storedName = localStorage.getItem("serviceplus_admin_user_name") || "Admin User";
+    const rawStoredName = localStorage.getItem("serviceplus_admin_user_name");
+    const storedName = (rawStoredName && !rawStoredName.includes("AHSAN") && !rawStoredName.includes("Ahsan") && !rawStoredName.includes("KAREEM"))
+      ? rawStoredName
+      : "Admin User";
     const storedRole = localStorage.getItem("serviceplus_admin_user_role") || "Admin";
-    const storedEmail = localStorage.getItem("serviceplus_admin_user_email") || "admin@serviceplus.ae";
+    const rawStoredEmail = localStorage.getItem("serviceplus_admin_user_email");
+    const storedEmail = (rawStoredEmail && !rawStoredEmail.includes("ahsan")) ? rawStoredEmail : "admin@serviceplus.ae";
     const storedPhone = localStorage.getItem("serviceplus_admin_user_phone") || "+971 50 123 4567";
     const storedAvatar = localStorage.getItem("serviceplus_admin_user_avatar") || null;
     const storedPerms = localStorage.getItem("serviceplus_admin_user_permissions") || "*";
+
+    // Clean up local storage if legacy placeholder was stored
+    if (rawStoredName && (rawStoredName.includes("AHSAN") || rawStoredName.includes("Ahsan"))) {
+      localStorage.setItem("serviceplus_admin_user_name", storedName);
+    }
 
     setUserName(storedName);
     setUserRole(storedRole);
@@ -92,6 +101,7 @@ export function AdminProfileMenu({ onLogout }: AdminProfileMenuProps) {
     setUserAvatar(storedAvatar);
     setPermissionsRaw(storedPerms);
   };
+
 
 
   useEffect(() => {
@@ -423,7 +433,8 @@ export function AdminProfileMenu({ onLogout }: AdminProfileMenuProps) {
                     <Input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      placeholder="e.g. Ahsan Kareem"
+                      placeholder="e.g. Admin Manager"
+
                       className="h-11 rounded-xl text-xs bg-white border-slate-200 font-semibold"
                       required
                     />
