@@ -1,5 +1,7 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:3001/api";
-const API_ORIGIN = API_BASE.replace(/\/api\/?$/, "") || "http://127.0.0.1:3001";
+const PROD_API_BASE = "https://service-plus-henna.vercel.app/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? PROD_API_BASE;
+const API_ORIGIN = API_BASE.replace(/\/api\/?$/, "") || PROD_API_BASE.replace(/\/api\/?$/, "");
+
 
 const TOKEN_KEY = "sp_auth_token";
 const REFRESH_KEY = "sp_refresh_token";
@@ -160,7 +162,7 @@ async function request<T>(path: string, method: string, options: RequestOptions 
   const fetchBody = body !== undefined ? JSON.stringify(body) : null;
 
   let res: Response;
-  const timeoutSignal = typeof AbortSignal !== "undefined" && "timeout" in AbortSignal ? AbortSignal.timeout(4000) : undefined;
+  const timeoutSignal = typeof AbortSignal !== "undefined" && "timeout" in AbortSignal ? AbortSignal.timeout(20000) : undefined;
   const signal = rest.signal || timeoutSignal;
 
   try {
@@ -172,16 +174,26 @@ async function request<T>(path: string, method: string, options: RequestOptions 
       ...rest,
     });
   } catch (err: unknown) {
-    const errorMsg = (err as Error)?.message ?? "Network error";
-    if (errorMsg.includes("Failed to fetch") || errorMsg.includes("NetworkError") || (err as any)?.name === "TimeoutError" || (err as any)?.name === "AbortError") {
-      throw new ApiError(
-        0,
-        `Network error: Could not connect to API at ${url}. If this was a large file upload, the payload may have exceeded the gateway limit.`,
-        err
-      );
+    if (url.includes("localhost") || url.includes("127.0.0.1")) {
+      const fallbackUrl = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):\d+\/api/, PROD_API_BASE);
+      try {
+        res = await fetch(fallbackUrl, {
+          method,
+          headers,
+          body: fetchBody,
+          signal: typeof AbortSignal !== "undefined" && "timeout" in AbortSignal ? AbortSignal.timeout(20000) : undefined,
+          ...rest,
+        });
+      } catch {
+        const errorMsg = (err as Error)?.message ?? "Network error";
+        throw new ApiError(0, `Network error: Could not connect to API at ${url}.`, err);
+      }
+    } else {
+      const errorMsg = (err as Error)?.message ?? "Network error";
+      throw new ApiError(0, `Network error: Could not connect to API at ${url}.`, err);
     }
-    throw new ApiError(0, errorMsg, err);
   }
+
 
   if (res.status === 401 && retry && !skipAuth && getRefreshToken()) {
     try {
