@@ -14,13 +14,28 @@ interface SearchParams {
 }
 
 const searchQuery = (q: string) => {
-  const hasQuery = Boolean(q && q.trim().length >= 2);
+  const trimmed = q ? q.trim() : "";
+  const hasQuery = Boolean(trimmed.length >= 2);
   return queryOptions({
-    queryKey: hasQuery ? ["search", q.trim()] : ["home-catalog"],
-    queryFn: () => (hasQuery ? searchServices(q.trim()) : getHomeCatalog()),
-    staleTime: 5 * 60 * 1000,
+    queryKey: hasQuery ? ["search", trimmed] : ["home-catalog"],
+    queryFn: async () => {
+      if (hasQuery) {
+        const [searchRes, catalogRes] = await Promise.all([
+          searchServices(trimmed),
+          getHomeCatalog(),
+        ]);
+        return {
+          services: searchRes.services,
+          categories: (catalogRes.categories && catalogRes.categories.length > 0) ? catalogRes.categories : searchRes.categories,
+          listings: catalogRes.listings || [],
+        };
+      }
+      return getHomeCatalog();
+    },
+    staleTime: 60 * 1000,
   });
 };
+
 
 export const Route = createFileRoute("/search")({
   validateSearch: (search: Record<string, unknown>): SearchParams => ({

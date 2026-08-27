@@ -249,8 +249,12 @@ export class ServicesService {
   }
 
   async searchServices(q: string) {
-    const term = q.trim();
-    if (term.length < 2) return { services: [], categories: [] };
+    const term = (q || '').trim();
+    if (!term || term.length < 2) {
+      const catalog = await this.getHomeCatalog();
+      return { services: catalog.services, categories: catalog.categories };
+    }
+
 
     const [services, categories] = await Promise.all([
       this.prisma.service.findMany({

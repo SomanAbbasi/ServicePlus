@@ -110,8 +110,10 @@ export async function getHomeCatalog() {
     }>("/services/home-catalog", { skipAuth: true });
 
     if (res && Array.isArray(res.categories) && res.categories.length > 0) {
+      AdminDataStore.syncCatalog(res.categories, res.services, res.listings);
       return res;
     }
+
   } catch (err) {
     console.warn("[getHomeCatalog] Remote fetch fallback to local store:", err);
   }
