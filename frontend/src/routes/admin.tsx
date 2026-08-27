@@ -46,7 +46,8 @@ function AdminLayout() {
     return localStorage.getItem("serviceplus_admin_authenticated") === "true";
   });
 
-  const { data: notificationsData } = useAdminQuery("notifications", getAdminNotifications);
+  const { data: notificationsData } = useAdminQuery("notifications", getAdminNotifications, isAdminLoggedIn);
+
   const notifications = (notificationsData ?? []) as any[];
   const [prevNotifCount, setPrevNotifCount] = useState<number | null>(null);
 

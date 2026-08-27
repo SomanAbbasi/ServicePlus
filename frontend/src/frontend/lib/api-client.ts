@@ -37,7 +37,13 @@ export function removeTokens(): void {
   if (!isBrowser) return;
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(REFRESH_KEY);
+  localStorage.removeItem("serviceplus_admin_authenticated");
+  localStorage.removeItem("serviceplus_admin_user_name");
+  localStorage.removeItem("serviceplus_admin_user_role");
+  localStorage.removeItem("serviceplus_admin_user_email");
+  localStorage.removeItem("serviceplus_admin_user_permissions");
 }
+
 
 /* --------------------------------------------------------------- snakeize */
 
