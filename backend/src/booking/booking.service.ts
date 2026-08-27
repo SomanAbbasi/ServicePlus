@@ -268,7 +268,7 @@ export class BookingService {
     });
     if (existing) return existing;
 
-    const finalUserId = userId || (await this.getOrCreateGuestUser());
+    const finalUserId = await this.resolveValidUserId(userId);
 
     let finalAddressId = input.addressId;
     let addr = await this.prisma.address.findUnique({
@@ -431,13 +431,14 @@ Total Amount: AED ${quote.breakdown.total.toFixed(2)}
     // Customer Notification
     await this.prisma.notification.create({
       data: {
-        userId,
+        userId: finalUserId,
         bookingId: booking.id,
         title: 'Booking confirmed',
         body: `Booking #${bookingNumber} on ${input.scheduledDate} at ${input.scheduledStart}.`,
         event: 'booking_confirmed',
       },
     });
+
 
     // Admin System Notification (for real-time dashboard updates)
     await this.prisma.notification.create({
@@ -518,13 +519,26 @@ Total Amount: AED ${quote.breakdown.total.toFixed(2)}
     return { ok: true };
   }
 
+  private async resolveValidUserId(userId?: string | null): Promise<string> {
+    if (userId && userId !== 'admin-local') {
+      try {
+        const exists = await this.prisma.profile.findUnique({
+          where: { id: userId },
+          select: { id: true },
+        });
+        if (exists) return exists.id;
+      } catch {}
+    }
+    return this.getOrCreateGuestUser();
+  }
+
   async createAddress(
     userId: string | undefined | null,
     data: { label?: string; street: string; building?: string | null },
   ) {
     if (!data.street?.trim())
       throw new BadRequestException('Enter your street address.');
-    const finalUserId = userId || (await this.getOrCreateGuestUser());
+    const finalUserId = await this.resolveValidUserId(userId);
     return this.prisma.address.create({
       data: {
         userId: finalUserId,
@@ -553,6 +567,7 @@ Total Amount: AED ${quote.breakdown.total.toFixed(2)}
     }
     return guest.id;
   }
+
 
   async getMyAddresses(userId: string) {
     return this.prisma.address.findMany({

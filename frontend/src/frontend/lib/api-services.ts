@@ -595,36 +595,41 @@ export async function getAdminOverview() {
 }
 
 export async function getAdminBookings() {
-  const localList = AdminDataStore.getBookings();
-  let serverList: Record<string, unknown>[] = [];
-
   try {
     const res = await get<Record<string, unknown>[]>("/admin/bookings");
-    if (Array.isArray(res)) {
-      serverList = res;
-    }
-  } catch {}
-
-  // Merge server bookings with local bookings (avoiding duplicates)
-  const merged: Record<string, unknown>[] = [...localList as unknown as Record<string, unknown>[]];
-  for (const sb of serverList) {
-    const id = sb.id as string;
-    const num = (sb.booking_number || sb.bookingNumber) as string;
-    if (!merged.some((m) => m.id === id || (m.booking_number && m.booking_number === num))) {
-      merged.push({
+    if (Array.isArray(res) && res.length > 0) {
+      return res.map((sb: any) => ({
         ...sb,
+        id: sb.id,
+        booking_number: sb.booking_number || sb.bookingNumber,
+        bookingNumber: sb.booking_number || sb.bookingNumber,
+        service_name: sb.service?.name || sb.service_name || sb.serviceName || "Service",
+        service_category: sb.service?.category?.name || sb.service_category || "General",
+        customer_name: sb.profile?.fullName || sb.profile?.full_name || sb.customer_name || "Customer",
+        customer_phone: sb.profile?.phone || sb.customer_phone || "-",
+        customer_email: sb.profile?.email || sb.customer_email || "-",
         scheduled_date: sb.scheduled_date || sb.scheduledDate,
         scheduledDate: sb.scheduled_date || sb.scheduledDate,
         scheduled_start: sb.scheduled_start || sb.scheduledStart,
         scheduledStart: sb.scheduled_start || sb.scheduledStart,
-        booking_number: sb.booking_number || sb.bookingNumber,
-        bookingNumber: sb.booking_number || sb.bookingNumber,
-      });
+        scheduled_end: sb.scheduled_end || sb.scheduledEnd,
+        status: sb.status || "CONFIRMED",
+        payment_status: sb.paymentStatus || sb.payment_status || "PAID",
+        payment_method: sb.paymentMethod || sb.payment_method || "card",
+        total: Number(sb.total || 0),
+        assignment_type: sb.assignmentType || sb.assignment_type || (sb.professional ? "Assigned" : "Unassigned"),
+        professional_name: sb.professional?.fullName || sb.professional_name || null,
+        city_name: sb.city?.name || sb.city_name || "Dubai",
+      }));
     }
+  } catch (err) {
+    console.warn("Failed to fetch admin bookings from server:", err);
   }
 
-  return merged;
+  const localList = AdminDataStore.getBookings();
+  return localList as unknown as Record<string, unknown>[];
 }
+
 
 export async function getAdminBookingDetail(id: string) {
   try {

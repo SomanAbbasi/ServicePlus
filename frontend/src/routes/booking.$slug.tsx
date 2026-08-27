@@ -522,16 +522,32 @@ function BookingWizard() {
 
   // Handle Complete Order
   const handleCompleteOrder = () => {
+    // If client is not logged in, prompt phone OTP authentication first
+    if (!user && !token) {
+      toast.info(
+        isAr
+          ? "يرجى تسجيل الدخول أو إدخال رقم هاتفك لإتمام الطلب"
+          : "Please login or verify your phone number to complete your booking."
+      );
+      setAuthModalOpen(true);
+      return;
+    }
+
     if (paymentMethod === "card") {
       const rawCard = cardNumber.replace(/\s/g, "");
       if (rawCard.length < 12) {
-        toast.error(isAr ? "أدخل رقم بطاقة صحيح أو اختر الدفع عند الاستلام" : "Please enter card details or choose Pay After Service");
+        toast.error(
+          isAr
+            ? "أدخل رقم بطاقة صحيح أو اختر الدفع عند الاستلام"
+            : "Please enter card details or choose Pay After Service"
+        );
         return;
       }
     }
 
     confirm.mutate();
   };
+
 
   // Handle Apply Coupon
   const handleApplyCoupon = () => {

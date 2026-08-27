@@ -45,7 +45,7 @@ interface AdminProfileMenuProps {
 }
 
 export function AdminProfileMenu({ onLogout }: AdminProfileMenuProps) {
-  const [userName, setUserName] = useState("AHSAN KAREEM KAREEM");
+  const [userName, setUserName] = useState("Admin User");
   const [userRole, setUserRole] = useState("Admin");
   const [userEmail, setUserEmail] = useState("admin@serviceplus.ae");
   const [userPhone, setUserPhone] = useState("+971 50 123 4567");
@@ -78,7 +78,7 @@ export function AdminProfileMenu({ onLogout }: AdminProfileMenuProps) {
 
   const loadUserData = () => {
     if (typeof window === "undefined") return;
-    const storedName = localStorage.getItem("serviceplus_admin_user_name") || "AHSAN KAREEM KAREEM";
+    const storedName = localStorage.getItem("serviceplus_admin_user_name") || "Admin User";
     const storedRole = localStorage.getItem("serviceplus_admin_user_role") || "Admin";
     const storedEmail = localStorage.getItem("serviceplus_admin_user_email") || "admin@serviceplus.ae";
     const storedPhone = localStorage.getItem("serviceplus_admin_user_phone") || "+971 50 123 4567";
@@ -92,6 +92,7 @@ export function AdminProfileMenu({ onLogout }: AdminProfileMenuProps) {
     setUserAvatar(storedAvatar);
     setPermissionsRaw(storedPerms);
   };
+
 
   useEffect(() => {
     loadUserData();
