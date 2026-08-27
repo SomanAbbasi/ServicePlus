@@ -38,3 +38,5 @@ storage/
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
