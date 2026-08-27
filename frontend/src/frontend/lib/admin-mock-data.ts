@@ -249,6 +249,63 @@ export interface AdminListing {
   sortOrder?: number;
 }
 
+export interface AdminBookingItem {
+  id?: string;
+  booking_id?: string;
+  bookingId?: string;
+  label: string;
+  unit_price: number;
+  unitPrice?: number;
+  quantity: number;
+}
+
+export interface AdminBooking {
+  id: string;
+  booking_number: string;
+  bookingNumber?: string;
+  user_id?: string;
+  userId?: string;
+  service_id?: string;
+  serviceId?: string;
+  service_name?: string;
+  serviceName?: string;
+  service?: { id?: string; name?: string; imageUrl?: string; image_url?: string; category?: { id?: string; name?: string } };
+  category?: { id?: string; name?: string };
+  profile?: { id?: string; fullName?: string; full_name?: string; phone?: string; email?: string };
+  address?: { id?: string; label?: string; street?: string; building?: string; unit?: string };
+  city?: { id?: string; name?: string };
+  professional?: { id?: string; fullName?: string; full_name?: string };
+  hours?: number;
+  professionals_count?: number;
+  professionalsCount?: number;
+  materials?: boolean;
+  instructions?: string;
+  scheduled_date: string;
+  scheduledDate?: string;
+  scheduled_start: string;
+  scheduledStart?: string;
+  scheduled_end?: string;
+  scheduledEnd?: string;
+  subtotal: number;
+  addons_total?: number;
+  addonsTotal?: number;
+  materials_total?: number;
+  materialsTotal?: number;
+  discount?: number;
+  fees?: number;
+  tax?: number;
+  total: number;
+  payment_method?: string;
+  paymentMethod?: string;
+  payment_status?: string;
+  paymentStatus?: string;
+  status: string;
+  created_at: string;
+  createdAt?: string;
+  items?: AdminBookingItem[];
+  addons?: AdminBookingItem[];
+}
+
 /* ==========================================================================
    DEFAULT CLEAN SYSTEM TEMPLATES (ZERO SEEDED / DUMMY DATA)
    ========================================================================== */
@@ -256,6 +313,7 @@ export interface AdminListing {
 export const INITIAL_CATEGORIES: AdminCategory[] = [];
 export const INITIAL_SERVICES: AdminService[] = [];
 export const INITIAL_LISTINGS: AdminListing[] = [];
+export const INITIAL_BOOKINGS: AdminBooking[] = [];
 
 const INITIAL_COMPANIES: AdminCompany[] = [];
 const INITIAL_PROFESSIONALS: AdminProfessional[] = [];
@@ -973,6 +1031,124 @@ export const AdminDataStore = {
         service_id: l.service_id ?? l.serviceId,
         sort_order: l.sort_order ?? l.sortOrder ?? 0,
       })));
+    }
+  },
+
+  // Bookings
+  getBookings: (): AdminBooking[] => getFromStorage("bookings", INITIAL_BOOKINGS),
+  saveBookings: (bookings: AdminBooking[]) => saveToStorage("bookings", bookings),
+  addBooking: (b: Record<string, any>): AdminBooking => {
+    const list = AdminDataStore.getBookings();
+    const now = new Date();
+    const dateStr = `${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}-${now.getFullYear()} ${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    const id = b.id || `bk-${Date.now()}`;
+    const bookingNumber = b.booking_number || b.bookingNumber || `SP-${Date.now().toString(36).toUpperCase()}`;
+
+    // Resolve service name and details if available from catalog
+    const catalog = AdminDataStore.getCatalog();
+    const matchedSvc = (catalog.services ?? []).find((s: any) => s.id === b.service_id || s.slug === b.service_id || s.slug === b.serviceSlug || s.id === b.serviceId);
+
+    const newBooking: AdminBooking = {
+      id,
+      booking_number: bookingNumber,
+      bookingNumber,
+      user_id: b.user_id || b.userId || "usr-guest",
+      userId: b.user_id || b.userId || "usr-guest",
+      service_id: b.service_id || b.serviceId || matchedSvc?.id || "svc-general",
+      serviceId: b.service_id || b.serviceId || matchedSvc?.id || "svc-general",
+      service_name: b.service_name || b.serviceName || matchedSvc?.name || "Home Service",
+      serviceName: b.service_name || b.serviceName || matchedSvc?.name || "Home Service",
+      service: b.service || {
+        id: matchedSvc?.id,
+        name: matchedSvc?.name || b.service_name || "Home Service",
+        imageUrl: matchedSvc?.image_url || matchedSvc?.imageUrl,
+      },
+      category: b.category || {
+        name: (catalog.categories ?? []).find((c: any) => c.id === matchedSvc?.category_id)?.name || "General Service",
+      },
+      profile: b.profile || {
+        fullName: b.customer_name || b.fullName || b.userName || "Customer",
+        phone: b.customer_phone || b.phone || "+971 50 123 4567",
+        email: b.customer_email || b.email || "customer@serviceplus.ae",
+      },
+      address: b.address || {
+        label: b.address_label || "Home",
+        street: b.address_street || b.street || (typeof b.address === "string" ? b.address : "Dubai, United Arab Emirates"),
+      },
+      city: b.city || { name: "Dubai" },
+      professional: b.professional || undefined,
+      hours: Number(b.hours || 2),
+      professionals_count: Number(b.professionals_count || b.professionals || b.professionalsCount || 1),
+      professionalsCount: Number(b.professionals_count || b.professionals || b.professionalsCount || 1),
+      materials: Boolean(b.materials),
+      instructions: b.instructions || "",
+      scheduled_date: b.scheduled_date || b.scheduledDate || now.toISOString().slice(0, 10),
+      scheduledDate: b.scheduled_date || b.scheduledDate || now.toISOString().slice(0, 10),
+      scheduled_start: b.scheduled_start || b.scheduledStart || "14:00",
+      scheduledStart: b.scheduled_start || b.scheduledStart || "14:00",
+      scheduled_end: b.scheduled_end || b.scheduledEnd || "16:00",
+      scheduledEnd: b.scheduled_end || b.scheduledEnd || "16:00",
+      subtotal: Number(b.subtotal || b.total || 0),
+      addons_total: Number(b.addons_total || b.addonsTotal || 0),
+      addonsTotal: Number(b.addons_total || b.addonsTotal || 0),
+      materials_total: Number(b.materials_total || b.materialsTotal || 0),
+      materialsTotal: Number(b.materials_total || b.materialsTotal || 0),
+      discount: Number(b.discount || 0),
+      fees: Number(b.fees || 0),
+      tax: Number(b.tax || 0),
+      total: Number(b.total || 0),
+      payment_method: b.payment_method || b.paymentMethod || "card",
+      paymentMethod: b.payment_method || b.paymentMethod || "card",
+      payment_status: b.payment_status || b.paymentStatus || "PAID",
+      paymentStatus: b.payment_status || b.paymentStatus || "PAID",
+      status: b.status || "CONFIRMED",
+      created_at: b.created_at || b.createdAt || dateStr,
+      createdAt: b.created_at || b.createdAt || dateStr,
+      items: b.items || [],
+      addons: b.addons || [],
+    };
+
+    const updated = [newBooking, ...list.filter((x) => x.id !== newBooking.id)];
+    AdminDataStore.saveBookings(updated);
+    return newBooking;
+  },
+  updateBooking: (id: string, patch: Record<string, any>): AdminBooking | null => {
+    const list = AdminDataStore.getBookings();
+    const idx = list.findIndex((b) => b.id === id);
+    if (idx === -1 || !list[idx]) return null;
+    const existing = list[idx]!;
+    const updated: AdminBooking = {
+      ...existing,
+      ...patch,
+      id: existing.id,
+      status: patch.status || existing.status,
+    };
+    list[idx] = updated;
+    AdminDataStore.saveBookings(list);
+    return updated;
+  },
+  getBookingDetail: (id: string): AdminBooking | null => {
+    const list = AdminDataStore.getBookings();
+    return list.find((b) => b.id === id || b.booking_number === id) || null;
+  },
+  syncBookings: (serverBookings?: any[]) => {
+    if (Array.isArray(serverBookings) && serverBookings.length > 0) {
+      const local = AdminDataStore.getBookings();
+      const merged = [...local];
+      for (const sb of serverBookings) {
+        if (!merged.some((m) => m.id === sb.id)) {
+          merged.push({
+            ...sb,
+            scheduled_date: sb.scheduled_date || sb.scheduledDate,
+            scheduledDate: sb.scheduled_date || sb.scheduledDate,
+            scheduled_start: sb.scheduled_start || sb.scheduledStart,
+            scheduledStart: sb.scheduled_start || sb.scheduledStart,
+            booking_number: sb.booking_number || sb.bookingNumber,
+            bookingNumber: sb.booking_number || sb.bookingNumber,
+          });
+        }
+      }
+      AdminDataStore.saveBookings(merged);
     }
   },
 };

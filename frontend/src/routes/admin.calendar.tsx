@@ -51,7 +51,7 @@ function AdminCalendarPage() {
     
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (data as any[]).forEach((b: any) => {
-      const d = b.scheduled_date;
+      const d = b.scheduled_date || b.scheduledDate;
       if (d) {
         if (!map.has(d)) map.set(d, []);
         map.get(d)!.push(b);
@@ -94,19 +94,26 @@ function AdminCalendarPage() {
               </div>
               
               <div className="flex flex-col gap-1 flex-1">
-                {dayBookings.slice(0, 3).map(b => (
-                  <div 
-                    key={b.id || b.booking_number} 
-                    className={cn(
-                      "text-xs px-1.5 py-0.5 rounded-sm truncate cursor-pointer h-5 leading-4",
-                      getStatusColor(b.status)
-                    )}
-                    onClick={() => setSelectedBookingId(b.id)}
-                    title={`BK${b.booking_number} (${b.service?.name}) (${b.profile?.full_name || b.guest_phone})`}
-                  >
-                    {b.scheduled_start?.substring(0, 5)} {b.profile?.full_name || b.guest_phone || 'Guest'}
-                  </div>
-                ))}
+                {dayBookings.slice(0, 3).map(b => {
+                  const bNum = b.booking_number || b.bookingNumber || b.id;
+                  const sName = b.service?.name || b.service_name || b.serviceName || "Home Service";
+                  const cName = b.profile?.full_name || b.profile?.fullName || b.customer_name || b.customer_phone || "Customer";
+                  const time = (b.scheduled_start || b.scheduledStart || "").substring(0, 5);
+
+                  return (
+                    <div 
+                      key={b.id || bNum} 
+                      className={cn(
+                        "text-xs px-1.5 py-0.5 rounded-sm truncate cursor-pointer h-5 leading-4 font-medium",
+                        getStatusColor(b.status)
+                      )}
+                      onClick={() => setSelectedBookingId(b.id)}
+                      title={`${bNum} (${sName}) - ${cName}`}
+                    >
+                      {time} {cName}
+                    </div>
+                  );
+                })}
                 {dayBookings.length > 3 && (
                   <div 
                     className="text-xs text-slate-500 font-medium cursor-pointer hover:text-slate-800 px-1"

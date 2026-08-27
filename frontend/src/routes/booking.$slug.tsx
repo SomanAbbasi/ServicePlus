@@ -213,16 +213,14 @@ function BookingWizard() {
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
 
-  // Phone & OTP Checkout Verification
-  const [phone, setPhone] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
-  const [phoneVerified, setPhoneVerified] = useState(false);
-  const [otpSending, setOtpSending] = useState(false);
+  // Customer Contact & Guest Details
+  const [customerName, setCustomerName] = useState(() => (user?.fullName as string) || ((user as any)?.name as string) || "");
+  const [customerPhone, setCustomerPhone] = useState(() => (user?.phone as string) || ((user as any)?.phone as string) || "");
+  const [customerEmail, setCustomerEmail] = useState(() => (user?.email as string) || ((user as any)?.email as string) || "");
 
   // Payment Options & Realtime Card Formatting
   const queryClient = useQueryClient();
-  const [paymentMethod, setPaymentMethod] = useState("card"); // card
+  const [paymentMethod, setPaymentMethod] = useState("cash"); // "cash" (Pay after service) | "card"
   const [cardNumber, setCardNumber] = useState("");
   const [cardExp, setCardExp] = useState("");
   const [cardCvv, setCardCvv] = useState("");
@@ -252,6 +250,13 @@ function BookingWizard() {
     setCardCvv(raw);
   };
 
+  const handleFillDemoCard = () => {
+    setCardNumber("4242 4242 4242 4242");
+    setCardExp("12/28");
+    setCardCvv("123");
+    toast.success(isAr ? "تم تعبئة بيانات البطاقة التجريبية بنجاح" : "Demo card details auto-filled!");
+  };
+
   const detectedCardBrand = useMemo(() => {
     const raw = cardNumber.replace(/\s/g, "");
     if (raw.startsWith("4")) return "visa";
@@ -272,15 +277,6 @@ function BookingWizard() {
   const addons = (detail?.addons ?? []) as any[];
   const hasAddons = addons.length > 0;
   const totalSteps = hasAddons ? 5 : 4;
-
-  // Auto-pop frequency modal when entering date/time step for the first time
-  useEffect(() => {
-    if (step === 2 && !freqAutoShown) {
-      setFreqDraft(frequency);
-      setFreqOpen(true);
-      setFreqAutoShown(true);
-    }
-  }, [step, freqAutoShown, frequency]);
 
   // Always scroll to top on step or slug changes
   useEffect(() => {
@@ -499,16 +495,20 @@ function BookingWizard() {
         instructions: instructions || undefined,
         paymentMethod,
         idempotencyKey,
+        customerName: customerName.trim() || user?.fullName || (user as any)?.name || "Customer",
+        customerPhone: customerPhone.trim() || user?.phone || (user as any)?.phone || "+971 50 123 4567",
+        customerEmail: customerEmail.trim() || user?.email || "customer@serviceplus.ae",
+        manualAddress: displayAddress,
       });
     },
     onSuccess: (res: any) => {
-      const bookingNum = res?.bookingNumber || "SP-BOOKING";
+      const bookingNum = res?.bookingNumber || res?.booking_number || "SP-BOOKING";
       const totalAmount = Number((quote?.breakdown as any)?.total || 0);
       void queryClient.invalidateQueries({ queryKey: ["admin", "bookings"] });
       void queryClient.invalidateQueries({ queryKey: ["admin"] });
       void queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
       toast.success(
-        isAr ? `تم إرسال الطلب بنجاح! (رقم المرجع: ${bookingNum})` : `Order placed successfully! (Ref: ${bookingNum})`,
+        isAr ? `تم تأكيد حجزك بنجاح! (رقم المرجع: ${bookingNum})` : `Order placed successfully! (Ref: ${bookingNum})`,
         { duration: 5000 }
       );
       setOrderSuccessModal({
@@ -520,28 +520,12 @@ function BookingWizard() {
     onError: (err) => setError(err instanceof Error ? err.message : t("booking.failed")),
   });
 
-  // Handle Complete Order (with mandatory profile completion & card validation)
+  // Handle Complete Order
   const handleCompleteOrder = () => {
-    // 1. Mandatory Profile Check
-    if (!user || (!user.phone && !(user as any).phone) || (!user.fullName && !(user as any).name)) {
-      toast.info(isAr ? "يرجى استكمال ملفك الشخصي لتأكيد الطلب" : "Please create / complete your profile to confirm your order");
-      setAuthModalOpen(true);
-      return;
-    }
-
-    // 2. Validate Card fields if card payment
     if (paymentMethod === "card") {
       const rawCard = cardNumber.replace(/\s/g, "");
-      if (rawCard.length < 15) {
-        toast.error(isAr ? "أدخل رقم بطاقة صحيح مكون من 16 رقمًا" : "Please enter a valid 16-digit card number");
-        return;
-      }
-      if (cardExp.length < 5) {
-        toast.error(isAr ? "أدخل تاريخ انتهاء صحيح (MM/YY)" : "Please enter a valid expiry date (MM/YY)");
-        return;
-      }
-      if (cardCvv.length < 3) {
-        toast.error(isAr ? "أدخل رمز الأمان CVV (3-4 أرقام)" : "Please enter a valid CVV (3-4 digits)");
+      if (rawCard.length < 12) {
+        toast.error(isAr ? "أدخل رقم بطاقة صحيح أو اختر الدفع عند الاستلام" : "Please enter card details or choose Pay After Service");
         return;
       }
     }
@@ -1433,7 +1417,7 @@ function BookingWizard() {
               </section>
             )}
 
-            {/* STEP 4: Verification & Payment (Matching Image 3) */}
+            {/* STEP 4: Verification & Payment */}
             {step === 4 && (
               <section className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs min-w-0 overflow-hidden">
                 <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
@@ -1442,37 +1426,65 @@ function BookingWizard() {
                       {isAr ? "الخطوة 4 من 4" : "Step 4 of 4"}
                     </span>
                     <h2 className="text-xl font-extrabold text-slate-900">
-                      {isAr ? "إتمام الحجز والدفع" : "Checkout"}
+                      {isAr ? "إتمام الحجز وتأكيد الطلب" : "Checkout & Confirmation"}
                     </h2>
                   </div>
                 </div>
 
-                {/* Phone & Account Verification Box (Only shown if user has no verified account) */}
-                {!token && (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 space-y-3 shadow-2xs">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-xs font-extrabold text-slate-900">
-                          {isAr ? "تسجيل الدخول أو إنشاء حساب" : "Sign Up Or Log In"}
-                        </h4>
-                        <p className="text-[11px] text-slate-600 font-semibold mt-0.5">
-                          {isAr
-                            ? "يرجى التحقق من رقم الهاتف وإنشاء الحساب لتأكيد طلبك."
-                            : "Please verify your phone number & create your account to place your order."}
-                        </p>
-                      </div>
+                {/* Customer Contact Details */}
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 sm:p-5 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                    <h3 className="text-xs sm:text-sm font-extrabold text-slate-900">
+                      {isAr ? "بيانات التواصل والتوصيل" : "Contact & Service Details"}
+                    </h3>
+                    <span className="text-[11px] font-bold text-cyan-700">
+                      {isAr ? "تأكيد فوري" : "Instant Confirmation"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="block text-xs font-bold text-slate-700 mb-1">
+                        {isAr ? "الاسم الكامل" : "Full Name"}
+                      </Label>
+                      <Input
+                        type="text"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder={isAr ? "الاسم الكامل" : "Your full name"}
+                        className="text-xs rounded-xl bg-white border-slate-200"
+                      />
+                    </div>
+                    <div>
+                      <Label className="block text-xs font-bold text-slate-700 mb-1">
+                        {isAr ? "رقم الهاتف (واتساب / اتصال)" : "Phone Number (UAE)"}
+                      </Label>
+                      <Input
+                        type="text"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        placeholder="+971 50 123 4567"
+                        className="text-xs rounded-xl bg-white border-slate-200"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 text-slate-600 truncate max-w-md">
+                      <MapPin className="size-3.5 text-cyan-600 shrink-0" />
+                      <span className="truncate">{displayAddress}</span>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setAuthModalOpen(true)}
-                      className="w-full rounded-full bg-[#FFC836] hover:bg-[#f5be29] py-3 px-6 text-center text-xs font-extrabold text-slate-900 shadow-md transition-all active:scale-98"
+                      onClick={() => setStep(3)}
+                      className="text-xs font-bold text-cyan-600 hover:underline shrink-0"
                     >
-                      {isAr ? "إنشاء حساب أو تسجيل الدخول" : "Sign Up Or Log In"}
+                      {isAr ? "تغيير العنوان" : "Change"}
                     </button>
                   </div>
-                )}
+                </div>
 
-                {/* Clear Payment Details Breakdown Box (Transparent Order Details) */}
+                {/* Clear Payment Details Breakdown Box */}
                 <div className="rounded-2xl border border-cyan-200/80 bg-cyan-50/40 p-4 sm:p-5 space-y-3 shadow-xs">
                   <div className="flex items-center justify-between pb-2.5 border-b border-cyan-100">
                     <div className="flex items-center gap-2">
@@ -1615,114 +1627,120 @@ function BookingWizard() {
                   </div>
                 </div>
 
-                {/* Payment Method UI (Matching Image 3) */}
-                <div className="space-y-4 pt-1">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm font-extrabold text-slate-900">Payment Method</Label>
-                    <span className="text-xs font-bold text-cyan-600 cursor-pointer hover:underline">Change</span>
+                {/* Payment Method Selector */}
+                <div className="space-y-3 pt-1">
+                  <Label className="text-sm font-extrabold text-slate-900">{isAr ? "طريقة الدفع" : "Payment Method"}</Label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Option 1: Cash / Card on Delivery */}
+                    <div
+                      onClick={() => setPaymentMethod("cash")}
+                      className={`relative flex flex-col p-4 rounded-2xl border cursor-pointer transition-all ${
+                        paymentMethod === "cash"
+                          ? "border-cyan-500 bg-cyan-50/60 ring-2 ring-cyan-500/20 shadow-xs"
+                          : "border-slate-200 bg-white hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-extrabold text-slate-900">
+                          {isAr ? "الدفع بعد انتهاء الخدمة" : "Pay After Service"}
+                        </span>
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
+                          {isAr ? "الأكثر تفضيلاً" : "Recommended"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        {isAr ? "ادفع نقدًا أو بالبطاقة عند زيارة المحترف." : "Pay by cash or card upon completion."}
+                      </p>
+                    </div>
+
+                    {/* Option 2: Online Card Payment */}
+                    <div
+                      onClick={() => setPaymentMethod("card")}
+                      className={`relative flex flex-col p-4 rounded-2xl border cursor-pointer transition-all ${
+                        paymentMethod === "card"
+                          ? "border-cyan-500 bg-cyan-50/60 ring-2 ring-cyan-500/20 shadow-xs"
+                          : "border-slate-200 bg-white hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-extrabold text-slate-900">
+                          {isAr ? "بطاقة ائتمان / خصم مباشر" : "Credit / Debit Card"}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className="rounded bg-blue-700 px-1 py-0.2 text-[8px] font-black text-white">VISA</span>
+                          <span className="rounded bg-red-600 px-1 py-0.2 text-[8px] font-black text-white">MC</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        {isAr ? "دفع رقمي فوري وآمن 100%." : "Instant & secure digital card checkout."}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Credit / Debit Card Selected Pill Header */}
-                  <div className="flex items-center justify-between rounded-xl border-2 border-cyan-500 bg-cyan-50/50 p-3.5 shadow-2xs">
-                    <div className="flex items-center gap-2.5">
-                      <CardIcon className="size-4 text-slate-900" />
-                      <span className="text-xs font-extrabold text-slate-900">
-                        {isAr ? "بطاقة ائتمان / خصم مباشر" : "Credit / Debit Card"}
-                      </span>
-                    </div>
-                    {/* Dynamic Card Logos: VISA, MasterCard, Amex */}
-                    <div className="flex items-center gap-1">
-                      <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-black italic transition-all ${
-                        detectedCardBrand === "visa" || !detectedCardBrand ? "bg-blue-700 text-white shadow-xs" : "bg-slate-200 text-slate-400"
-                      }`}>
-                        VISA
-                      </span>
-                      <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-black transition-all ${
-                        detectedCardBrand === "mastercard" || !detectedCardBrand ? "bg-red-600 text-white shadow-xs" : "bg-slate-200 text-slate-400"
-                      }`}>
-                        MC
-                      </span>
-                      <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-black transition-all ${
-                        detectedCardBrand === "amex" || !detectedCardBrand ? "bg-cyan-700 text-white shadow-xs" : "bg-slate-200 text-slate-400"
-                      }`}>
-                        AMEX
-                      </span>
-                    </div>
-                  </div>
+                  {/* Card Form Inputs (Only shown when card is selected) */}
+                  {paymentMethod === "card" && (
+                    <div className="rounded-2xl border border-cyan-200/80 bg-white p-4 space-y-3 mt-2 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-bold text-slate-700">{isAr ? "بيانات البطاقة" : "Card Details"}</Label>
+                        <button
+                          type="button"
+                          onClick={handleFillDemoCard}
+                          className="text-[11px] font-bold text-cyan-600 hover:underline cursor-pointer"
+                        >
+                          {isAr ? "تعبئة بطاقة تجريبية بنقرة واحدة" : "Auto-fill Demo Card"}
+                        </button>
+                      </div>
 
-                  {/* Card Form Inputs */}
-                  <div className="space-y-3.5 pt-1">
-                    <div>
-                      <Label className="block text-xs font-semibold text-slate-400 mb-1">
-                        {isAr ? "رقم البطاقة" : "Card Number"}
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          type="text"
-                          inputMode="numeric"
-                          name="cc-number"
-                          autoComplete="off"
-                          value={cardNumber}
-                          onChange={handleCardNumberChange}
-                          placeholder="1234 1234 1234 1234"
-                          className="text-xs rounded-xl border-slate-200 bg-white font-mono tracking-wider h-11"
-                          maxLength={19}
-                        />
-                        <div className="absolute right-3 top-3 flex items-center gap-1">
-                          {detectedCardBrand === "visa" && (
-                            <span className="rounded bg-blue-700 px-1.5 py-0.5 text-[8px] font-black text-white">VISA</span>
-                          )}
-                          {detectedCardBrand === "mastercard" && (
-                            <span className="rounded bg-red-600 px-1.5 py-0.5 text-[8px] font-black text-white">MC</span>
-                          )}
-                          {detectedCardBrand === "amex" && (
-                            <span className="rounded bg-cyan-700 px-1.5 py-0.5 text-[8px] font-black text-white">AMEX</span>
-                          )}
-                          {!detectedCardBrand && (
-                            <span className="text-[10px] text-slate-400 font-mono">16 DIGITS</span>
-                          )}
+                      <div>
+                        <div className="relative">
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            value={cardNumber}
+                            onChange={handleCardNumberChange}
+                            placeholder="1234 1234 1234 1234"
+                            className="text-xs rounded-xl border-slate-200 bg-white font-mono tracking-wider h-10"
+                            maxLength={19}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="block text-[11px] font-medium text-slate-500 mb-1">
+                            {isAr ? "تاريخ الانتهاء (MM/YY)" : "Exp. Date (MM/YY)"}
+                          </Label>
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            value={cardExp}
+                            onChange={handleCardExpChange}
+                            placeholder="MM/YY"
+                            className="text-xs rounded-xl border-slate-200 bg-white font-mono h-10"
+                            maxLength={5}
+                          />
+                        </div>
+                        <div>
+                          <Label className="block text-[11px] font-medium text-slate-500 mb-1">
+                            {isAr ? "رمز التحقق (CVV)" : "CVV Number"}
+                          </Label>
+                          <Input
+                            type="password"
+                            inputMode="numeric"
+                            value={cardCvv}
+                            onChange={handleCardCvvChange}
+                            placeholder="CVV"
+                            className="text-xs rounded-xl border-slate-200 bg-white font-mono h-10"
+                            maxLength={4}
+                          />
                         </div>
                       </div>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="block text-xs font-semibold text-slate-400 mb-1">
-                          {isAr ? "تاريخ الانتهاء (MM/YY)" : "Exp. Date (MM/YY)"}
-                        </Label>
-                        <Input
-                          type="text"
-                          inputMode="numeric"
-                          name="cc-exp"
-                          autoComplete="off"
-                          value={cardExp}
-                          onChange={handleCardExpChange}
-                          placeholder="MM/YY"
-                          className="text-xs rounded-xl border-slate-200 bg-white font-mono h-11"
-                          maxLength={5}
-                        />
-                      </div>
-                      <div>
-                        <Label className="block text-xs font-semibold text-slate-400 mb-1">
-                          {isAr ? "رمز التحقق (CVV)" : "CVV Number"}
-                        </Label>
-                        <Input
-                          type="password"
-                          inputMode="numeric"
-                          name="cc-csc"
-                          autoComplete="off"
-                          value={cardCvv}
-                          onChange={handleCardCvvChange}
-                          placeholder="CVV"
-                          className="text-xs rounded-xl border-slate-200 bg-white font-mono h-11"
-                          maxLength={4}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
-                {/* Complete Order Gold Button (Matching Image 3) */}
+                {/* Complete Order Gold Button */}
                 <div className="pt-2 space-y-2.5">
                   <Button
                     type="button"
@@ -1731,7 +1749,7 @@ function BookingWizard() {
                     className="w-full rounded-full bg-[#FFC836] hover:bg-[#f5be29] py-3.5 px-6 text-center text-sm font-extrabold text-slate-900 shadow-md transition-all active:scale-98 disabled:opacity-50 h-12"
                   >
                     {confirm.isPending ? <Loader2 className="size-4 animate-spin me-2" /> : null}
-                    {isAr ? "إتمام الحجز وتأكيد الطلب" : "Complete"}
+                    {isAr ? "تأكيد وإتمام الحجز" : "Confirm Booking"}
                   </Button>
 
                   <p className="text-[11px] text-slate-500 text-center leading-relaxed font-medium">
@@ -2315,17 +2333,41 @@ function BookingWizard() {
             </div>
           </div>
 
-          <div className="pt-4">
+          <div className="pt-4 space-y-2">
             <Button
               type="button"
               onClick={() => {
                 setOrderSuccessModal(null);
-                navigate({ to: "/dashboard" });
+                navigate({ to: "/admin" });
               }}
               className="w-full bg-[#0093A3] hover:bg-[#007b88] text-white font-extrabold py-3.5 rounded-full text-xs shadow-md"
             >
-              {isAr ? "عرض حجوزاتي" : "View My Bookings"}
+              {isAr ? "عرض في لوحة تحكم الإدارة (Admin Dashboard)" : "View in Admin Dashboard"}
             </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setOrderSuccessModal(null);
+                  navigate({ to: "/admin/calendar" });
+                }}
+                className="text-xs font-bold rounded-full border-slate-300 hover:bg-slate-50"
+              >
+                {isAr ? "تقويم المواعيد" : "Admin Calendar"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setOrderSuccessModal(null);
+                  navigate({ to: "/" });
+                }}
+                className="text-xs font-bold rounded-full border-slate-300 hover:bg-slate-50"
+              >
+                {isAr ? "الرئيسية" : "Home"}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

@@ -22,8 +22,11 @@ export function ServiceCard({
   const isAr = locale === "ar";
   const [optionsModalOpen, setOptionsModalOpen] = useState(false);
 
+  if (!service) return <ServiceCardSkeleton />;
+
   const svcRecord = service as unknown as Record<string, unknown>;
-  const name = localizedText(svcRecord, "name", locale) ?? service.name;
+  const name = localizedText(svcRecord, "name", locale) ?? service.name ?? "Home Service";
+  const targetSlug = service.slug || (service as any).id || (name ? name.toLowerCase().replace(/[^a-z0-9]+/g, "-") : "deep-cleaning");
   const description =
     localizedText(svcRecord, "shortDescription", locale) ??
     localizedText(svcRecord, "short_description", locale) ??
@@ -64,7 +67,8 @@ export function ServiceCard({
   return (
     <Link
       to="/booking/$slug"
-      params={{ slug: service.slug }}
+      params={{ slug: targetSlug }}
+      preload="intent"
       className={`group flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-cyan-500/40 cursor-pointer ${className}`}
     >
       {/* Image Container with Badges */}

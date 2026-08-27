@@ -154,16 +154,20 @@ async function request<T>(path: string, method: string, options: RequestOptions 
   const fetchBody = body !== undefined ? JSON.stringify(body) : null;
 
   let res: Response;
+  const timeoutSignal = typeof AbortSignal !== "undefined" && "timeout" in AbortSignal ? AbortSignal.timeout(4000) : undefined;
+  const signal = rest.signal || timeoutSignal;
+
   try {
     res = await fetch(url, {
       method,
       headers,
       body: fetchBody,
+      signal,
       ...rest,
     });
   } catch (err: unknown) {
     const errorMsg = (err as Error)?.message ?? "Network error";
-    if (errorMsg.includes("Failed to fetch") || errorMsg.includes("NetworkError")) {
+    if (errorMsg.includes("Failed to fetch") || errorMsg.includes("NetworkError") || (err as any)?.name === "TimeoutError" || (err as any)?.name === "AbortError") {
       throw new ApiError(
         0,
         `Network error: Could not connect to API at ${url}. If this was a large file upload, the payload may have exceeded the gateway limit.`,
