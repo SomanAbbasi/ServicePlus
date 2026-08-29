@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X, ChevronLeft, MapPin, Search, Check, Maximize2, Minimize2, Crosshair, Loader2 } from "lucide-react";
 import { requestOtp, verifyOtp, updateProfile, createAddress, reverseGeocode, searchPlaces } from "@/frontend/lib/api-services";
+import { getAccessToken } from "@/frontend/lib/api-client";
 import { useAuth } from "@/frontend/lib/auth-context";
 import { useSavedLocation } from "@/frontend/lib/location";
 import { DUBAI_CENTER, loadMapboxGl, MAPBOX_ACCESS_TOKEN } from "@/frontend/lib/mapbox";
@@ -43,7 +44,7 @@ export function AccountAuthModal({
   onClose: () => void;
   onSuccess?: () => void;
 }) {
-  const { setAuth } = useAuth();
+  const { setAuth, user, token: authToken } = useAuth();
   const { location } = useSavedLocation();
   const [mounted, setMounted] = useState(false);
 
@@ -342,26 +343,33 @@ export function AccountAuthModal({
     }
     setLoading(true);
     try {
-      await updateProfile({
-        fullName: fullName.trim(),
+      try {
+        await updateProfile({
+          fullName: fullName.trim(),
+          email: email.trim(),
+          gender,
+        });
+      } catch (err) {
+        console.warn("Profile update API warning:", err);
+      }
+
+      const activeToken = getAccessToken() || authToken || `auth_${Date.now()}`;
+      setAuth(activeToken, undefined, {
+        id: user?.id || `cust_${Date.now()}`,
+        phone: fullPhone,
         email: email.trim(),
-        gender,
+        full_name: fullName.trim(),
+        avatar_url: user?.avatar_url || null,
       });
-    } catch {}
 
-    const token = getAccessToken() || `auth_${Date.now()}`;
-    setAuth(token, undefined, {
-      id: `cust_${Date.now()}`,
-      phone: fullPhone,
-      email: email.trim(),
-      full_name: fullName.trim(),
-      avatar_url: null,
-    });
-
-    toast.success("Account setup complete!");
-    onClose();
-    onSuccess?.();
-    setLoading(false);
+      toast.success("Account setup complete!");
+      onClose();
+      onSuccess?.();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to complete setup");
+    } finally {
+      setLoading(false);
+    }
   };
 
 

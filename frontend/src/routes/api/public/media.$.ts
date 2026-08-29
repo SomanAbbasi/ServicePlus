@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const RAW_API_BASE = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3001/api";
-const API_ORIGIN = RAW_API_BASE.replace(/\/api\/?$/, "") || "http://localhost:3001";
+const PROD_API_ORIGIN = "https://service-plus-henna.vercel.app";
+const RAW_API_BASE = import.meta.env["VITE_API_BASE_URL"] ?? "https://service-plus-henna.vercel.app/api";
+const API_ORIGIN = RAW_API_BASE.replace(/\/api\/?$/, "") || PROD_API_ORIGIN;
 
 /** Public read-through proxy for media stored in the backend. */
 export const Route = createFileRoute("/api/public/media/$")({

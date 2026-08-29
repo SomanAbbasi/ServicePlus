@@ -367,25 +367,29 @@ function Home() {
 
       {/* The ServicePlus Promise Banner */}
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <div className="overflow-hidden rounded-3xl bg-gradient-to-r from-cyan-600 via-sky-600 to-blue-600 p-8 text-white shadow-xl sm:p-12">
-          <div className="grid items-center gap-8 md:grid-cols-2">
+        <div className="relative overflow-hidden rounded-3xl bg-[linear-gradient(135deg,#10B981_0%,#00C3E3_48%,#1D4ED8_100%)] p-8 text-white shadow-2xl sm:p-12">
+          {/* Ambient Glows matching Logo Colors */}
+          <div className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-emerald-400/25 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-24 size-80 rounded-full bg-blue-500/30 blur-3xl" />
+
+          <div className="relative z-10 grid items-center gap-8 md:grid-cols-2">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3.5 py-1 text-xs font-bold text-white backdrop-blur-xs">
-                <ShieldCheck className="size-4" />
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3.5 py-1.5 text-xs font-bold text-white backdrop-blur-md border border-white/20 shadow-xs">
+                <ShieldCheck className="size-4 text-emerald-100" />
                 {t("home.promiseChip")}
               </div>
 
-              <h2 className="mt-4 text-2xl font-extrabold text-white sm:text-3xl">
+              <h2 className="mt-4 text-2xl font-extrabold text-white sm:text-3xl tracking-tight drop-shadow-xs">
                 {t("home.promiseHeading")}
               </h2>
-              <p className="mt-3 text-sm text-cyan-50 leading-relaxed">
+              <p className="mt-3 text-sm text-white/95 leading-relaxed font-medium">
                 {t("home.promiseIntro")}
               </p>
 
               <ul className="mt-6 space-y-2.5">
                 {PROMISES.map((item) => (
                   <li key={item} className="flex items-center gap-3 text-xs font-semibold text-white">
-                    <div className="grid size-5 shrink-0 place-items-center rounded-full bg-white text-cyan-700">
+                    <div className="grid size-5 shrink-0 place-items-center rounded-full bg-white text-cyan-700 shadow-xs">
                       <Sparkles className="size-3" />
                     </div>
                     {item}
@@ -397,7 +401,7 @@ function Home() {
                 <Button
                   asChild
                   size="lg"
-                  className="bg-white text-cyan-800 font-bold hover:bg-cyan-50 shadow-md"
+                  className="bg-white text-slate-900 font-extrabold hover:bg-slate-50 hover:text-cyan-700 shadow-lg transition-all active:scale-98"
                 >
                   <Link to="/search" search={{ q: "" }} preload="intent">
                     {t("home.browseAll")}
@@ -407,7 +411,7 @@ function Home() {
             </div>
 
             <div className="hidden md:flex justify-center">
-              <div className="relative overflow-hidden rounded-2xl border-4 border-white/20 shadow-2xl">
+              <div className="relative overflow-hidden rounded-2xl border-4 border-white/30 backdrop-blur-xs shadow-2xl">
                 <img
                   src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&q=80"
                   alt="Service Guarantee"

@@ -38,7 +38,7 @@ export function PhoneMockup() {
             </div>
 
             {/* Banner */}
-            <div className="m-2.5 overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-600 via-sky-600 to-blue-600 p-3 text-white shadow-sm">
+            <div className="m-2.5 overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#10B981_0%,#00C3E3_48%,#1D4ED8_100%)] p-3 text-white shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="rounded-md bg-[#FFC836] px-1.5 py-0.5 text-[9px] font-black text-slate-900">
                   30% OFF

@@ -1,5 +1,24 @@
 const PROD_API_BASE = "https://service-plus-henna.vercel.app/api";
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? PROD_API_BASE;
+
+function resolveApiBase(): string {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    const isLocal =
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname.endsWith(".local");
+    // If running in browser and NOT on localhost, never connect to localhost:3001
+    if (!isLocal) {
+      if (!envUrl || envUrl.includes("localhost") || envUrl.includes("127.0.0.1") || envUrl.includes(":3001")) {
+        return PROD_API_BASE;
+      }
+    }
+  }
+  return envUrl || PROD_API_BASE;
+}
+
+const API_BASE = resolveApiBase();
 const API_ORIGIN = API_BASE.replace(/\/api\/?$/, "") || PROD_API_BASE.replace(/\/api\/?$/, "");
 
 
@@ -70,23 +89,44 @@ export function snakeizeKeys<T>(input: T): T {
   return out as T;
 }
 
-/** Resolve a relative image path (e.g. "/images/catalog/...") to a full backend URL. */
+/** Resolve a relative image path or localhost URL to a full production/configured backend URL. */
 export function resolveImageUrl(url: string | null | undefined): string {
   if (!url || typeof url !== "string") return "";
   const trimmed = url.trim();
   if (!trimmed || trimmed === "null" || trimmed === "undefined") return "";
   if (trimmed.startsWith("data:") || trimmed.startsWith("blob:")) return trimmed;
+
+  const effectiveOrigin = API_ORIGIN;
+
+  // If the stored URL contains localhost / 127.0.0.1 / :3001 from past local development, rewrite it to current backend
+  if (trimmed.includes("localhost") || trimmed.includes("127.0.0.1") || trimmed.includes(":3001")) {
+    const cleanPath = trimmed.replace(/^https?:\/\/[^/]+(?::\d+)?\/?(?:api\/)?(?:media\/file\/)?/, "");
+    return `${effectiveOrigin}/api/media/file/${cleanPath.replace(/^\/+/, "")}`;
+  }
+
   // If the URL is an inaccessible .r2.dev URL, proxy through backend endpoint
   if (trimmed.includes(".r2.dev/")) {
     const r2Path = trimmed.replace(/^https?:\/\/[^/]+\.r2\.dev\/?/, "");
-    return `${API_ORIGIN}/api/media/file/${r2Path}`;
+    return `${effectiveOrigin}/api/media/file/${r2Path}`;
   }
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+
+  // External absolute URLs (e.g. Unsplash, external CDNs)
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+
   if (trimmed.startsWith("catalog/") || trimmed.startsWith("/catalog/")) {
     const cleanPath = trimmed.replace(/^\/+/, "");
-    return `${API_ORIGIN}/api/media/file/${cleanPath}`;
+    return `${effectiveOrigin}/api/media/file/${cleanPath}`;
   }
-  return `${API_ORIGIN}${trimmed.startsWith("/") ? "" : "/"}${trimmed}`;
+
+  if (trimmed.startsWith("api/media/file/") || trimmed.startsWith("/api/media/file/")) {
+    const cleanPath = trimmed.replace(/^\/?api\/media\/file\/?/, "");
+    return `${effectiveOrigin}/api/media/file/${cleanPath}`;
+  }
+
+  const clean = trimmed.replace(/^\/+/, "");
+  return `${effectiveOrigin}/api/media/file/${clean}`;
 }
 
 /* ---------------------------------------------------------------- errors */
