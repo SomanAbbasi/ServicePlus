@@ -413,9 +413,9 @@ function Home() {
             <div className="hidden md:flex justify-center">
               <div className="relative overflow-hidden rounded-2xl border-4 border-white/30 backdrop-blur-xs shadow-2xl">
                 <img
-                  src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&q=80"
-                  alt="Service Guarantee"
-                  className="h-72 w-96 object-cover"
+                  src="/serviceplus-promise.jpg"
+                  alt="ServicePlus Cleaning Professional"
+                  className="h-80 w-72 lg:h-88 lg:w-80 object-cover object-top"
                 />
               </div>
             </div>
