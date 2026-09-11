@@ -1,10 +1,17 @@
 # ServicePlus 🛠️
 
-> **Enterprise Full-Stack On-Demand Home Services Booking & Workforce Operations Platform**
+> **Enterprise Full-Stack Home Services Booking & Workforce Operations Platform**
 
 ServicePlus is a modern, production-ready, full-stack home services marketplace and operations management system. Built with **React 19**, **TanStack Start (SSR)**, **NestJS 11**, **Prisma ORM**, **PostgreSQL**, and **Redis**, it delivers an end-to-end booking experience for customers and a comprehensive back-office operations suite for administrators, dispatchers, and service providers.
 
 ---
+## Screenshots
+
+<img width="1916" height="1001" alt="Screenshot 2026-09-11 204215" src="https://github.com/user-attachments/assets/f00ff041-8f5a-4bbb-97e2-a5c961505c3b" />
+
+# Admin Dashboard
+<img width="1897" height="998" alt="Screenshot 2026-09-11 204231" src="https://github.com/user-attachments/assets/70227a81-e05d-4774-8f18-5535d620051a" />
+
 
 ## 📑 Table of Contents
 
